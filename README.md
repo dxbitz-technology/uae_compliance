@@ -1,33 +1,16 @@
-### UAE Compliance
+## UAE Compliance
 
-UAE FTA compliance app for ERPNext
+UAE Peppol e-invoicing for ERPNext: outbound Sales Invoice and credit-note preparation, validation, review, transmission, and recovery.
+
+Design baseline: `docs/spec.md`. Current state: `docs/build-state.md`. Decisions: `docs/decisions.md`. Pinned standards: `docs/standards-lock.json`.
 
 ### Installation
 
-You can install this app using the [bench](https://github.com/frappe/bench) CLI:
-
 ```bash
-cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch n
-bench install-app uae_compliance
+bench get-app uae_compliance
+bench --site <site> install-app uae_compliance
 ```
-
-### Contributing
-
-This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
-
-```bash
-cd apps/uae_compliance
-pre-commit install
-```
-
-Pre-commit is configured to use the following tools for checking and formatting your code:
-
-- ruff
-- eslint
-- prettier
-- pyupgrade
 
 ### License
 
-mit
+AGPL-3.0-only. See `license.txt`.

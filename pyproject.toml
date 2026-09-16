@@ -3,9 +3,10 @@ name = "uae_compliance"
 authors = [
     { name = "Dxbitz Technology", email = "info@dxbitz.com"}
 ]
-description = "UAE FTA compliance app for ERPNext"
+description = "UAE Peppol e-invoicing preparation, validation, review, transmission, and recovery for ERPNext"
 requires-python = ">=3.14"
 readme = "README.md"
+license = { file = "license.txt" }
 dynamic = ["version"]
 dependencies = [
     # "frappe~=16.0.0" # Installed and managed by bench.
