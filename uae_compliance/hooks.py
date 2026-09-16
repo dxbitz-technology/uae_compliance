@@ -4,6 +4,7 @@ app_publisher = "Dxbitz Technology"
 app_description = "UAE Peppol e-invoicing preparation, validation, review, transmission, and recovery for ERPNext"
 app_email = "info@dxbitz.com"
 app_license = "agpl-3.0"
+required_apps = ["frappe/erpnext"]
 
 # Apps
 # ------------------
