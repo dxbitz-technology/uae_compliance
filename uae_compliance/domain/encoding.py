@@ -15,8 +15,10 @@ The rules:
   document, for example invoice lines, so this module never sorts an array.
 - Numbers are Decimal, written as plain strings. Floats are refused.
 - A key whose value is None is left out entirely. None means the value is
-  absent. A value that is present but does not apply needs its own explicit
-  representation in the canonical model; it must not be written as None.
+  absent.
+- A value that is present but does not apply is the NOT_APPLICABLE marker,
+  written as {"not_applicable":true}. It is its own thing: not a missing key,
+  not a null, and not zero. A reader turns it back with read_not_applicable.
 - Separators carry no spaces, so nothing depends on pretty printing.
 """
 
@@ -36,6 +38,41 @@ PAYLOAD_HASH_LABEL = f"payload-v{ENCODING_VERSION}"
 
 class EncodingError(ValueError):
 	"""The input cannot be encoded in a way that stays stable."""
+
+
+class NotApplicable:
+	"""A value that is present and deliberately does not apply here.
+
+	It lives with the encoding rather than with the schema, because what
+	matters about it is how it is written down and read back. A missing key
+	means nobody knows. Zero is an amount. This is a considered statement that
+	the field has no meaning for this document.
+	"""
+
+	_instance = None
+
+	def __new__(cls):
+		if cls._instance is None:
+			cls._instance = super().__new__(cls)
+		return cls._instance
+
+	def __repr__(self):
+		return "NOT_APPLICABLE"
+
+
+NOT_APPLICABLE = NotApplicable()
+
+# How the marker is written. A single reserved key, so it cannot be confused
+# with an ordinary object and a reader can recognise it without guessing.
+NOT_APPLICABLE_KEY = "not_applicable"
+NOT_APPLICABLE_FORM = {NOT_APPLICABLE_KEY: True}
+
+
+def read_not_applicable(value):
+	"""Turn the written form back into the marker, leaving anything else alone."""
+	if isinstance(value, Mapping) and dict(value) == NOT_APPLICABLE_FORM:
+		return NOT_APPLICABLE
+	return value
 
 
 def canonical_decimal(value: Decimal) -> str:
@@ -60,6 +97,8 @@ def _encodable(value, path: str):
 	"""Return the value in a form json.dumps can write, or explain the refusal."""
 	if value is None or isinstance(value, (str, bool)):
 		return value
+	if isinstance(value, NotApplicable):
+		return dict(NOT_APPLICABLE_FORM)
 	if isinstance(value, Decimal):
 		return canonical_decimal(value)
 	if isinstance(value, float):
