@@ -311,6 +311,25 @@ Source: uae_compliance/domain/connector.py, the effect table and the advice chec
 Affected: the worker in P06, acceptance cases A13, A14 and A15.
 Status: Verified.
 
+## D036 The money rules check, they do not calculate
+
+Choice: nothing in the money rules works out what the tax should be. ERPNext already did that and its figures are the ones that get posted. These rules read the frozen document and report anywhere it does not add up, naming the stated figure and the expected one so someone can look at the source.
+Reason: invariant I01 makes ERPNext authoritative for accounting values, and spec 5.3 says a difference from the frozen source is explained rather than corrected. Recalculating would only produce a second opinion nobody asked for.
+The three identities are exact. The amount before tax is the lines less allowances plus charges. The amount after tax adds the tax. Payable takes off the prepaid amount and adds the rounding. Rounding is its own field on the document, so a real invoice has nothing left over and any gap is a genuine disagreement rather than a tolerance to widen.
+Tax groups by category and rate together, never by rate alone, because a zero rated supply and an exempt one both carry no tax and are not the same thing on a return.
+A price discount already inside the net price is never taken off again. Taking it twice is the ordinary way an invoice ends up short, so there is a test for it.
+Source: uae_compliance/domain/money.py with 29 tests, built on the six worked examples in spec 5.3. Every expected figure in those tests was worked out from the specification table rather than read back from the code. Three deliberate breaks were introduced to confirm the tests catch them.
+Affected: the arithmetic stage (P03), acceptance cases A03 and A04.
+Status: Verified.
+
+## D037 No currency rounding table
+
+Choice: the money rules carry no list of what each currency rounds to. Every check works at the precision the document itself used.
+Reason: the pinned currency code list holds only the code and the name, with no minor units, and spec 1.2 forbids a money assumption with nothing behind it. Inventing a table would be exactly that, and it would be wrong for the currencies with three minor units.
+Consequence: these rules never decide that a figure is wrongly rounded. They only report that two figures in the same document disagree. Whether a currency was rounded correctly needs a source we do not have yet.
+Affected: this supersedes the open question in D018 for the purposes of these checks, and narrows D032. A real per currency rule is still unresolved and belongs with the deployment setup, which knows the company and its currency.
+Status: Verified as the choice. The per currency rule stays Unresolved, owner maintainer, affected phase P03.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |
