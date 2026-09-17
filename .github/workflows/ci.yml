@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+      - "version-*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install pinned tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "ruff==0.15.22" "lxml==6.1.1" "saxonche==13.0.0"
+
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Standards tooling tests
+        run: python scripts/standards/test_validate_examples.py
+
+      - name: Standards lock hashes
+        run: python scripts/standards/check_lock.py
+
+      - name: Official examples
+        run: python scripts/standards/validate_examples.py
+
+      - name: Altered negative examples
+        run: python scripts/standards/validate_examples.py --negative
+
+      - name: Determinism
+        run: python scripts/standards/validate_examples.py --determinism

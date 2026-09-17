@@ -51,5 +51,3 @@ jspm_packages/
 # Helix Editor
 .helix/
 
-# Aider AI Chat
-.aider*

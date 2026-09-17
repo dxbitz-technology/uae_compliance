@@ -1,43 +1,41 @@
 # Build state
 
-Phase: P00 Baseline. State: In progress.
-Branch: main, local repository only. No remote, protected branch, or CI exists yet (D004).
-Last verified code commit: none. First P00 commit pending.
-Development site: uae.local on bench /Users/aslam/frappe-local/loc16. Frappe v16.22.0 (567c05b), ERPNext v16.26.2 (d1d3b24), Python 3.14.5, MariaDB 12.2.2, Node 24.16.0, macOS arm64 development host. This host is not the spec 11.2 reference host.
+Phase: P00 Baseline. State: In review. Acceptance is the maintainer's call, so this phase is not Accepted.
+Branch: p00-baseline-evidence, open as a pull request into develop. Default branch is develop. develop and version-* take pull requests only, with one approval and a passing ci check. Tags are immutable.
+Last verified code commit: the head of p00-baseline-evidence. Nothing is merged into develop yet beyond the app skeleton.
+Development site: uae.local on bench /Users/aslam/frappe-local/loc16. Frappe v16.22.0 (567c05b), ERPNext v16.26.2 (d1d3b24), Python 3.14.5, MariaDB 12.2.2, Node 24.16.0, macOS arm64 host. This is not the reference host in spec 11.2, so no timing here is a capacity claim.
 
 ## Packet P00 Baseline
 
-Requirement IDs: spec 0, 1.1, 1.3, 1.4, 3, 4.3, 6.1, 6.2, 7.2 (hook facts only), 11.2 (workload record), 12.2 P00, 13 A01, 14.
-
-Expected behavior: repository baseline, pinned sources with hashes, verified XML runtime, official positive and negative example runs, recorded decisions and unresolved facts. No application feature, DocType, hook, fixture, or UI.
-
-Affected interfaces: app metadata (hooks.py, pyproject.toml, modules.txt, license.txt), docs records, scripts/standards evidence tooling, vendored official artifacts under uae_compliance/standards.
-
-Likely files: docs/spec.md, docs/build-state.md, docs/decisions.md, docs/standards-lock.json, AGENTS.md, scripts/standards/validate_examples.py, scripts/standards/check_lock.py, uae_compliance/standards/pint_ae/1.0.4, uae_compliance/standards/ubl/2.1/xsd.
-
-Checks:
-
-- C1 Every hash in docs/standards-lock.json matches the vendored artifact. check_lock.py exits 0.
-- C2 saxonche 13.0.0 imports and executes an XSLT 2.0 stylesheet inside the bench env.
-- C3 Every official example passes UBL 2.1 XSD and both Schematron layers with zero fatal failed asserts.
-- C4 Altered negative examples fail on the expected official rule IDs.
-- C5 Frappe v16 facts for hook order, enqueue after commit, Password storage, and private File access cite file and line in the pinned checkout.
-- C6 ERPNext v16 facts for tax calculation order, item_wise_tax_detail shape, discount handling, and Quick Entry class cite file and line in the pinned checkout.
-- C7 uae.local has no Custom Field, Property Setter, Server Script, or Client Script on the section 4.3 DocTypes beyond what ERPNext itself installs.
-- C8 House style holds: no em dashes, tool branding, or co-author trailers in repository content or commits.
-
-Exclusions: no DocTypes, roles, fixtures, hooks, JavaScript, or v15 lane work. No provider or MoF contact. No production, remote repository, or destructive actions.
+Requirement IDs: spec 0, 1.1, 1.3, 1.4, 3, 4.3, 6.1, 6.2, 7.2, 11.2, 12.2 P00, 13 A01, 14.
+Expected behavior: a pinned baseline. Official sources with checksums, a working XML runtime, official positive and negative runs, and the facts the later phases depend on, each with its source. No application feature.
+Exclusions: no DocTypes, roles, fixtures, hooks, JavaScript, or v15 work. No provider or ministry contact. No production or destructive action.
 
 ## Outcomes
 
-Pending.
+- C1 pinned files match their checksums: Passed. check_lock.py reports 91 files, 0 problems.
+- C2 XSLT 2.0 runtime: Passed. SaxonC-HE 13.0 runs the official compiled rules in the bench environment.
+- C3 official examples: Passed with one recorded exception. 29 of 30 pass the schema and both rule layers with nothing failing. The Volume discount credit note fails the UBL schema on element order inside the credit note line. The file is untouched and the check is unchanged. See D008.
+- C4 negative cases: Passed. All 7 altered copies fire the expected rule. Repeat runs are identical.
+- C5 Frappe facts: Passed. 199 facts with file and line, 11 proposals, none unresolved. See D021 to D025.
+- C6 ERPNext facts: Passed. 104 facts plus the field inventories, with file and line. See D019 to D021 and D026.
+- C7 site customizations: Passed. No third party customization on the eleven target DocTypes. ERPNext's own UAE regional layer is present because a UAE company exists. See D012.
+- C8 house style: Passed. No em dashes, no tool names, no credits in anything written here.
+- Harness tests: Passed. 7 tests hold the known defect guard narrow.
+
+## What still needs a decision from the maintainer
+
+- Accept or reject this phase.
+- The Volume discount example defect: report it to the publisher or confirm it against a later release (D008).
+- Spec 5.2 names a tax breakup field that version 16 no longer has. Our rule is stricter and already recorded, but the specification text needs amending (D019).
+- Spec 4.1 lists a UOM code DocType that may not be needed, since UOM already carries a common code field (D026).
+- Whether docs/evidence/p00 stays. It holds the five investigation reports behind the decisions. Spec 1.3 keeps the record set small, so these may be dropped once P01 has used them. They are kept for now because the field inventories and hook tables save re-deriving the same facts in P02 and P03.
 
 ## Blockers
 
-- No remote repository, protected main, or CI. Owner: maintainer. Consequence: the 1.1 review gate cannot be recorded against a pull request; local commits only.
-- No Frappe v15 bench on this host. Consequence: the v15 lane stays unverified (spec 3).
-- No /etc/hosts entry for uae.local and no sudo in this session. Consequence: browser access to the site needs a hosts entry from the maintainer or a separate serve port. Not needed for P00.
+- No Frappe v15 bench on this host, so that lane stays unverified. version-15 and version-14 are the maintainer's later work.
+- uae.local has no hosts entry and this session has no sudo, so browser access needs the maintainer or a separate serve port. Not needed so far.
 
 ## Next action
 
-Collect P00 evidence, review it, record outcomes here, then request maintainer acceptance before P01.
+After acceptance, start packet P01a: the canonical schema, the finding schema, the adapter contract, and deterministic hashing, as pure code with no framework import. Write its packet record here first. The money decision tables and the reference serializer follow in P01b and P01c.
