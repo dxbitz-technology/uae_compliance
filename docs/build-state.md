@@ -1,8 +1,10 @@
 # Build state
 
-Phase: P00 Baseline. State: In review. Acceptance is the maintainer's call, so this phase is not Accepted.
-Branch: p00-baseline-evidence, open as a pull request into develop. Default branch is develop. develop and version-* take pull requests only, with one approval and a passing ci check. Tags are immutable.
-Last verified code commit: the head of p00-baseline-evidence. Nothing is merged into develop yet beyond the app skeleton.
+Phase: P00 Baseline is merged into develop and Accepted by the maintainer on 17-09-2026. P01a is complete and in review.
+Branch: p01a-connector, open as one pull request into develop carrying all of P01a. Default branch is develop, which takes pull requests with a passing ci check. An approving review is no longer required; the maintainer relaxed that on 17-09-2026 because the approval step could not be satisfied in practice. Tags stay immutable.
+Last verified code commit: the head of p01a-connector, with all eight gates passing.
+
+Note on the stack. P01a was originally five stacked pull requests. Merging them bottom up deleted each base branch in turn, which closed the pull requests above rather than retargeting them, so the stack came apart. No work was lost: the top branch already carried every commit, and the abandoned branches held only superseded notes. P01a is now one pull request. Later phases use one pull request per packet against develop rather than a stack.
 Development site: uae.local on bench /Users/aslam/frappe-local/loc16. Frappe v16.22.0 (567c05b), ERPNext v16.26.2 (d1d3b24), Python 3.14.5, MariaDB 12.2.2, Node 24.16.0, macOS arm64 host. This is not the reference host in spec 11.2, so no timing here is a capacity claim.
 
 ## Packet P00 Baseline
