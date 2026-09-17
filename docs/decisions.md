@@ -330,6 +330,25 @@ Consequence: these rules never decide that a figure is wrongly rounded. They onl
 Affected: this supersedes the open question in D018 for the purposes of these checks, and narrows D032. A real per currency rule is still unresolved and belongs with the deployment setup, which knows the company and its currency.
 Status: Verified as the choice. The per currency rule stays Unresolved, owner maintainer, affected phase P03.
 
+## D038 Company mode and what each one enforces
+
+Choice: three modes. Off enforces nothing and creates no work that could be transmitted. Preparation advises and still creates no transmittable work. Live enforces, and creates work. A stored value that is unset or unrecognised reads as Off, so a company nobody configured behaves exactly as it did before the app was installed.
+A live company blocks an in scope submission when there is a local error, and equally when the checks could not run. Not knowing is not the same as being fine, and treating an unavailable validator as a pass is how an unchecked invoice reaches a tax authority.
+Reason: spec 2.1, and its rule that missing configuration means Off.
+Source: uae_compliance/domain/scope.py with tests, including a mutation check that an unknown mode is not read as live.
+Affected: the invoice gate in P04, acceptance case A09.
+Status: Verified.
+
+## D039 The document type follows the category matrix
+
+Choice: the four codes are tied to the tax categories on the document and to whether the seller is registered, not to whether the source is a return. The rules constrain rather than decide, so the domain reports which types are permitted and where a document contradicts itself; extraction picks within that.
+The rules applied, each cited where it is used: a commercial document carries only exempt, out of scope or zero rated lines (ibr-122-ae); a tax document is not made up only of exempt and out of scope lines (ibr-151-ae); a seller with no registration cannot issue a tax document (ibr-134-ae); a commercial document carries no deemed supply, margin or summary flag (ibr-157-ae).
+A consequence worth stating: an unregistered seller with standard rated lines has no permitted type at all. The facts contradict each other and someone has to resolve it rather than the app picking a code that fits neither.
+Reason: spec 6.2 requires selection through the verified category matrix rather than from a return flag alone. The matrix itself was read from the pinned publication in P00 and recorded in the evidence.
+Source: uae_compliance/domain/scope.py with 30 tests. Every finding carries the published rule id, so a reader can check rather than trust.
+Affected: extraction (P03), the serializer (P01c), acceptance case A05.
+Status: Verified.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |
