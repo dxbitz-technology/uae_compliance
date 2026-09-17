@@ -15,27 +15,27 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
 class FindingError(ValueError):
 	"""A finding or result was built in a way that cannot be trusted."""
 
 
-class Level(str, Enum):
+class Level(StrEnum):
 	"""How much was checked. Fast is cheap and local. Full is everything."""
 
 	FAST = "Fast"
 	FULL = "Full"
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
 	ERROR = "Error"
 	WARNING = "Warning"
 	INFO = "Info"
 
 
-class Stage(str, Enum):
+class Stage(StrEnum):
 	"""A step of the check. Required stages must pass before Ready locally."""
 
 	SCOPE = "Scope"
@@ -51,7 +51,8 @@ class Stage(str, Enum):
 
 # Fast stops at the cheap local checks. Full adds the document ones.
 FAST_STAGES = (Stage.SCOPE, Stage.MASTERS, Stage.MAPPING, Stage.ARITHMETIC)
-FULL_STAGES = FAST_STAGES + (
+FULL_STAGES = (
+	*FAST_STAGES,
 	Stage.CANONICAL,
 	Stage.XSD,
 	Stage.SCHEMATRON_SHARED,
@@ -63,7 +64,7 @@ FULL_STAGES = FAST_STAGES + (
 OPTIONAL_STAGES = (Stage.PROVIDER_LOCAL,)
 
 
-class StageState(str, Enum):
+class StageState(StrEnum):
 	PASSED = "Passed"
 	FAILED = "Failed"
 	NOT_RUN = "Not run"
@@ -76,7 +77,7 @@ class StageState(str, Enum):
 STATES_NEEDING_A_REASON = (StageState.NOT_RUN, StageState.UNAVAILABLE, StageState.SKIPPED)
 
 
-class Readiness(str, Enum):
+class Readiness(StrEnum):
 	"""What the working record may say about an invoice."""
 
 	NOT_CHECKED = "Not checked"
