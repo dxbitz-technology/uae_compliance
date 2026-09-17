@@ -157,6 +157,73 @@ Source: docs/evidence/p00/A3-site-inspection.md section 7.
 Affected: money rules (P01b) and the ERP extraction fixtures (P03).
 Status: Unresolved. Owner: the money rules packet. Read the precision helper in the pinned framework and cite it before writing the rounding table.
 
+## D019 ERPNext v16 replaced the per item tax breakup field
+
+Choice: do not read `item_wise_tax_detail`. It does not exist in this version. Compute every per line tax figure in our own code from the row net amount and the effective rate, then reconcile the total to the invoice tax rows.
+Reason: in v16.26.2 the JSON field is gone from Sales Taxes and Charges. The parent now carries a child table `item_wise_tax_details` of DocType `Item Wise Tax Detail` with item_row, tax_row, rate, amount and taxable_amount. It looks like the per line ledger we want, and it is not one. Its amounts are company currency, produced as deltas of a running cumulative total so the sum reconciles to the base tax amount after discount. The display helper that still groups by item code divides the taxable amount back by the exchange rate but leaves the tax amount in company currency.
+Source: erpnext/accounts/doctype/sales_taxes_and_charges/sales_taxes_and_charges.json (field absent, verified by field list); erpnext/accounts/doctype/item_wise_tax_detail/item_wise_tax_detail.json; erpnext/accounts/doctype/sales_invoice/sales_invoice.json:2217; erpnext/controllers/taxes_and_totals.py:635 to 673 and :1262; docs/evidence/p00/A2-erpnext-facts.md.
+Affected: the source map (P03a) and the money fixtures (P03b).
+Spec impact: section 5.2 warns against `item_wise_tax_detail[item_code]`, which describes the version 15 field. The warning still holds in spirit and its wording is now out of date. Owner: maintainer, to amend the specification. The rule we follow is stricter: neither shape is a per line ledger.
+Status: Verified.
+
+## D020 Which ERPNext figures are authoritative for money
+
+Choice: read `tax_amount_after_discount_amount` as the tax figure for a tax row, never `tax_amount`. Treat a discount applied on the grand total as its own case with its own fixtures.
+Reason: when the discount applies to the grand total, the second calculation pass deliberately leaves `tax_amount` untouched and rebuilds only the after discount figure, so `tax_amount` is stale. Cash and non trade discount on the grand total skips line distribution altogether, so the plain tax exclusive plus tax identity does not hold for it.
+Source: erpnext/controllers/taxes_and_totals.py:272 and :455 (both guard on the discount applied and grand total condition), :869, and the calculate entry path.
+Affected: money rules (P01b), extraction (P03b), the reconciliation identities in spec 5.3 which need an explicit carve out for that case.
+Status: Verified.
+
+## D021 ERPNext arithmetic is float, and rounding is a site setting
+
+Choice: our domain code uses Decimal as the specification requires. Every money fixture records the site rounding method along with its expected values, and extraction compares against the posted source rather than recomputing it.
+Reason: ERPNext uses plain Python floats through a precision helper, with no Decimal anywhere. The rounding method is a runtime choice in System Settings among several variants, so two sites holding identical data can post different figures.
+Source: erpnext/controllers/taxes_and_totals.py throughout; frappe/utils/data.py:1239.
+Affected: money rules (P01b), fixtures (P03), the A03 and A04 acceptance cases.
+Status: Verified.
+
+## D022 The queue is not a record, so the outbox is mandatory
+
+Choice: the submission row is the only record that work exists. Enqueue is a nudge. Never let a hook try to commit.
+Reason: the after commit callback runs once the commit has already landed and a new transaction has begun, it returns no job handle, and a queue failure surfaces outside the request error handling. Document event handlers run with transaction control disabled, so a commit inside a hook is a silent no operation that only warns.
+Source: frappe/database/database.py:1178 and :1190; frappe/utils/background_jobs.py:207; frappe/app.py:144; frappe/model/document.py:1581. Full detail in docs/evidence/p00/A1-frappe-facts.md.
+Affected: the durable worker boundary (P05b and P06), acceptance case A11.
+Status: Verified.
+
+## D023 Credentials in child rows work, with three gaps we must close
+
+Choice: keep provider credentials in child rows, and handle the cleanup ourselves. Delete the stored secret explicitly when a credential row is removed and when the parent is deleted. Never export these DocTypes as fixtures.
+Reason: the framework saves and reads child row passwords keyed by child DocType and row name, and row names are stable across saves, so the storage itself is sound. Three gaps: removing a child row deletes it with a plain delete that leaves the stored secret behind; deleting the parent clears only the parent's own secrets while child rows go through a plain delete; and the fixture export strips the row name, which would orphan the secret permanently.
+Source: frappe/model/document.py:830, :645 and :1111; frappe/model/delete_doc.py:201 and :266; frappe/core/doctype/data_import/data_import.py:350.
+Affected: connection credentials (P02a), acceptance case A20. This closes the open question carried from spec 14 on child credential storage.
+Status: Verified.
+
+## D024 Native file permissions are not enough for evidence
+
+Choice: do not rely on the framework's file permission alone to protect submitted evidence. Bind every artifact to its record, check access against that record, and block replacement and deletion of evidence in our own code.
+Reason: the file permission check returns true for the uploading user before it delegates to the attached document, and it does so for every permission type including delete. There is no dedicated method that flips a file to public either, because the private flag is an ordinary field, so any write path that reaches it moves the bytes into the public directory.
+Source: frappe/core/doctype/file/file.py:953, :175 and :312.
+Affected: the artifact contract (P05a), permissions and evidence (P07b), acceptance cases A19 and A20.
+Status: Verified.
+
+## D025 Small traps to carry forward
+
+- Claiming a lease must use dictionary filters. The values helper hardcodes a blocking wait when filters arrive as a list, so a no wait claim silently turns into a blocking one. frappe/database/database.py:658 against :665. Affects P05b.
+- The exchange rate helper can make an outbound network call. It must never run inside validation, preview or a document hook. erpnext/setup/utils.py:108. Affects P03b and invariant I08.
+- ERPNext's own UAE override decides its zero rated flag by comparing the company country with the customer address country. That is the blanket export rule the specification rejects, so the flag is never evidence of tax treatment. Affects P03 and spec 6.2.
+- Validation does not run on an update after submit, yet several invoice fields allow it, and payment updates change the outstanding amount and status by direct writes with no document event. Reconciliation cannot rely on an event for those. frappe/model/document.py:1361. Affects P05c and P07a.
+- The reverse charge field ERPNext installs is on purchase documents only, and its emirate field stores full names rather than codes. Affects P02b.
+- The quick entry bindings for Customer and Supplier are the same class object, so replacing one replaces both. This reinforces D013.
+Status: Verified, each with its own citation in docs/evidence/p00/A1-frappe-facts.md and A2-erpnext-facts.md.
+
+## D026 UOM codes may not need a new DocType
+
+Choice: before building the planned UOM code mapping, use the native UOM common code field.
+Reason: UOM already carries a common code field of length three, described as the CEFACT code. Spec 4.3 says to reuse a native field where one exists. The value is not validated and is often blank, so the mapping still needs a fallback and a validation finding when it is missing or not in the pinned list.
+Source: erpnext/setup/doctype/uom/uom.json; docs/evidence/p00/A2-erpnext-facts.md.
+Affected: the storage contract (P02c). Spec 4.1 lists a `UAE Peppol UOM Code` DocType; this may reduce to a fallback table or disappear.
+Status: Proposed. Decide in P02c with the maintainer, since it changes a listed DocType.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |
@@ -164,11 +231,12 @@ Status: Unresolved. Owner: the money rules packet. Read the precision helper in 
 | Frappe v15 and v14 lanes | maintainer | No v15 or v14 claim | P09 |
 | Reference deployment workload and company/invoice distribution | maintainer | No capacity claim; spec 11.2 fixture is the placeholder | P00/P09 |
 | Real site tax templates, accounts, currency policy | deployment setup | Mappings incomplete | P02/P03 |
-| Child table Password encryption behavior | P02 | No credential path | P02 |
 | Whether this app reads fta_compliance fields when co-installed (D014) | P01 | Stay independent for now | P01 |
 | Currency precision fallback (D018) | money rules packet | No rounding table yet | P01/P03 |
 | Which registration a tax group member shows on its invoice (D016) | maintainer with the tax adviser | Seller profile keeps both identities separate | P02 |
 | Issuance and date policy source | maintainer | No issuance deadline logic | P02 |
 | Reporting the Volume discount example defect upstream (D008) | maintainer | Example excluded as an XSD positive case | P01 |
 | Effective applicability and mandate dates | maintainer | No applicability claim; never hard-coded | P02 |
+| Whether the planned UOM code DocType is still needed (D026) | P02 with maintainer | Native common code used, with a fallback | P02 |
+| Amending spec 5.2 for the changed tax breakup field (D019) | maintainer | We follow the stricter rule meanwhile | P03 |
 | ASP contract facts | P10 | Simulation only | P10 |

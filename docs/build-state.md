@@ -1,43 +1,41 @@
 # Build state
 
-Phase: P00 Baseline. State: In progress. Checkpoint written 16-09-2026 when the session was stopped early on request.
-Branch: p00-baseline-evidence, pushed to github.com/dxbitz-technology/uae_compliance. Default branch is develop. develop and version-* accept only pull requests with one approval and a passing ci check. Tags are immutable.
-Last verified code commit: 6d9f342 on develop. The P00 evidence sits on the p00-baseline-evidence branch and is not merged.
-Development site: uae.local on bench /Users/aslam/frappe-local/loc16. Frappe v16.22.0 (567c05b), ERPNext v16.26.2 (d1d3b24), Python 3.14.5, MariaDB 12.2.2, Node 24.16.0, macOS arm64 host. Not the spec 11.2 reference host.
+Phase: P00 Baseline. State: In review. Acceptance is the maintainer's call, so this phase is not Accepted.
+Branch: p00-baseline-evidence, open as a pull request into develop. Default branch is develop. develop and version-* take pull requests only, with one approval and a passing ci check. Tags are immutable.
+Last verified code commit: the head of p00-baseline-evidence. Nothing is merged into develop yet beyond the app skeleton.
+Development site: uae.local on bench /Users/aslam/frappe-local/loc16. Frappe v16.22.0 (567c05b), ERPNext v16.26.2 (d1d3b24), Python 3.14.5, MariaDB 12.2.2, Node 24.16.0, macOS arm64 host. This is not the reference host in spec 11.2, so no timing here is a capacity claim.
 
 ## Packet P00 Baseline
 
-Requirement IDs: spec 0, 1.1, 1.3, 1.4, 3, 4.3, 6.1, 6.2, 7.2 (hook facts only), 11.2 (workload record), 12.2 P00, 13 A01, 14.
-Expected behavior: repository baseline, pinned sources with hashes, verified XML runtime, official positive and negative example runs, recorded decisions and unresolved facts. No application feature, DocType, hook, fixture, or UI.
-Exclusions: no DocTypes, roles, fixtures, hooks, JavaScript, or v15 lane work. No provider or MoF contact. No production or destructive actions.
+Requirement IDs: spec 0, 1.1, 1.3, 1.4, 3, 4.3, 6.1, 6.2, 7.2, 11.2, 12.2 P00, 13 A01, 14.
+Expected behavior: a pinned baseline. Official sources with checksums, a working XML runtime, official positive and negative runs, and the facts the later phases depend on, each with its source. No application feature.
+Exclusions: no DocTypes, roles, fixtures, hooks, JavaScript, or v15 work. No provider or ministry contact. No production or destructive action.
 
-## What changed at this checkpoint
+## Outcomes
 
-- Official PINT AE Billing 1.0.4 files (trn-invoice, trn-creditnote) and the UBL 2.1 XSD set are vendored unchanged under uae_compliance/standards, with NOTICES.md.
-- scripts/standards/validate_examples.py and check_lock.py exist. docs/standards-lock.json lists 91 vendored files with sha256 and the run evidence.
-- .github/workflows/ci.yml defines the ci job: ruff, lock check, official examples, negative cases, determinism.
-- docs/evidence/p00 holds four investigator reports (site inspection, harness, code lists and rules, MoF guideline). Temporary. Fold their facts into decisions.md and delete the folder before the P00 pull request merges.
+- C1 pinned files match their checksums: Passed. check_lock.py reports 91 files, 0 problems.
+- C2 XSLT 2.0 runtime: Passed. SaxonC-HE 13.0 runs the official compiled rules in the bench environment.
+- C3 official examples: Passed with one recorded exception. 29 of 30 pass the schema and both rule layers with nothing failing. The Volume discount credit note fails the UBL schema on element order inside the credit note line. The file is untouched and the check is unchanged. See D008.
+- C4 negative cases: Passed. All 7 altered copies fire the expected rule. Repeat runs are identical.
+- C5 Frappe facts: Passed. 199 facts with file and line, 11 proposals, none unresolved. See D021 to D025.
+- C6 ERPNext facts: Passed. 104 facts plus the field inventories, with file and line. See D019 to D021 and D026.
+- C7 site customizations: Passed. No third party customization on the eleven target DocTypes. ERPNext's own UAE regional layer is present because a UAE company exists. See D012.
+- C8 house style: Passed. No em dashes, no tool names, no credits in anything written here.
+- Harness tests: Passed. 7 tests hold the known defect guard narrow.
 
-## Outcomes so far
+## What still needs a decision from the maintainer
 
-- C1 lock hashes: Passed. check_lock.py reports 91 listed files, 0 problems (re-run by the orchestrator at checkpoint).
-- C2 XSLT 2.0 runtime: Passed. SaxonC-HE 13.0 executes the official compiled Schematron XSLT in the bench env.
-- C3 official examples: 29 of 30 Passed. Volume-discount-credit-note.xml fails UBL 2.1 XSD on element order inside cac:CreditNoteLine. Both Schematron layers report zero failed asserts on all 30. See D008.
-- C4 negative examples: Passed, 7 of 7 fired the expected rule (ibr-002, ibr-132-ae, ibr-139-ae, ibr-cl-01, ibr-001, ibr-co-15, ibr-cl-04). Determinism run: identical on repeat.
-- C5 Frappe facts with file and line: Not run. The investigator was stopped before it reported.
-- C6 ERPNext facts with file and line: Not run. Same reason.
-- C7 site customizations: report written (docs/evidence/p00/A3-site-inspection.md), not yet folded into decisions.md.
-- C8 house style: grep for em dashes, en dashes, and tool names is clean on all files written at this checkpoint.
+- Accept or reject this phase.
+- The Volume discount example defect: report it to the publisher or confirm it against a later release (D008).
+- Spec 5.2 names a tax breakup field that version 16 no longer has. Our rule is stricter and already recorded, but the specification text needs amending (D019).
+- Spec 4.1 lists a UOM code DocType that may not be needed, since UOM already carries a common code field (D026).
+- Whether docs/evidence/p00 stays. It holds the five investigation reports behind the decisions. Spec 1.3 keeps the record set small, so these may be dropped once P01 has used them. They are kept for now because the field inventories and hook tables save re-deriving the same facts in P02 and P03.
 
 ## Blockers
 
-- Frappe v15 lane: no bench on this host. version-15 and version-14 branches are the maintainer's later work.
-- uae.local has no hosts entry and this session has no sudo. Browser access needs the maintainer to add it or a separate serve port.
-- Volume-discount-credit-note.xml XSD defect is in the published artifact. Owner: maintainer, report upstream or confirm against a later release.
+- No Frappe v15 bench on this host, so that lane stays unverified. version-15 and version-14 are the maintainer's later work.
+- uae.local has no hosts entry and this session has no sudo, so browser access needs the maintainer or a separate serve port. Not needed so far.
 
 ## Next action
 
-1. Redo C5 and C6: Frappe v16 lifecycle, enqueue after commit, Password storage, private File access; ERPNext tax calculation order, item_wise_tax_detail shape, Quick Entry class, regional UAE fields. Cite file and line. Write the facts into decisions.md.
-2. Fold the A3, B2, B3 reports into decisions.md, then remove docs/evidence/p00.
-3. Run the review pass over the records, then open the P00 pull request from p00-baseline-evidence to develop for maintainer acceptance.
-4. After acceptance, start packet P01a: canonical, finding and adapter schemas with deterministic hashing, with its own packet record here.
+After acceptance, start packet P01a: the canonical schema, the finding schema, the adapter contract, and deterministic hashing, as pure code with no framework import. Write its packet record here first. The money decision tables and the reference serializer follow in P01b and P01c.
