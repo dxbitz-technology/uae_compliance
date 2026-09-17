@@ -224,6 +224,93 @@ Source: erpnext/setup/doctype/uom/uom.json; docs/evidence/p00/A2-erpnext-facts.m
 Affected: the storage contract (P02c). Spec 4.1 lists a `UAE Peppol UOM Code` DocType; this may reduce to a fallback table or disappear.
 Status: Proposed. Decide in P02c with the maintainer, since it changes a listed DocType.
 
+## D027 Deterministic encoding rules
+
+Choice: encode a canonical document as UTF-8 JSON with keys sorted by code point, array order kept as given, no spaces in separators, and non-ASCII written as itself. Numbers are Decimal written as plain strings with the scale the caller set. Floats are refused anywhere in the document, as are sets, raw bytes and non-string keys. A key whose value is None is left out, because None means absent. A value that is present but deliberately does not apply is the not applicable marker, written as a single reserved key. The encoding owns that marker, because what matters about it is how it is written down and read back. Absent, zero, empty and not applicable all produce different bytes, and a test holds that.
+Reason: spec 5.1 requires a documented encoding, and spec 5.3 forbids binary floating point in domain calculations. Refusing a float at the boundary is how that rule is enforced rather than merely stated.
+Notes: the encoding carries a version. A submission freezes these hashes, so any later change to the rules is a contract change that raises the version rather than editing a stored value. The business hash takes the volatile paths from its caller, because which fields move on their own belongs to the canonical model. The payload hash covers exact bytes and accepts nothing else. A path passed to the business hash that matches no field is an error, so a renamed field cannot quietly stop being excluded.
+Source: uae_compliance/domain/encoding.py with 33 tests beside it. The module imports nothing from the framework, which is checked.
+Affected: the canonical hash and the payload hash frozen in P05, the approval identity in spec 8.2, acceptance case A02.
+Status: Verified for the rules as written. The volatile path list itself arrives with the canonical model in P01a-3.
+
+## D028 Finding and result shape, and the readiness rule
+
+Choice: a check returns a finding, never a sentence. A finding carries a stable code of ours, the severity, the stage, where the problem is, a plain fallback message, the message parameters as separate values, the official rule id when an official rule failed, and the named repair. An error must name its repair or it cannot be built. A finding may name another finding as its cause, and a consequence is held back from the list until its cause is dealt with, so one missing value does not bury the thing to fix.
+A result carries the level, when it ran, the input and master fingerprints, the ruleset version, whether the invoice is in scope, one outcome per stage, and the findings. A stage that is not passed or failed must say why, so a missing check cannot read as a clean one. Only the provider validator stage may be skipped, and skipping it can never excuse a rule above it.
+Readiness: the full vocabulary is Not checked, Stale, Further checks required, Needs details, Ready locally, Unavailable, Out of scope. The rule lives in one function and nothing re-derives it. No result means Not checked. A result taken against different inputs or masters is Stale and says nothing about the invoice as it stands, even though it passed at the time. Only a current Full result with every required stage passed and no error reaches Ready locally. A Fast pass says further checks are required. Out of scope goes stale like any other result: the company is a field on the invoice and its policy can change, so a scope decision taken against different inputs says nothing about the invoice as it stands.
+The optional provider validator counts once it has been attempted. Skipped means it is not installed and never ran, which does not block. Unavailable, failed, or listed as not run all mean its answer matters and is missing, so none of them reaches Ready locally. Review caught this: an engine that failed was being read as a pass.
+Reason: spec 7.1 for the contents and the readiness rule, spec 8.1 for the working readiness states, spec 1.4 for stable codes and translatable strings.
+Source: uae_compliance/domain/findings.py with 36 tests beside it. Imports nothing from the framework, which is checked.
+Affected: everything the validation service returns, the working record in P04, the submission gate in P05. The codes become a contract once P01 is accepted.
+Status: Verified for the shape and the rule. The code list itself arrives with the rules in P01b and P03.
+
+## D029 The canonical model is written as data
+
+Choice: describe each canonical field as data, with its kind, whether it is required, its decimal scale, its permitted values where it is a code, and whether it may be marked as not applicable. One check reads a document against that description and returns findings at the canonical stage. Classes would state the same thing in more places.
+Reason: spec 5.1 asks for an executable schema, for unknown fields to be refused at controlled boundaries, and for intentional extensions to be versioned. A declaration gives all three in one place, and the same declaration produces the path that a finding points at.
+Rules the machinery enforces: an unknown field is refused rather than ignored; a required field that is missing is reported with its path; a decimal carrying more places than declared is refused rather than quietly rounded, because rounding belongs to the money rules where it is deliberate; dates, currencies and countries are checked for shape; an identifier needs both its scheme and its value; a check reports everything in one pass rather than stopping at the first problem.
+Absent, zero and not applicable stay apart. A key left out means nothing is known. Zero is an ordinary amount. Not applicable is the marker the encoding defines, permitted only where the schema allows it, and it has a written form so a document carrying one can still be stored and hashed. None is refused everywhere, because it reads as any of the three. Review caught that the schema accepted the marker while the encoder refused it, which would have left a valid invoice that could not be saved; the marker now lives with the encoding and a round trip test covers it.
+Extensions sit in their own part of a schema and cannot reuse a core field name, so a local addition can never quietly redefine a canonical field.
+Source: uae_compliance/domain/schema.py with 39 tests beside it. Imports nothing from the framework, which is checked.
+Affected: the canonical field list in P01a-4, the extraction boundary in P03, anything that accepts a document from outside.
+Status: Verified for the machinery. The field list itself is the next packet.
+
+## D030 One command runs every gate
+
+Choice: scripts/check.sh runs each CI step separately, prints pass or fail per step, and exits non-zero if any failed. It is the way to check work locally before pushing.
+Reason: a tool can print a reassuring last line and still exit with a failure. Reading the tail of a command's output rather than its exit code sent a red build to the repository on 17-09-2026. A runner that reports per step removes the chance to misread.
+Source: scripts/check.sh, referenced from AGENTS.md. It was tested against deliberately broken code and reported three failing steps with exit 1.
+Affected: the working method in spec 1.1, which requires checks to be recorded against the reviewed commit.
+Status: Verified.
+
+## D031 The canonical invoice, version 1
+
+Choice: one declaration holds all twelve groups from spec 5.1 as fourteen top level fields. Provenance, context, document, parties, lines, tax breakdown, document allowances, document charges, totals, references, payment, delivery, scenario, exchange rates. Document allowances and charges sit at the top level rather than inside totals, because they are rows with their own tax treatment rather than a single figure.
+Decisions carried in as verified values, from D015: only 380, 480, 381 and 81 are accepted as document types; the tax categories are S, E, O, AE, Z and N, with margin as the letter N; the customization and profile identifiers are carried as fields rather than assumed.
+Scenario flags are eight named booleans in the published order, all required, so an extractor has to state each one instead of leaving a scenario silently off. The official positional string is built from them at serialization and never stored, so nothing in the model depends on those positions.
+A party may hold a second tax registration alongside its own, which is how a foreign buyer with a UAE registration is represented without either value overwriting the other. See D016.
+An exchange rate must say where it came from. A missing source is a finding, never a reason to invent a rate.
+Reason: spec 5.1 requires an executable schema covering these groups before any adapter is written.
+Source: uae_compliance/domain/canonical.py with 34 tests beside it.
+Affected: extraction (P03), the serializer (P01c), the frozen snapshot (P05). A change after acceptance is a version change.
+Status: Verified for the shape. The rules that read it arrive in P01b.
+
+## D032 Schema scales are a safety net, not the rounding rule
+
+Choice: the model allows up to 4 decimal places on an amount, 6 on a price, quantity or percentage, and 9 on an exchange rate. A per unit price discount carries price precision rather than amount precision: the official rule requires net price to equal gross price minus the discount exactly, so a narrower scale on the discount would make price combinations the model allows impossible to reconcile. Review caught that. These are wide enough to hold what a real invoice carries and narrow enough to catch a value that arrived from floating point arithmetic with seventeen places.
+Reason: what each currency actually rounds to is a money decision that needs the currency in hand, and spec 5.3 asks for rounding to be documented separately per value class. Encoding that policy in the schema would put it in the wrong place and would break on a currency with three minor units.
+Affected: the money rules in P01b, which own the real per currency rounding and check it at the arithmetic stage.
+Status: Proposed. P01b confirms the per currency rule and may narrow these.
+
+## D033 What the business hash ignores
+
+Choice: one path today, the extraction timestamp. Every path on that list must name a field the model requires, and a test enforces it.
+Reason: the exclusion list is strict and raises when a path matches nothing, which is what stops a renamed field from quietly slipping back into the hash. That strictness only works if the excluded fields are always present.
+Note: the source fingerprint stays inside the hash. It says which source the document was built from, so it belongs to what was agreed rather than to the noise around it. Payment collected after issue is not in the model at all, so there is nothing to exclude; the prepaid amount in the totals is frozen at issue and is part of the agreement.
+Source: uae_compliance/domain/canonical.py, VOLATILE_PATHS, with its tests.
+Affected: the frozen submission and the approval identity in P05.
+Status: Verified.
+
+## D034 The adapter contract
+
+Choice: an adapter declares itself and a capability it does not declare does not exist. The declaration carries the provider key, the contract and adapter versions, the environments, the exact operations from spec 9.1, the request format, how it authenticates, what it promises about sending the same thing twice, whether a submission can be searched for by key, how its events are authenticated and whether they carry order, whether it serves artifacts, and how it pages.
+An operation returns four things that are decided separately: what happened to the request, whether the effect actually landed on the other side, what to do next, and the four acknowledgement dimensions from spec 8.1. Completeness is answered against the route, which says which acknowledgements this document actually needs. A step may be marked as not applicable only where the route says it does not apply, so a document cannot read as complete having never been reported. A provider's own status code rides along for the record and nothing in this app may branch on it.
+The registry takes an adapter object that is already imported. A name or an import path is refused, so nothing in configuration or in a request can make this app import and run arbitrary code.
+Reason: spec 9.1, spec 8.1 and the retry classes in spec 8.4, with invariants I06, I11 and I12.
+Source: uae_compliance/domain/connector.py with 37 tests beside it. Imports nothing from the framework.
+Affected: everything P06 builds. The operation names and the outcome shape become a contract once P01 is accepted.
+Status: Verified for the shape. Real provider facts stay unresolved until P10, as spec 14 says.
+
+## D035 An ambiguous send is never repeated on a guess
+
+Choice: when the effect of a send is unknown, the contract refuses to advise sending the same payload again. What happens instead depends on what the provider has actually promised. If it promises idempotency, or if a submission can be searched for by key, the outcome is reconciled first. If it promises neither, the work is held for a person.
+Reason: this is invariant I06 and the ambiguous rows of spec 8.4. A late invoice is a nuisance. A duplicate legal invoice is a problem for the client and for their tax position. The decision cannot rest on an adapter author remembering the rule, so the contract refuses the unsafe combination at the point the outcome is built.
+The same rule runs the other way. Once the provider has taken the document, the contract refuses to advise sending it again at all. Review caught that a successful, applied submit could still carry a resend instruction, which a worker following the contract would have obeyed. Whatever is still missing, a status or an artifact, is fetched by its own operation.
+Related rules the contract holds: a success must report the effect as applied and a timeout may only report it as unknown, so no adapter can quietly claim certainty it does not have. A transport failure may be either, and has to say which, because a refused connection and a lost response are different situations. A rejected document needs a correction rather than another attempt. A rate limit must carry its wait and is waited out rather than corrected. Stale credentials are their own case and are never reported as a rejected document.
+Source: uae_compliance/domain/connector.py, the effect table and the advice check, with tests covering each combination.
+Affected: the worker in P06, acceptance cases A13, A14 and A15.
+Status: Verified.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |
