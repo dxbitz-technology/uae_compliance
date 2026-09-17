@@ -224,6 +224,15 @@ Source: erpnext/setup/doctype/uom/uom.json; docs/evidence/p00/A2-erpnext-facts.m
 Affected: the storage contract (P02c). Spec 4.1 lists a `UAE Peppol UOM Code` DocType; this may reduce to a fallback table or disappear.
 Status: Proposed. Decide in P02c with the maintainer, since it changes a listed DocType.
 
+## D027 Deterministic encoding rules
+
+Choice: encode a canonical document as UTF-8 JSON with keys sorted by code point, array order kept as given, no spaces in separators, and non-ASCII written as itself. Numbers are Decimal written as plain strings with the scale the caller set. Floats are refused anywhere in the document, as are sets, raw bytes and non-string keys. A key whose value is None is left out, because None means absent. A value that is present but does not apply needs its own representation in the canonical model and must never be written as None.
+Reason: spec 5.1 requires a documented encoding, and spec 5.3 forbids binary floating point in domain calculations. Refusing a float at the boundary is how that rule is enforced rather than merely stated.
+Notes: the encoding carries a version. A submission freezes these hashes, so any later change to the rules is a contract change that raises the version rather than editing a stored value. The business hash takes the volatile paths from its caller, because which fields move on their own belongs to the canonical model. The payload hash covers exact bytes and accepts nothing else. A path passed to the business hash that matches no field is an error, so a renamed field cannot quietly stop being excluded.
+Source: uae_compliance/domain/encoding.py with 33 tests beside it. The module imports nothing from the framework, which is checked.
+Affected: the canonical hash and the payload hash frozen in P05, the approval identity in spec 8.2, acceptance case A02.
+Status: Verified for the rules as written. The volatile path list itself arrives with the canonical model in P01a-3.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |

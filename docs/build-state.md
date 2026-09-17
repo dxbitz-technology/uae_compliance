@@ -36,6 +36,17 @@ Exclusions: no DocTypes, roles, fixtures, hooks, JavaScript, or v15 work. No pro
 - No Frappe v15 bench on this host, so that lane stays unverified. version-15 and version-14 are the maintainer's later work.
 - uae.local has no hosts entry and this session has no sudo, so browser access needs the maintainer or a separate serve port. Not needed so far.
 
-## Next action
+## Packet P01a-1 Deterministic encoding and hashing
 
-After acceptance, start packet P01a: the canonical schema, the finding schema, the adapter contract, and deterministic hashing, as pure code with no framework import. Write its packet record here first. The money decision tables and the reference serializer follow in P01b and P01c.
+State: In review on branch p01a-deterministic-encoding, stacked on the P00 branch. It cannot merge before P00 is accepted.
+Outcome: all checks passed. 33 tests cover the rules, including that the document hash for a known example does not drift. Writing the tests found one real defect: a volatile path stopped being removed after the first row of a list, so a per line field would have leaked into the business hash. Fixed, with the test that caught it kept. The module imports nothing from the framework, which is checked.
+Requirement IDs: spec 5.1 (deterministic JSON encoding, business hash, payload hash), 5.3 (no binary floating point in domain calculations), 3 (domain owns no database, HTTP or framework import), 12.2 P01a, 13 A02.
+Expected behavior: one module that turns a canonical document into the same bytes every time, hashes those bytes, and hashes a business subset with the volatile parts removed. Nothing else in the app depends on it yet.
+Affected interfaces: the canonical document hash and the payload hash, which the submission record freezes in P05. Once P01 is accepted these become a contract, so changing them later needs a version bump.
+Likely files: uae_compliance/domain/__init__.py, uae_compliance/domain/encoding.py, its tests, the CI job, and a decision entry.
+Checks: round trip and repeat runs give identical bytes; key order does not matter to the result; floats are refused; decimals keep their scale; the business hash ignores the volatile parts and nothing else; the payload hash covers exact bytes.
+Exclusions: no canonical field list, no finding schema, no adapter contract, no serializer. Those are their own packets. No framework import.
+
+## Next packets
+
+P01a-2 finding and result schema. P01a-3 the canonical field list. P01a-4 the adapter contract. Then P01b decision tables and money examples, P01c reference serializer and validator wrapper.
