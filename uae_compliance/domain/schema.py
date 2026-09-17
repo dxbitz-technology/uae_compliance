@@ -14,8 +14,9 @@ invoice:
 - not applicable, a deliberate statement that the field does not apply here
 
 A key left out is absent. Zero is an ordinary value. Not applicable is the
-NOT_APPLICABLE marker below, allowed only where the schema says so. None is
-never used, because it reads as any of the three.
+marker the encoding defines, allowed only where the schema says so, and it has
+a written form so a document carrying one can still be stored and hashed. None
+is never used, because it reads as any of the three.
 
 A check reports everything it finds in one pass. Stopping at the first problem
 would send someone round the loop once per missing field.
@@ -30,6 +31,7 @@ from dataclasses import field as dataclass_field
 from decimal import Decimal
 from enum import StrEnum
 
+from uae_compliance.domain.encoding import NOT_APPLICABLE, NotApplicable
 from uae_compliance.domain.findings import Finding, Severity, Stage
 
 SCHEMA_VERSION = 1
@@ -37,27 +39,6 @@ SCHEMA_VERSION = 1
 
 class SchemaError(ValueError):
 	"""The schema itself is wrong. This is our bug, not the document's."""
-
-
-class NotApplicable:
-	"""A field that deliberately does not apply here.
-
-	It is a distinct value, not a missing key and not an empty string, so a
-	reader can tell a considered "does not apply" from "nobody filled this in".
-	"""
-
-	_instance = None
-
-	def __new__(cls):
-		if cls._instance is None:
-			cls._instance = super().__new__(cls)
-		return cls._instance
-
-	def __repr__(self):
-		return "NOT_APPLICABLE"
-
-
-NOT_APPLICABLE = NotApplicable()
 
 
 class Kind(StrEnum):

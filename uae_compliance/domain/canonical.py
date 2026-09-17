@@ -190,8 +190,11 @@ LINE = obj(
 		"gross_price": Field(Kind.DECIMAL, scale=PRICE_SCALE),
 		"net_price": Field(Kind.DECIMAL, required=True, scale=PRICE_SCALE),
 		# Already taken off the net price. It is carried for the record and
-		# must not be deducted a second time as an allowance.
-		"price_discount": amount(),
+		# must not be deducted a second time as an allowance. It is a per unit
+		# price, so it carries price precision: the official rule requires net
+		# price to equal gross price minus this exactly, and a narrower scale
+		# here would make prices the model allows impossible to reconcile.
+		"price_discount": Field(Kind.DECIMAL, scale=PRICE_SCALE),
 		"allowances": array(ADJUSTMENT),
 		"charges": array(ADJUSTMENT),
 		"net_amount": amount(required=True),

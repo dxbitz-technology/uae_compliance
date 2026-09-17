@@ -51,6 +51,26 @@ class KnownDefectGuard(unittest.TestCase):
 		self.assertTrue(excused)
 		self.assertEqual(why, "D008")
 
+	def test_the_recorded_error_plus_an_unrelated_one_is_not_excused(self):
+		# The defect is one known failure. A second failure alongside it is a
+		# new problem and must not ride along on the record.
+		excused, why = known_defect(
+			self.transaction,
+			self.path,
+			result_for(self.path, False, [XSD_ERROR, "line 999: something else entirely"]),
+		)
+		self.assertFalse(excused)
+		self.assertIn("does not cover", why)
+
+	def test_more_errors_than_recorded_is_not_excused(self):
+		excused, why = known_defect(
+			self.transaction,
+			self.path,
+			result_for(self.path, False, [XSD_ERROR, XSD_ERROR]),
+		)
+		self.assertFalse(excused)
+		self.assertIn("schema errors", why)
+
 	def test_a_different_schema_error_is_not_excused(self):
 		excused, why = known_defect(
 			self.transaction,
@@ -58,7 +78,7 @@ class KnownDefectGuard(unittest.TestCase):
 			result_for(self.path, False, ["line 12: Element 'cbc:ID': something else"]),
 		)
 		self.assertFalse(excused)
-		self.assertIn("not the recorded one", why)
+		self.assertIn("does not cover", why)
 
 	def test_a_schematron_failure_is_never_excused(self):
 		failed = [FailedAssert("aligned", "ibr-132-ae", "fatal", "/CreditNote", "bad identifier")]
@@ -96,7 +116,8 @@ class KnownDefectGuard(unittest.TestCase):
 			self.assertTrue(path.exists(), f"{transaction}/{name} is recorded but missing")
 			self.assertRegex(entry["decision"], r"^D\d{3}$")
 			self.assertEqual(len(entry["sha256"]), 64)
-			self.assertTrue(entry["xsd_error_contains"])
+			self.assertTrue(entry["xsd_errors_contain"])
+			self.assertEqual(entry["xsd_error_count"], len(entry["xsd_errors_contain"]))
 			self.assertTrue(entry["note"])
 
 

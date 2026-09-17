@@ -10,6 +10,7 @@ from __future__ import annotations
 import unittest
 from decimal import Decimal
 
+from uae_compliance.domain.encoding import business_hash, canonical_bytes
 from uae_compliance.domain.findings import Severity, Stage
 from uae_compliance.domain.schema import (
 	CODE_EMPTY,
@@ -181,6 +182,14 @@ class AbsentZeroAndNotApplicable(unittest.TestCase):
 		self.assertEqual(check(good() | {"due_on": NOT_APPLICABLE}, INVOICE), [])
 		found = check(good() | {"country": NOT_APPLICABLE}, INVOICE)
 		self.assertEqual(codes(found), [CODE_NOT_APPLICABLE])
+
+	def test_a_document_marked_not_applicable_can_also_be_stored(self):
+		# Accepting a document the encoder then refuses would leave a valid
+		# invoice that cannot be hashed or saved.
+		document = good() | {"due_on": NOT_APPLICABLE}
+		self.assertEqual(check(document, INVOICE), [])
+		self.assertIn(b'"due_on":{"not_applicable":true}', canonical_bytes(document))
+		self.assertEqual(business_hash(document), business_hash(good() | {"due_on": NOT_APPLICABLE}))
 
 	def test_a_none_is_refused_because_it_reads_three_ways(self):
 		found = check(good() | {"country": None}, INVOICE)

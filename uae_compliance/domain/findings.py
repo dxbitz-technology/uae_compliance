@@ -219,7 +219,19 @@ class ValidationResult:
 		"""
 		if not self.in_scope:
 			return Readiness.OUT_OF_SCOPE
-		required = FULL_STAGES if self.level is Level.FULL else FAST_STAGES
+		required = list(FULL_STAGES if self.level is Level.FULL else FAST_STAGES)
+		# An optional stage counts only once it has actually been attempted.
+		# Skipped means it is not installed and never ran, which is fine. Any
+		# other state means it did run, or tried to, and its answer matters.
+		for stage in OPTIONAL_STAGES:
+			if self.state_of(stage) not in (StageState.SKIPPED, StageState.NOT_RUN):
+				required.append(stage)
+			elif self.state_of(stage) is StageState.NOT_RUN and any(
+				outcome.stage is stage for outcome in self.stages
+			):
+				# Listed as not run rather than absent, so something meant to
+				# run it and did not. That is an open question, not a pass.
+				required.append(stage)
 		states = {stage: self.state_of(stage) for stage in required}
 		if any(state is StageState.UNAVAILABLE for state in states.values()):
 			return Readiness.UNAVAILABLE
@@ -253,10 +265,9 @@ def working_readiness(
 	if result is None:
 		return Readiness.NOT_CHECKED
 	if not result.is_current_for(input_fingerprint, master_fingerprint):
-		# Out of scope does not go stale: scope is decided by company policy,
-		# not by the invoice content the fingerprints cover.
-		if not result.in_scope:
-			return Readiness.OUT_OF_SCOPE
+		# Out of scope goes stale like anything else. The company is a field on
+		# the invoice and its policy can change, so a scope decision taken
+		# against different inputs says nothing about the invoice as it stands.
 		return Readiness.STALE
 	return result.readiness
 

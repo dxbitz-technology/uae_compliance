@@ -197,6 +197,31 @@ class ReadinessRule(unittest.TestCase):
 		)
 		self.assertIs(a_result(stages=stages).readiness, Readiness.READY_LOCALLY)
 
+	def test_an_absent_provider_validator_does_not_block(self):
+		stages = (
+			*passed(FULL_STAGES),
+			StageOutcome(Stage.PROVIDER_LOCAL, StageState.SKIPPED, reason="not installed"),
+		)
+		self.assertIs(a_result(stages=stages).readiness, Readiness.READY_LOCALLY)
+
+	def test_a_provider_validator_that_could_not_run_is_not_ready(self):
+		stages = (
+			*passed(FULL_STAGES),
+			StageOutcome(Stage.PROVIDER_LOCAL, StageState.UNAVAILABLE, reason="engine failed"),
+		)
+		self.assertIs(a_result(stages=stages).readiness, Readiness.UNAVAILABLE)
+
+	def test_a_provider_validator_that_failed_is_not_ready(self):
+		stages = (*passed(FULL_STAGES), StageOutcome(Stage.PROVIDER_LOCAL, StageState.FAILED))
+		self.assertIs(a_result(stages=stages).readiness, Readiness.NEEDS_DETAILS)
+
+	def test_a_provider_validator_listed_as_not_run_is_not_ready(self):
+		stages = (
+			*passed(FULL_STAGES),
+			StageOutcome(Stage.PROVIDER_LOCAL, StageState.NOT_RUN, reason="worker stopped"),
+		)
+		self.assertIs(a_result(stages=stages).readiness, Readiness.FURTHER_CHECKS_REQUIRED)
+
 	def test_out_of_scope_wins_over_everything(self):
 		result = a_result(in_scope=False, stages=(), findings=(an_error(),))
 		self.assertIs(result.readiness, Readiness.OUT_OF_SCOPE)
@@ -235,11 +260,27 @@ class WorkingReadiness(unittest.TestCase):
 			Readiness.STALE,
 		)
 
-	def test_out_of_scope_does_not_go_stale(self):
+	def test_out_of_scope_stays_while_nothing_has_changed(self):
 		result = a_result(in_scope=False, stages=())
 		self.assertIs(
-			working_readiness(result, "input-99", "master-99"),
+			working_readiness(result, "input-1", "master-1"),
 			Readiness.OUT_OF_SCOPE,
+		)
+
+	def test_switching_company_makes_an_out_of_scope_result_stale(self):
+		# Company is a field on the invoice, so changing it changes the input
+		# fingerprint. The old scope decision was taken for a different company.
+		result = a_result(in_scope=False, stages=())
+		self.assertIs(
+			working_readiness(result, "input-2", "master-1"),
+			Readiness.STALE,
+		)
+
+	def test_a_policy_change_makes_an_out_of_scope_result_stale(self):
+		result = a_result(in_scope=False, stages=())
+		self.assertIs(
+			working_readiness(result, "input-1", "master-2"),
+			Readiness.STALE,
 		)
 
 	def test_a_stale_result_never_reports_ready_even_though_it_passed(self):
