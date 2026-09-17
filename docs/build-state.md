@@ -36,39 +36,27 @@ Exclusions: no DocTypes, roles, fixtures, hooks, JavaScript, or v15 work. No pro
 - No Frappe v15 bench on this host, so that lane stays unverified. version-15 and version-14 are the maintainer's later work.
 - uae.local has no hosts entry and this session has no sudo, so browser access needs the maintainer or a separate serve port. Not needed so far.
 
-## Packet P01a-1 Deterministic encoding and hashing
+## Packets finished and awaiting review
 
-State: In review on branch p01a-deterministic-encoding, stacked on the P00 branch. It cannot merge before P00 is accepted.
-Outcome: all checks passed. 33 tests cover the rules, including that the document hash for a known example does not drift. Writing the tests found one real defect: a volatile path stopped being removed after the first row of a list, so a per line field would have leaked into the business hash. Fixed, with the test that caught it kept. The module imports nothing from the framework, which is checked.
-Requirement IDs: spec 5.1 (deterministic JSON encoding, business hash, payload hash), 5.3 (no binary floating point in domain calculations), 3 (domain owns no database, HTTP or framework import), 12.2 P01a, 13 A02.
-Expected behavior: one module that turns a canonical document into the same bytes every time, hashes those bytes, and hashes a business subset with the volatile parts removed. Nothing else in the app depends on it yet.
-Affected interfaces: the canonical document hash and the payload hash, which the submission record freezes in P05. Once P01 is accepted these become a contract, so changing them later needs a version bump.
-Likely files: uae_compliance/domain/__init__.py, uae_compliance/domain/encoding.py, its tests, the CI job, and a decision entry.
-Checks: round trip and repeat runs give identical bytes; key order does not matter to the result; floats are refused; decimals keep their scale; the business hash ignores the volatile parts and nothing else; the payload hash covers exact bytes.
-Exclusions: no canonical field list, no finding schema, no adapter contract, no serializer. Those are their own packets. No framework import.
+Each is a branch stacked on the one before, each with its own pull request, all gates passing. Full detail lives in the pull requests and in the decisions.
 
-## Packet P01a-2 Finding and result schema
+| Packet | What it settled | Decisions | Notes |
+| --- | --- | --- | --- |
+| P01a-1 Deterministic encoding | Same meaning gives the same bytes; the business hash and the payload hash | D027 | Writing the tests found a real defect. A volatile path stopped being removed after the first row of a list, so a per line field would have leaked into the business hash. |
+| P01a-2 Finding and result shape | What a check returns, and the one function that decides readiness | D028 | Checking against spec 8.1 showed the state list was short of Not checked and Stale. A passing result taken before the invoice changed now reports Stale rather than Ready. |
+| P01a-3 Schema machinery | How a canonical field is described and checked | D029, D030 | Adds scripts/check.sh, which runs every gate separately, after a misread local result put a red build on the repository. |
 
-State: In review on branch p01a-findings, stacked on P01a-1.
-Outcome: all checks passed, 36 tests. Comparing the shapes against spec 8.1 showed the vocabulary was short of two states the working record needs, Not checked and Stale, so the readiness rule now covers the whole list in one function. A passing result that no longer matches the current fingerprints reports Stale rather than Ready, which is the case most likely to mislead someone.
-Requirement IDs: spec 7.1 (one validation service, finding and result contents, stage states, readiness rule), 1.4 (stable codes and translatable strings), 3 (no framework import), 12.2 P01a, 13 A02.
-Expected behavior: the shape of a finding and of a validation result, with the readiness rule that decides whether an invoice can say Ready locally. No checks are implemented here, only what a check returns.
-Affected interfaces: everything the validation service returns, which the working record stores and the interface reads in P04. Once accepted, the codes become a contract.
-Likely files: uae_compliance/domain/findings.py, its tests, a decision entry.
-Checks: a result is Ready locally only at Full level with every required stage passed and no error; Fast success says further checks are required; a stage that did not run carries its reason; a consequence of an earlier finding can be collapsed so one missing value does not flood the list; messages keep their parameters so they can be translated at display.
-Exclusions: no rule implementations, no canonical field list, no serializer, no stage ordering logic. The service that runs the stages arrives in P01c and P03.
+## Packet P01a-4 The canonical invoice
 
-## Packet P01a-3 Schema language for the canonical model
+State: In review on branch p01a-canonical, stacked on P01a-3.
+Requirement IDs: spec 5.1 (all twelve groups, decimal strings, ISO values, identifier pairs, the business hash exclusions), 6.2 and 6.3 through the verified values in D015, 12.2 P01a, 13 A02.
+Expected behavior: the whole invoice model as one declaration, plus the list of fields the business hash ignores.
+Affected interfaces: everything downstream reads this and nothing reads the source document again. Once P01 is accepted, a change here is a version change.
+Checks: the example invoice passes; every required group is reported when missing; unknown fields are refused anywhere; only the four verified document types and six tax categories are accepted; re-extracting the same invoice does not change its business hash while a real edit does; every volatile path names a field the model requires.
+Exclusions: no money rules, no serializer, no extraction. The amounts are carried, not calculated.
 
-State: In review on branch p01a-schema, stacked on P01a-2.
-Outcome: all gates passed, 39 tests here and 108 across the domain. The packet also adds scripts/check.sh, which runs every gate and reports each one separately, after a misread local result put a red build on the repository. See D030.
-Requirement IDs: spec 5.1 (an executable schema, decimal strings, ISO values, identifier pairs, absent against zero against not applicable, reject unknown fields, version extensions), 7.1 (the canonical stage returns findings), 3, 12.2 P01a, 13 A02.
-Expected behavior: the machinery a schema is written in, and the check that reads a document against one. The canonical field list itself is the next packet, so this one carries only a small schema to exercise the machinery.
-Affected interfaces: how every canonical field states its type, scale and whether it is required, and how the canonical stage reports a problem.
-Likely files: uae_compliance/domain/schema.py, its tests, a decision entry.
-Checks: an unknown field is refused rather than ignored; a missing required field is reported with its path; absent, zero and not applicable stay distinguishable; a decimal beyond its declared scale is refused; dates, currencies and countries are checked against their shape; an identifier needs both scheme and value; every problem comes back as a finding with a path, and one pass reports them all rather than stopping at the first.
-Exclusions: no canonical field list, no volatile path list, no serializer, no money rules. The field list is P01a-4.
+Two things to flag honestly. First, the packet record was written after the work rather than before it, which the method asks for the other way round. Second, it runs to about 650 lines against the 400 the method aims for. The model is one coherent thing and splitting it at any point would leave a half model that reads as complete, so the exception is recorded here rather than taken quietly.
 
 ## Next packets
 
-P01a-4 the canonical field list, which owns the volatile path list for the business hash. Then P01a-5 the adapter contract. P01a-3 the canonical field list. P01a-4 the adapter contract. Then P01b decision tables and money examples, P01c reference serializer and validator wrapper.
+P01a-5 the adapter contract. Then P01b decision tables and money examples, P01c reference serializer and validator wrapper.

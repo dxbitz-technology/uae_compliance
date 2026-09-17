@@ -65,6 +65,7 @@ class Kind(StrEnum):
 	CODE = "code"
 	DECIMAL = "decimal"
 	DATE = "date"
+	TIMESTAMP = "timestamp"
 	CURRENCY = "currency"
 	COUNTRY = "country"
 	BOOLEAN = "boolean"
@@ -74,6 +75,8 @@ class Kind(StrEnum):
 
 
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# A moment in time, always written in UTC so two sites cannot disagree.
+TIMESTAMP_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 CURRENCY_PATTERN = re.compile(r"^[A-Z]{3}$")
 COUNTRY_PATTERN = re.compile(r"^[A-Z]{2}$")
 
@@ -340,6 +343,7 @@ _CHECKERS = {
 	Kind.CODE: _code,
 	Kind.DECIMAL: _decimal,
 	Kind.DATE: _pattern(DATE_PATTERN, "a date", "A date is written as four digits, month, day."),
+	Kind.TIMESTAMP: _pattern(TIMESTAMP_PATTERN, "a moment in time", "A time is written in UTC, ending in Z."),
 	Kind.CURRENCY: _pattern(CURRENCY_PATTERN, "a currency", "A currency is three capital letters."),
 	Kind.COUNTRY: _pattern(COUNTRY_PATTERN, "a country", "A country is two capital letters."),
 	Kind.BOOLEAN: _boolean,

@@ -262,6 +262,34 @@ Source: scripts/check.sh, referenced from AGENTS.md. It was tested against delib
 Affected: the working method in spec 1.1, which requires checks to be recorded against the reviewed commit.
 Status: Verified.
 
+## D031 The canonical invoice, version 1
+
+Choice: one declaration holds all twelve groups from spec 5.1 as fourteen top level fields. Provenance, context, document, parties, lines, tax breakdown, document allowances, document charges, totals, references, payment, delivery, scenario, exchange rates. Document allowances and charges sit at the top level rather than inside totals, because they are rows with their own tax treatment rather than a single figure.
+Decisions carried in as verified values, from D015: only 380, 480, 381 and 81 are accepted as document types; the tax categories are S, E, O, AE, Z and N, with margin as the letter N; the customization and profile identifiers are carried as fields rather than assumed.
+Scenario flags are eight named booleans in the published order, all required, so an extractor has to state each one instead of leaving a scenario silently off. The official positional string is built from them at serialization and never stored, so nothing in the model depends on those positions.
+A party may hold a second tax registration alongside its own, which is how a foreign buyer with a UAE registration is represented without either value overwriting the other. See D016.
+An exchange rate must say where it came from. A missing source is a finding, never a reason to invent a rate.
+Reason: spec 5.1 requires an executable schema covering these groups before any adapter is written.
+Source: uae_compliance/domain/canonical.py with 34 tests beside it.
+Affected: extraction (P03), the serializer (P01c), the frozen snapshot (P05). A change after acceptance is a version change.
+Status: Verified for the shape. The rules that read it arrive in P01b.
+
+## D032 Schema scales are a safety net, not the rounding rule
+
+Choice: the model allows up to 4 decimal places on an amount, 6 on a price, quantity or percentage, and 9 on an exchange rate. These are wide enough to hold what a real invoice carries and narrow enough to catch a value that arrived from floating point arithmetic with seventeen places.
+Reason: what each currency actually rounds to is a money decision that needs the currency in hand, and spec 5.3 asks for rounding to be documented separately per value class. Encoding that policy in the schema would put it in the wrong place and would break on a currency with three minor units.
+Affected: the money rules in P01b, which own the real per currency rounding and check it at the arithmetic stage.
+Status: Proposed. P01b confirms the per currency rule and may narrow these.
+
+## D033 What the business hash ignores
+
+Choice: one path today, the extraction timestamp. Every path on that list must name a field the model requires, and a test enforces it.
+Reason: the exclusion list is strict and raises when a path matches nothing, which is what stops a renamed field from quietly slipping back into the hash. That strictness only works if the excluded fields are always present.
+Note: the source fingerprint stays inside the hash. It says which source the document was built from, so it belongs to what was agreed rather than to the noise around it. Payment collected after issue is not in the model at all, so there is nothing to exclude; the prepaid amount in the totals is frozen at issue and is part of the agreement.
+Source: uae_compliance/domain/canonical.py, VOLATILE_PATHS, with its tests.
+Affected: the frozen submission and the approval identity in P05.
+Status: Verified.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |
