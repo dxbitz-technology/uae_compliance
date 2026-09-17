@@ -119,6 +119,19 @@ class Evidence(StrEnum):
 
 
 @dataclass(frozen=True)
+class Route:
+	"""What a given document actually has to collect before it is done.
+
+	Which acknowledgements apply depends on the scenario and the route, not on
+	what the provider happened to send back. Defaults assume both apply, so a
+	route that skips one has to say so deliberately.
+	"""
+
+	exchange_required: bool = True
+	reporting_required: bool = True
+
+
+@dataclass(frozen=True)
 class Acknowledgements:
 	"""The four outcomes, each held separately.
 
@@ -131,15 +144,29 @@ class Acknowledgements:
 	reporting: Reporting = Reporting.NOT_STARTED
 	evidence: Evidence = Evidence.PENDING
 
-	@property
-	def complete(self) -> bool:
-		"""Everything the route needs has arrived. One success is not enough."""
-		return (
-			self.asp_receipt is AspReceipt.RECEIVED
-			and self.exchange in (Exchange.DELIVERED, Exchange.NOT_APPLICABLE)
-			and self.reporting in (Reporting.ACCEPTED, Reporting.NOT_APPLICABLE)
-			and self.evidence is Evidence.COMPLETE
-		)
+	def complete(self, route: "Route") -> bool:
+		"""Everything this route needs has arrived. One success is not enough.
+
+		The route says which acknowledgements this document actually needs.
+		A step may only be marked as not applicable where the route says it
+		does not apply; otherwise a document could be called complete having
+		never been reported.
+		"""
+		if self.asp_receipt is not AspReceipt.RECEIVED:
+			return False
+		if self.evidence is not Evidence.COMPLETE:
+			return False
+		if route.exchange_required:
+			if self.exchange is not Exchange.DELIVERED:
+				return False
+		elif self.exchange not in (Exchange.DELIVERED, Exchange.NOT_APPLICABLE):
+			return False
+		if route.reporting_required:
+			if self.reporting is not Reporting.ACCEPTED:
+				return False
+		elif self.reporting not in (Reporting.ACCEPTED, Reporting.NOT_APPLICABLE):
+			return False
+		return True
 
 
 @dataclass(frozen=True)
@@ -283,6 +310,13 @@ def _check_effect_matches_disposition(outcome: Outcome) -> None:
 def _check_advice_is_safe(outcome: Outcome) -> None:
 	if outcome.effect is Effect.UNKNOWN and outcome.advice is Advice.RETRY_SAME_PAYLOAD:
 		raise ContractError("an unknown outcome cannot be retried blindly; reconcile first or hold it")
+	if outcome.effect is Effect.APPLIED and outcome.advice is Advice.RETRY_SAME_PAYLOAD:
+		# The provider already has it. Sending it again is how a client ends up
+		# with two of the same legal invoice. Whatever is still missing, a
+		# status or an artifact, is fetched by its own operation.
+		raise ContractError(
+			"the provider already took this; fetch what is missing rather than sending it again"
+		)
 	if outcome.disposition is Disposition.BUSINESS_REJECTED and outcome.advice in (
 		Advice.RETRY_SAME_PAYLOAD,
 		Advice.RECONCILE_FIRST,

@@ -26,6 +26,7 @@ from uae_compliance.domain.connector import (
 	Outcome,
 	Registry,
 	Reporting,
+	Route,
 	advise,
 )
 from uae_compliance.domain.findings import Finding, Severity, Stage
@@ -287,16 +288,43 @@ class RejectionsAndLimits(unittest.TestCase):
 		self.assertIsNot(outcome.disposition, Disposition.BUSINESS_REJECTED)
 
 
+class NeverResendWhatTheProviderAlreadyHas(unittest.TestCase):
+	def test_an_applied_submit_cannot_advise_sending_it_again(self):
+		with self.assertRaises(ContractError) as caught:
+			an_outcome(
+				operation=Operation.SUBMIT,
+				disposition=Disposition.SUCCEEDED,
+				effect=Effect.APPLIED,
+				advice=Advice.RETRY_SAME_PAYLOAD,
+			)
+		self.assertIn("already took this", str(caught.exception))
+
+	def test_that_holds_even_when_the_provider_promises_idempotency(self):
+		# The promise makes a repeat safe, not useful. The document is already
+		# there; whatever is missing is fetched by its own operation.
+		with self.assertRaises(ContractError):
+			an_outcome(effect=Effect.APPLIED, advice=Advice.RETRY_SAME_PAYLOAD)
+
+	def test_a_missing_artifact_is_fetched_not_resubmitted(self):
+		outcome = an_outcome(
+			operation=Operation.FETCH_ARTIFACT,
+			disposition=Disposition.TRANSPORT_FAILED,
+			effect=Effect.NOT_APPLIED,
+			advice=Advice.RETRY_SAME_PAYLOAD,
+		)
+		self.assertIs(outcome.operation, Operation.FETCH_ARTIFACT)
+
+
 class TheFourOutcomesStayApart(unittest.TestCase):
 	def test_nothing_is_acknowledged_until_it_is(self):
 		acks = Acknowledgements()
 		self.assertIs(acks.asp_receipt, AspReceipt.NOT_SENT)
-		self.assertFalse(acks.complete)
+		self.assertFalse(acks.complete(Route()))
 
 	def test_the_provider_receiving_it_is_not_delivery(self):
 		acks = Acknowledgements(asp_receipt=AspReceipt.RECEIVED)
 		self.assertIs(acks.exchange, Exchange.NOT_STARTED)
-		self.assertFalse(acks.complete)
+		self.assertFalse(acks.complete(Route()))
 
 	def test_delivery_is_not_reporting(self):
 		acks = Acknowledgements(
@@ -304,7 +332,7 @@ class TheFourOutcomesStayApart(unittest.TestCase):
 			exchange=Exchange.DELIVERED,
 			evidence=Evidence.COMPLETE,
 		)
-		self.assertFalse(acks.complete)
+		self.assertFalse(acks.complete(Route()))
 
 	def test_reporting_accepted_without_the_evidence_is_not_complete(self):
 		acks = Acknowledgements(
@@ -313,7 +341,7 @@ class TheFourOutcomesStayApart(unittest.TestCase):
 			reporting=Reporting.ACCEPTED,
 			evidence=Evidence.PENDING,
 		)
-		self.assertFalse(acks.complete)
+		self.assertFalse(acks.complete(Route()))
 
 	def test_complete_needs_all_four(self):
 		acks = Acknowledgements(
@@ -322,16 +350,29 @@ class TheFourOutcomesStayApart(unittest.TestCase):
 			reporting=Reporting.ACCEPTED,
 			evidence=Evidence.COMPLETE,
 		)
-		self.assertTrue(acks.complete)
+		self.assertTrue(acks.complete(Route()))
 
-	def test_a_route_where_a_step_does_not_apply_can_still_complete(self):
+	def test_a_step_may_be_skipped_only_where_the_route_says_so(self):
 		acks = Acknowledgements(
 			asp_receipt=AspReceipt.RECEIVED,
 			exchange=Exchange.NOT_APPLICABLE,
 			reporting=Reporting.ACCEPTED,
 			evidence=Evidence.COMPLETE,
 		)
-		self.assertTrue(acks.complete)
+		self.assertTrue(acks.complete(Route(exchange_required=False)))
+		self.assertFalse(acks.complete(Route()))
+
+	def test_reporting_cannot_be_waved_away_on_a_route_that_requires_it(self):
+		# Otherwise an invoice could read as complete having never been
+		# reported, which is the worst thing this table could get wrong.
+		acks = Acknowledgements(
+			asp_receipt=AspReceipt.RECEIVED,
+			exchange=Exchange.DELIVERED,
+			reporting=Reporting.NOT_APPLICABLE,
+			evidence=Evidence.COMPLETE,
+		)
+		self.assertFalse(acks.complete(Route()))
+		self.assertTrue(acks.complete(Route(reporting_required=False)))
 
 	def test_a_rejection_downstream_is_not_complete(self):
 		acks = Acknowledgements(
@@ -340,7 +381,7 @@ class TheFourOutcomesStayApart(unittest.TestCase):
 			reporting=Reporting.REJECTED,
 			evidence=Evidence.COMPLETE,
 		)
-		self.assertFalse(acks.complete)
+		self.assertFalse(acks.complete(Route()))
 
 
 class WhatTheProviderSaidIsKeptButNeverDecides(unittest.TestCase):
