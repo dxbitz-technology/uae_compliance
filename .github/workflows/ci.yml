@@ -37,6 +37,9 @@ jobs:
           ruff check .
           ruff format --check .
 
+      - name: Standards tooling tests
+        run: python scripts/standards/test_validate_examples.py
+
       - name: Standards lock hashes
         run: python scripts/standards/check_lock.py
 

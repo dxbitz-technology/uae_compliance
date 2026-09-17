@@ -13,6 +13,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import platform
 import tempfile
 import time
@@ -34,6 +35,21 @@ TRANSACTIONS = {"trn-invoice": "Invoice", "trn-creditnote": "CreditNote"}
 XSD_BY_ROOT = {"Invoice": "UBL-Invoice-2.1.xsd", "CreditNote": "UBL-CreditNote-2.1.xsd"}
 # Shared PINT layer first, then the AE aligned layer.
 STYLESHEETS = ("PINT-UBL-validation-preprocessed.xslt", "PINT-jurisdiction-aligned-rules.xslt")
+
+# Defects in the published files themselves, recorded one by one so a run stays honest.
+# An entry applies only while the file has exactly the recorded content and fails in exactly
+# the recorded way. A new release changes the hash, the entry stops applying, and the run
+# fails until someone reviews it. An entry whose file now passes also fails the run, so a
+# fixed defect cannot sit here unnoticed. Nothing here relaxes a rule for our own output.
+KNOWN_UPSTREAM_DEFECTS = {
+	("trn-creditnote", "Volume-discount-credit-note.xml"): {
+		"sha256": "2da27c48b45605aba947fc09e6f7314ed4caebf6b247b1dedf6961c4979f8e1e",
+		"xsd_error_contains": "OrderLineReference",
+		"decision": "D008",
+		"note": "cac:OrderLineReference follows cac:DiscrepancyResponse inside cac:CreditNoteLine; "
+		"UBL 2.1 CreditNoteLineType requires the opposite order. Both Schematron layers pass.",
+	},
+}
 
 BASE_EXAMPLE = PINT_ROOT / "trn-invoice" / "example" / "Standard tax invoice.xml"
 EXTENSIVE_EXAMPLE = PINT_ROOT / "trn-invoice" / "example" / "Standard.invoice.-.Extensive.xml"
@@ -150,9 +166,28 @@ class Validator:
 		return Result(path, root_name, xsd_ok, xsd_errors, failed, svrl)
 
 
+def known_defect(transaction: str, path: Path, result: "Result") -> tuple[bool, str]:
+	"""Say whether this failure is the recorded upstream defect, and why not when it is not."""
+	entry = KNOWN_UPSTREAM_DEFECTS.get((transaction, path.name))
+	if entry is None:
+		return False, ""
+	actual = hashlib.sha256(path.read_bytes()).hexdigest()
+	if actual != entry["sha256"]:
+		return False, f"file changed since the defect was recorded (sha256 {actual})"
+	if result.fatal:
+		return False, "the file now fails a Schematron rule, which the record does not cover"
+	if result.xsd_ok:
+		return False, "the file now passes; remove the entry and its decision"
+	if not any(entry["xsd_error_contains"] in err for err in result.xsd_errors):
+		return False, "the schema error is not the recorded one"
+	return True, entry["decision"]
+
+
 def run_positive(validator: Validator) -> int:
 	count = 0
 	failures = 0
+	known = 0
+	seen_defects = set()
 	for transaction, expected_root in TRANSACTIONS.items():
 		for path in sorted((PINT_ROOT / transaction / "example").glob("*.xml")):
 			count += 1
@@ -170,14 +205,31 @@ def run_positive(validator: Validator) -> int:
 			bad = not result.xsd_ok or bool(result.fatal) or result.root_name != expected_root
 			if result.root_name != expected_root:
 				line += f" root={result.root_name} expected={expected_root}"
+			excused = False
+			if bad:
+				excused, why = known_defect(transaction, path, result)
+				if excused:
+					seen_defects.add((transaction, path.name))
+					line += f" KNOWN UPSTREAM DEFECT ({why})"
+				elif why:
+					line += f" recorded defect no longer applies: {why}"
 			print(line)
 			for err in result.xsd_errors:
 				print(f"  xsd: {err}")
 			for item in result.fatal:
 				print(f"  {item.id} [{item.layer}] {item.text}")
-			if bad:
+			if bad and not excused:
 				failures += 1
-	print(f"positive: {count} examples, {count - failures} passed, {failures} failed")
+			elif excused:
+				known += 1
+	stale = sorted(set(KNOWN_UPSTREAM_DEFECTS) - seen_defects)
+	for transaction, name in stale:
+		print(f"{transaction}/{name}: recorded as an upstream defect but did not fail that way")
+		failures += 1
+	print(
+		f"positive: {count} examples, {count - failures - known} passed, "
+		f"{failures} failed, {known} known upstream defects"
+	)
 	return 1 if failures else 0
 
 

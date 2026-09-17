@@ -722,15 +722,17 @@
     ],
     "positive_examples": {
       "count": 30,
-      "failed": 1,
-      "failures": [
+      "failed": 0,
+      "known_defects": [
         {
           "check": "xsd",
           "detail": "line 185: cac:OrderLineReference is not expected after cac:DiscrepancyResponse. UBL 2.1 CreditNoteLineType (UBL-CommonAggregateComponents-2.1.xsd from line 9409) orders OrderLineReference before DiscrepancyResponse. Both Schematron layers report zero failed asserts for this file.",
           "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Volume-discount-credit-note.xml",
-          "status": "Unresolved: official example element order defect; artifact left unchanged; owner maintainer; consequence: this example is not usable as an XSD positive case; affected phase P01."
+          "sha256": "2da27c48b45605aba947fc09e6f7314ed4caebf6b247b1dedf6961c4979f8e1e",
+          "status": "Recorded upstream defect, decision D008. The artifact is unchanged and the check is unchanged. validate_examples.py excuses this one file only while its sha256 and schema error match the record, and fails the run if the file changes, starts passing, or fails a Schematron rule. Owner maintainer: report upstream or confirm against a later release. Affected phase P01."
         }
       ],
+      "known_upstream_defects": 1,
       "passed": 29,
       "schematron_fatal_total": 0,
       "schematron_warning_total": 0

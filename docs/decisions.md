@@ -64,8 +64,9 @@ Status: Verified.
 Choice: keep the artifact unchanged and keep the check strict. `trn-creditnote/example/Volume-discount-credit-note.xml` places cac:DiscrepancyResponse before cac:OrderLineReference inside cac:CreditNoteLine; UBL 2.1 requires the opposite order (UBL-CommonAggregateComponents-2.1.xsd:9600 and :9616). Both Schematron layers pass on the same file.
 Reason: spec 1.2 forbids weakening a validator or changing expected results to pass CI.
 Source: docs/evidence/p00/B1-validation-harness.md Finding 1; validate_examples.py output.
-Affected: this example cannot be an XSD positive fixture in P01; the serializer must follow XSD order, not this example. The ci job fails on this case until a decision is recorded on how to mark a known upstream defect.
-Status: Unresolved. Owner: maintainer. Report upstream to the PINT AE publisher or confirm against a later release. Phase P01.
+Handling: the check records this one file as a known upstream defect, by name, exact sha256, and the exact schema error. It stays visible in every run and in the lock file. The run fails if the file changes, if it starts passing, if it fails a Schematron rule, or if the error differs. Nothing is relaxed for our own output, and no other file can inherit the allowance. Seven tests in scripts/standards/test_validate_examples.py hold that line.
+Affected: this example cannot be an XSD positive fixture in P01. The serializer must follow the schema order, not this example.
+Status: the defect is Verified and its handling is Verified. Reporting it upstream is Unresolved. Owner: maintainer. Report it to the publisher or confirm it against a later release. Phase P01.
 
 ## D009 XML parsing order
 
@@ -77,17 +78,84 @@ Status: Verified.
 
 ## D010 CI definition
 
-Choice: one GitHub Actions job named `ci` on push to develop and version-* and on pull requests: ruff check and format, check_lock.py, validate_examples.py plain, `--negative`, `--determinism`. Pinned: Python 3.14, ruff 0.15.22, lxml 6.1.1, saxonche 13.0.0.
-Reason: spec 1.1 required CI; the job name matches the required status check in D004.
-Source: .github/workflows/ci.yml.
-Affected: every pull request. Note D008: the job fails on the official defect until resolved.
-Status: Proposed until the first green or expected run is observed.
+Choice: one GitHub Actions job named `ci` on push to develop and version-* and on pull requests: ruff check and format, the standards tooling tests, check_lock.py, then validate_examples.py plain, `--negative` and `--determinism`. Pinned: Python 3.14, ruff 0.15.22, lxml 6.1.1, saxonche 13.0.0.
+Reason: spec 1.1 requires CI; the job name matches the required status check in D004.
+Source: .github/workflows/ci.yml. Every step was run locally on 17-09-2026 and passed.
+Affected: every pull request.
+Status: Verified locally. Confirm on the first run in the pull request.
 
 ## D011 Test approach for pure domain code
 
 Choice: standard library unittest, run with the bench env Python, no frappe import, until P01 decides otherwise.
 Reason: spec 3 says domain code must not import Frappe; the bench env is the only verified interpreter.
 Status: Proposed.
+
+## D012 ERPNext already owns a UAE regional field layer
+
+Choice: treat the ERPNext United Arab Emirates regional fields as existing native fields. Never export Custom Field or Property Setter fixtures without a module filter set to UAE e-Invoicing. Read those fields through meta and treat them as optional; rely on fieldname and existence only, never on label, fieldtype or insert_after.
+Reason: ERPNext installs its own UAE fields (company_trn, vat_emirate, customer_name_in_arabic, Address.emirate, Item.is_zero_rated and is_exempt among others) when a Company with country United Arab Emirates is saved. They carry module NULL, so an unfiltered fixture export would capture them and a later migrate would overwrite them. Other Dxbitz apps already rewrite some of these rows on every migrate.
+Source: docs/evidence/p00/A3-site-inspection.md sections 3.1, 3.3, 9.4, 9.6; erpnext/regional/united_arab_emirates/setup.py:10 and :246; erpnext/setup/doctype/company/company.py:336, :352 and :847.
+Affected: fixtures declaration (P02), master resolution (P02/P03), install and upgrade tests (A21).
+Status: Verified.
+
+## D013 Quick entry extension composes, it does not replace
+
+Choice: at load time, wrap or subclass whatever class is currently bound to frappe.ui.form.CustomerQuickEntryForm and SupplierQuickEntryForm. Never assign a fresh class over the global.
+Reason: Frappe resolves the quick entry class by global name, so a plain assignment silently removes any other app's extension. No app on this bench overrides it today, so ours would be the first, but client sites carry many apps.
+Source: docs/evidence/p00/A3-site-inspection.md section 9.1; frappe/public/js/frappe/form/quick_entry.js:19; erpnext/public/js/utils/contact_address_quick_entry.js:3 and the two binding files.
+Affected: party entry (P04c), A07 and A21.
+Status: Verified.
+
+## D014 Coexistence with other apps on Sales Invoice
+
+Choice: assume no position in doc_events order. Our handlers must not depend on running first or last, and must not fail on unknown fields other apps add.
+Reason: on Dxbitz client sites the likely co-installed apps that hook Sales Invoice validate or on_submit are fta_compliance, bitz_progress_billing, milestone_invoice, hangcha, internal_pms and tht.
+Source: docs/evidence/p00/A3-site-inspection.md section 9.6.
+Open question: whether this app reads fta_compliance party fields when both are installed, or stays independent. Owner: P01 design. Consequence until decided: stay independent and duplicate nothing.
+Status: Verified for the ordering rule; the fta_compliance relationship is Unresolved.
+
+## D015 Verified official code values
+
+Choice: take these values as the baseline for the P01 decision tables.
+- Document types: 380 tax invoice, 480 commercial invoice, 381 tax credit note, 81 commercial credit note. Only these four exist and ibr-cl-01 enforces them. Selection follows the category rules (ibr-122-ae, ibr-123-ae, ibr-134-ae, ibr-136-ae, ibr-151-ae, ibr-157-ae), never is_return alone.
+- Tax categories: S, E, O, AE, Z, N. Margin is ASCII N. The rules and every example use ASCII N; the code list file stores a Greek capital Nu at that row. Treat the code list character as an upstream typo and keep ASCII N.
+- Transaction flags: eight positions carried in cbc:ProfileExecutionID as an eight character string of 0 and 1 (ibr-154-ae). Order: free zone, deemed supply, margin, summary, continuous supply, agent, e-commerce, export. ibr-157-ae forbids positions 2, 3 and 4 with document type 480 or 81.
+- Electronic address scheme for the UAE TIN is 0235, permitted by ibr-cl-25 for endpoints and ibr-cl-10 for party identification.
+- Every example carries CustomizationID urn:peppol:pint:billing-1@ae-1 and ProfileID urn:peppol:bis:billing.
+- No rule requires the participant TIN to match the VAT registration prefix. ibr-148-ae constrains the seller non-VAT TIN format only.
+Reason: spec 6.2 requires these corrections to be confirmed against the pinned publication rather than copied.
+Source: docs/evidence/p00/B2-codelists-rules-notices.md sections 1 to 9 and 13, with file and line for each value.
+Affected: document type matrix, tax category table, scenario flags, identity validation (all P01b).
+Status: Verified.
+
+## D016 Guideline facts that shape the contracts
+
+Choice: carry these into the P01 and P02 contracts.
+- Each tax group member holds its own participant identity and onboards separately. Which registration appears on a member's invoice is Unresolved in the guideline.
+- Exchange (delivery to the buyer) and reporting (to the authority) are separate confirmations. A validation failure at the reporting corner means no reporting acknowledgement.
+- Three predefined endpoint values exist: deemed supply, buyer not yet onboarded, and export without a buyer identifier. Their exact serialized form comes from the Peppol specification, not the guideline.
+- The guideline states no numeric issuance deadline. The issuance and date policy needs another source.
+- Retention obligations and their extensions come from the tax procedures law and its regulation, not from a single fixed number of years.
+Reason: spec 14 names this guideline as the identity, scenario and storage source, and spec 1.2 forbids guessing.
+Source: docs/evidence/p00/B3-mof-guidelines.md sections 1, 2, 5, 9, 12 and 13, each fact carrying a page number.
+Affected: seller and party profiles (P02), routing (P01b and P06), retention policy (P07).
+Status: Verified as a record of what the guideline says. The mandate dates are facts only and must never be hard-coded into invoice logic.
+
+## D017 Site encryption key is created on first use
+
+Choice: store every credential through the Password fieldtype or the decrypted password helper. Never assume the key exists at install time.
+Reason: the site has no encryption key today. Frappe generates and writes one the first time a Password value is encrypted or decrypted.
+Source: docs/evidence/p00/A3-site-inspection.md section 6; frappe/utils/password.py:223.
+Affected: connection credentials (P02a), backup and restore procedure (P07c).
+Status: Verified.
+
+## D018 Currency precision on this site is unset
+
+Choice: money tests must not assume a System Settings currency precision. The float precision is 3 and the currency precision is blank, so the framework falls back to its own rule.
+Reason: spec 5.3 requires documented rounding for each value class.
+Source: docs/evidence/p00/A3-site-inspection.md section 7.
+Affected: money rules (P01b) and the ERP extraction fixtures (P03).
+Status: Unresolved. Owner: the money rules packet. Read the precision helper in the pinned framework and cite it before writing the rounding table.
 
 ## Unresolved facts carried from spec 14
 
@@ -97,7 +165,10 @@ Status: Proposed.
 | Reference deployment workload and company/invoice distribution | maintainer | No capacity claim; spec 11.2 fixture is the placeholder | P00/P09 |
 | Real site tax templates, accounts, currency policy | deployment setup | Mappings incomplete | P02/P03 |
 | Child table Password encryption behavior | P02 | No credential path | P02 |
-| Frappe and ERPNext source facts with file and line (C5, C6) | next session | P04 and P05 contracts cannot cite hook order yet | P00 |
-| Volume-discount-credit-note.xml XSD defect (D008) | maintainer | Example excluded as XSD positive; ci red | P01 |
+| Whether this app reads fta_compliance fields when co-installed (D014) | P01 | Stay independent for now | P01 |
+| Currency precision fallback (D018) | money rules packet | No rounding table yet | P01/P03 |
+| Which registration a tax group member shows on its invoice (D016) | maintainer with the tax adviser | Seller profile keeps both identities separate | P02 |
+| Issuance and date policy source | maintainer | No issuance deadline logic | P02 |
+| Reporting the Volume discount example defect upstream (D008) | maintainer | Example excluded as an XSD positive case | P01 |
 | Effective applicability and mandate dates | maintainer | No applicability claim; never hard-coded | P02 |
 | ASP contract facts | P10 | Simulation only | P10 |
