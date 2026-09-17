@@ -44,7 +44,10 @@ STYLESHEETS = ("PINT-UBL-validation-preprocessed.xslt", "PINT-jurisdiction-align
 KNOWN_UPSTREAM_DEFECTS = {
 	("trn-creditnote", "Volume-discount-credit-note.xml"): {
 		"sha256": "2da27c48b45605aba947fc09e6f7314ed4caebf6b247b1dedf6961c4979f8e1e",
-		"xsd_error_contains": "OrderLineReference",
+		# Every schema error this file is known to produce, and how many.
+		# Anything beyond this list, or a different count, fails the run.
+		"xsd_errors_contain": ("OrderLineReference",),
+		"xsd_error_count": 1,
 		"decision": "D008",
 		"note": "cac:OrderLineReference follows cac:DiscrepancyResponse inside cac:CreditNoteLine; "
 		"UBL 2.1 CreditNoteLineType requires the opposite order. Both Schematron layers pass.",
@@ -178,8 +181,19 @@ def known_defect(transaction: str, path: Path, result: "Result") -> tuple[bool, 
 		return False, "the file now fails a Schematron rule, which the record does not cover"
 	if result.xsd_ok:
 		return False, "the file now passes; remove the entry and its decision"
-	if not any(entry["xsd_error_contains"] in err for err in result.xsd_errors):
-		return False, "the schema error is not the recorded one"
+	# Every reported error has to be one we already knew about. Matching only
+	# one of them would let a second, unrelated schema failure ride along
+	# unnoticed on the back of the recorded one.
+	unrecorded = [
+		err for err in result.xsd_errors if not any(known in err for known in entry["xsd_errors_contain"])
+	]
+	if unrecorded:
+		return False, f"the file also fails in a way the record does not cover: {unrecorded[0]}"
+	if len(result.xsd_errors) != entry["xsd_error_count"]:
+		return False, (
+			f"the file reports {len(result.xsd_errors)} schema errors, "
+			f"the record covers {entry['xsd_error_count']}"
+		)
 	return True, entry["decision"]
 
 
