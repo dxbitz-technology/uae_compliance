@@ -290,6 +290,25 @@ Source: uae_compliance/domain/canonical.py, VOLATILE_PATHS, with its tests.
 Affected: the frozen submission and the approval identity in P05.
 Status: Verified.
 
+## D034 The adapter contract
+
+Choice: an adapter declares itself and a capability it does not declare does not exist. The declaration carries the provider key, the contract and adapter versions, the environments, the exact operations from spec 9.1, the request format, how it authenticates, what it promises about sending the same thing twice, whether a submission can be searched for by key, how its events are authenticated and whether they carry order, whether it serves artifacts, and how it pages.
+An operation returns four things that are decided separately: what happened to the request, whether the effect actually landed on the other side, what to do next, and the four acknowledgement dimensions from spec 8.1. A provider's own status code rides along for the record and nothing in this app may branch on it.
+The registry takes an adapter object that is already imported. A name or an import path is refused, so nothing in configuration or in a request can make this app import and run arbitrary code.
+Reason: spec 9.1, spec 8.1 and the retry classes in spec 8.4, with invariants I06, I11 and I12.
+Source: uae_compliance/domain/connector.py with 37 tests beside it. Imports nothing from the framework.
+Affected: everything P06 builds. The operation names and the outcome shape become a contract once P01 is accepted.
+Status: Verified for the shape. Real provider facts stay unresolved until P10, as spec 14 says.
+
+## D035 An ambiguous send is never repeated on a guess
+
+Choice: when the effect of a send is unknown, the contract refuses to advise sending the same payload again. What happens instead depends on what the provider has actually promised. If it promises idempotency, or if a submission can be searched for by key, the outcome is reconciled first. If it promises neither, the work is held for a person.
+Reason: this is invariant I06 and the ambiguous rows of spec 8.4. A late invoice is a nuisance. A duplicate legal invoice is a problem for the client and for their tax position. The decision cannot rest on an adapter author remembering the rule, so the contract refuses the unsafe combination at the point the outcome is built.
+Related rules the contract holds: a success must report the effect as applied and a timeout may only report it as unknown, so no adapter can quietly claim certainty it does not have. A transport failure may be either, and has to say which, because a refused connection and a lost response are different situations. A rejected document needs a correction rather than another attempt. A rate limit must carry its wait and is waited out rather than corrected. Stale credentials are their own case and are never reported as a rejected document.
+Source: uae_compliance/domain/connector.py, the effect table and the advice check, with tests covering each combination.
+Affected: the worker in P06, acceptance cases A13, A14 and A15.
+Status: Verified.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |

@@ -47,6 +47,9 @@ class Stage(StrEnum):
 	SCHEMATRON_SHARED = "Schematron shared"
 	SCHEMATRON_AE = "Schematron AE"
 	PROVIDER_LOCAL = "Provider local"
+	# What the provider itself said when we sent the document. Not a local
+	# check, and never a reason to call an invoice locally ready or not.
+	PROVIDER_RESPONSE = "Provider response"
 
 
 # Fast stops at the cheap local checks. Full adds the document ones.

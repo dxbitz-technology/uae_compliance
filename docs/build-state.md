@@ -57,6 +57,17 @@ Exclusions: no money rules, no serializer, no extraction. The amounts are carrie
 
 Two things to flag honestly. First, the packet record was written after the work rather than before it, which the method asks for the other way round. Second, it runs to about 650 lines against the 400 the method aims for. The model is one coherent thing and splitting it at any point would leave a half model that reads as complete, so the exception is recorded here rather than taken quietly.
 
+## Packet P01a-5 The adapter contract
+
+State: In review on branch p01a-connector, stacked on P01a-4. Record written before the work this time.
+Outcome: all gates passed, 37 tests here and 174 across the domain. The safety rule is enforced where the outcome is built rather than left to an adapter author to remember, so an unknown send cannot be marked for another attempt at all. See D035.
+Requirement IDs: spec 9.1 (versioned contract, registry of trusted modules, metadata, exact operation names, normalized results, business rejection kept apart from transport and authentication failure), 8.1 (the independent outcome dimensions), 8.4 (the retry classes), 2.2 invariants I06, I11 and I12, 12.2 P01a, 13 A02.
+Expected behavior: the contract a provider adapter fills in, and the shape of what an operation returns, with the safety rules that stop an unsafe resend. No HTTP, no adapter, no provider.
+Affected interfaces: everything P06 builds against. The operation names and the outcome shape become a contract once P01 is accepted.
+Likely files: uae_compliance/domain/connector.py, its tests, one new stage in findings.py, a decision entry.
+Checks: an operation the adapter did not declare cannot be called; an outcome whose effect is unknown cannot advise repeating the same send unless the adapter declares an idempotency guarantee, and holds for a person when it does not; a business rejection is not a transport failure and not an authentication failure; a rate limit carries its wait; the four outcome dimensions stay independent and none of them can be inferred from another; a provider status code cannot reach a decision, only the record; the registry takes an adapter object and refuses an import path.
+Exclusions: no HTTP transport, no real or test adapter, no simulator, no retry scheduling. Those are P06.
+
 ## Next packets
 
-P01a-5 the adapter contract. Then P01b decision tables and money examples, P01c reference serializer and validator wrapper.
+P01b decision tables and money examples. P01c reference serializer and validator wrapper.
