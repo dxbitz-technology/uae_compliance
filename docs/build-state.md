@@ -47,6 +47,17 @@ Likely files: uae_compliance/domain/__init__.py, uae_compliance/domain/encoding.
 Checks: round trip and repeat runs give identical bytes; key order does not matter to the result; floats are refused; decimals keep their scale; the business hash ignores the volatile parts and nothing else; the payload hash covers exact bytes.
 Exclusions: no canonical field list, no finding schema, no adapter contract, no serializer. Those are their own packets. No framework import.
 
+## Packet P01a-2 Finding and result schema
+
+State: In review on branch p01a-findings, stacked on P01a-1.
+Outcome: all checks passed, 36 tests. Comparing the shapes against spec 8.1 showed the vocabulary was short of two states the working record needs, Not checked and Stale, so the readiness rule now covers the whole list in one function. A passing result that no longer matches the current fingerprints reports Stale rather than Ready, which is the case most likely to mislead someone.
+Requirement IDs: spec 7.1 (one validation service, finding and result contents, stage states, readiness rule), 1.4 (stable codes and translatable strings), 3 (no framework import), 12.2 P01a, 13 A02.
+Expected behavior: the shape of a finding and of a validation result, with the readiness rule that decides whether an invoice can say Ready locally. No checks are implemented here, only what a check returns.
+Affected interfaces: everything the validation service returns, which the working record stores and the interface reads in P04. Once accepted, the codes become a contract.
+Likely files: uae_compliance/domain/findings.py, its tests, a decision entry.
+Checks: a result is Ready locally only at Full level with every required stage passed and no error; Fast success says further checks are required; a stage that did not run carries its reason; a consequence of an earlier finding can be collapsed so one missing value does not flood the list; messages keep their parameters so they can be translated at display.
+Exclusions: no rule implementations, no canonical field list, no serializer, no stage ordering logic. The service that runs the stages arrives in P01c and P03.
+
 ## Next packets
 
-P01a-2 finding and result schema. P01a-3 the canonical field list. P01a-4 the adapter contract. Then P01b decision tables and money examples, P01c reference serializer and validator wrapper.
+P01a-3 the canonical field list, which owns the volatile path list for the business hash. P01a-3 the canonical field list. P01a-4 the adapter contract. Then P01b decision tables and money examples, P01c reference serializer and validator wrapper.
