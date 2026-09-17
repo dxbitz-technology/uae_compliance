@@ -243,6 +243,25 @@ Source: uae_compliance/domain/findings.py with 36 tests beside it. Imports nothi
 Affected: everything the validation service returns, the working record in P04, the submission gate in P05. The codes become a contract once P01 is accepted.
 Status: Verified for the shape and the rule. The code list itself arrives with the rules in P01b and P03.
 
+## D029 The canonical model is written as data
+
+Choice: describe each canonical field as data, with its kind, whether it is required, its decimal scale, its permitted values where it is a code, and whether it may be marked as not applicable. One check reads a document against that description and returns findings at the canonical stage. Classes would state the same thing in more places.
+Reason: spec 5.1 asks for an executable schema, for unknown fields to be refused at controlled boundaries, and for intentional extensions to be versioned. A declaration gives all three in one place, and the same declaration produces the path that a finding points at.
+Rules the machinery enforces: an unknown field is refused rather than ignored; a required field that is missing is reported with its path; a decimal carrying more places than declared is refused rather than quietly rounded, because rounding belongs to the money rules where it is deliberate; dates, currencies and countries are checked for shape; an identifier needs both its scheme and its value; a check reports everything in one pass rather than stopping at the first problem.
+Absent, zero and not applicable stay apart. A key left out means nothing is known. Zero is an ordinary amount. Not applicable is its own marker, permitted only where the schema allows it. None is refused everywhere, because it reads as any of the three.
+Extensions sit in their own part of a schema and cannot reuse a core field name, so a local addition can never quietly redefine a canonical field.
+Source: uae_compliance/domain/schema.py with 39 tests beside it. Imports nothing from the framework, which is checked.
+Affected: the canonical field list in P01a-4, the extraction boundary in P03, anything that accepts a document from outside.
+Status: Verified for the machinery. The field list itself is the next packet.
+
+## D030 One command runs every gate
+
+Choice: scripts/check.sh runs each CI step separately, prints pass or fail per step, and exits non-zero if any failed. It is the way to check work locally before pushing.
+Reason: a tool can print a reassuring last line and still exit with a failure. Reading the tail of a command's output rather than its exit code sent a red build to the repository on 17-09-2026. A runner that reports per step removes the chance to misread.
+Source: scripts/check.sh, referenced from AGENTS.md. It was tested against deliberately broken code and reported three failing steps with exit 1.
+Affected: the working method in spec 1.1, which requires checks to be recorded against the reviewed commit.
+Status: Verified.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |

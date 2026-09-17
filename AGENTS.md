@@ -14,18 +14,31 @@ Read `docs/build-state.md` first. It names the current phase, the packet in hand
 
 ## Commands
 
-Run these from the repository root. On the development bench use `/Users/aslam/frappe-local/loc16/env/bin/python`.
+Run everything CI runs, from the repository root:
 
 ```bash
+sh scripts/check.sh
+```
+
+On the development bench, point it at the bench environment:
+
+```bash
+PYTHON=/Users/aslam/frappe-local/loc16/env/bin/python RUFF=/Users/aslam/frappe-local/loc16/env/bin/ruff sh scripts/check.sh
+```
+
+It runs each step on its own, prints pass or fail per step with the output of anything that failed, and exits non-zero if any step failed. Read its verdict, not the last line of a single command. A tool can print a cheerful final line and still exit with a failure, which is how a red build once reached the repository.
+
+The individual steps, if you need one on its own:
+
+```bash
+ruff check . && ruff format --check .
+python -m unittest discover -s uae_compliance/domain -t . -p 'test_*.py'
 python scripts/standards/test_validate_examples.py   # checks on the harness itself
 python scripts/standards/check_lock.py               # every pinned file still matches its checksum
 python scripts/standards/validate_examples.py        # all official examples
 python scripts/standards/validate_examples.py --negative
 python scripts/standards/validate_examples.py --determinism
-ruff check . && ruff format --check .
 ```
-
-The same steps run in CI as one job named `ci`.
 
 ## Ground rules
 

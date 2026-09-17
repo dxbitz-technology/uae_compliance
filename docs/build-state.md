@@ -58,6 +58,17 @@ Likely files: uae_compliance/domain/findings.py, its tests, a decision entry.
 Checks: a result is Ready locally only at Full level with every required stage passed and no error; Fast success says further checks are required; a stage that did not run carries its reason; a consequence of an earlier finding can be collapsed so one missing value does not flood the list; messages keep their parameters so they can be translated at display.
 Exclusions: no rule implementations, no canonical field list, no serializer, no stage ordering logic. The service that runs the stages arrives in P01c and P03.
 
+## Packet P01a-3 Schema language for the canonical model
+
+State: In review on branch p01a-schema, stacked on P01a-2.
+Outcome: all gates passed, 39 tests here and 108 across the domain. The packet also adds scripts/check.sh, which runs every gate and reports each one separately, after a misread local result put a red build on the repository. See D030.
+Requirement IDs: spec 5.1 (an executable schema, decimal strings, ISO values, identifier pairs, absent against zero against not applicable, reject unknown fields, version extensions), 7.1 (the canonical stage returns findings), 3, 12.2 P01a, 13 A02.
+Expected behavior: the machinery a schema is written in, and the check that reads a document against one. The canonical field list itself is the next packet, so this one carries only a small schema to exercise the machinery.
+Affected interfaces: how every canonical field states its type, scale and whether it is required, and how the canonical stage reports a problem.
+Likely files: uae_compliance/domain/schema.py, its tests, a decision entry.
+Checks: an unknown field is refused rather than ignored; a missing required field is reported with its path; absent, zero and not applicable stay distinguishable; a decimal beyond its declared scale is refused; dates, currencies and countries are checked against their shape; an identifier needs both scheme and value; every problem comes back as a finding with a path, and one pass reports them all rather than stopping at the first.
+Exclusions: no canonical field list, no volatile path list, no serializer, no money rules. The field list is P01a-4.
+
 ## Next packets
 
-P01a-3 the canonical field list, which owns the volatile path list for the business hash. P01a-3 the canonical field list. P01a-4 the adapter contract. Then P01b decision tables and money examples, P01c reference serializer and validator wrapper.
+P01a-4 the canonical field list, which owns the volatile path list for the business hash. Then P01a-5 the adapter contract. P01a-3 the canonical field list. P01a-4 the adapter contract. Then P01b decision tables and money examples, P01c reference serializer and validator wrapper.
