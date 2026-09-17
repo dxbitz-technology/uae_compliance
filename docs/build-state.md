@@ -38,9 +38,21 @@ Exclusions: no DocTypes, roles, fixtures, hooks, JavaScript, or v15 work. No pro
 - No Frappe v15 bench on this host, so that lane stays unverified. version-15 and version-14 are the maintainer's later work.
 - uae.local has no hosts entry and this session has no sudo, so browser access needs the maintainer or a separate serve port. Not needed so far.
 
+## Packet P01b-2 Scope and the document type matrix
+
+State: In progress on branch p01b-scope, one pull request against develop.
+Requirement IDs: spec 2.1 (company modes and what each enforces), 6.2 (document codes chosen through the verified category matrix rather than from a return flag), 6.3, 12.2 P01b, 13 A05 and A09.
+Expected behavior: what a company mode allows, and which document types the official rules permit for a given invoice. No extraction and no scenario conditions.
+Affected interfaces: the scope decision the invoice gate reads in P04, and the document type extraction picks in P03.
+Likely files: uae_compliance/domain/scope.py, its tests, a decision entry.
+Checks: missing configuration reads as off; off creates no intent; preparation is advisory and never blocks; live blocks an in scope submission on a local error or on validation that could not run; the four document types follow the pinned rules, so a commercial document carries only exempt, out of scope or zero rated lines, a tax document is not made up only of exempt and out of scope lines, a seller with no registration cannot issue a tax document, and a commercial document carries no deemed supply, margin or summary flag.
+Exclusions: no per scenario conditions, no serializer, no extraction. Those are the next packets. The rules here constrain the choice rather than making it, so this reports what is permitted and what contradicts, and extraction picks within that.
+
 ## Packet P01b-1 Money rules
 
-State: In progress on branch p01b-money, one pull request against develop.
+## Packet P01b-1 Money rules
+
+State: Merged into develop on 17-09-2026. 29 tests on the six worked examples; three deliberate breaks confirmed the tests catch them. See D036 and D037.
 Requirement IDs: spec 5.3 (money rules, the six fixtures, credit note signs, foreign currency), 2.2 invariant I01, 7.1 (the arithmetic stage returns findings), 12.2 P01b, 13 A03 and A04.
 Expected behavior: check that an invoice's own numbers hold together, and say exactly where they do not. The app never recalculates tax. ERPNext is authoritative, so this reads the frozen document and reports differences.
 Affected interfaces: what the arithmetic stage returns, and the money codes it raises.
