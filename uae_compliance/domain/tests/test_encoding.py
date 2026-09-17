@@ -11,11 +11,13 @@ import unittest
 from decimal import Decimal
 
 from uae_compliance.domain.encoding import (
+	NOT_APPLICABLE,
 	EncodingError,
 	business_hash,
 	canonical_bytes,
 	canonical_decimal,
 	payload_hash,
+	read_not_applicable,
 	sha256_hex,
 	without_paths,
 )
@@ -107,6 +109,33 @@ class CanonicalBytes(unittest.TestCase):
 	def test_the_document_itself_must_be_a_mapping(self):
 		with self.assertRaises(EncodingError):
 			canonical_bytes([{"a": "1"}])
+
+	def test_not_applicable_has_a_written_form(self):
+		self.assertEqual(
+			canonical_bytes({"due_date": NOT_APPLICABLE}), b'{"due_date":{"not_applicable":true}}'
+		)
+
+	def test_not_applicable_is_none_of_the_other_three(self):
+		not_applicable = canonical_bytes({"due_date": NOT_APPLICABLE})
+		absent = canonical_bytes({})
+		empty = canonical_bytes({"due_date": ""})
+		zero = canonical_bytes({"due_date": Decimal("0")})
+		self.assertEqual(len({not_applicable, absent, empty, zero}), 4)
+
+	def test_not_applicable_reads_back(self):
+		written = {"not_applicable": True}
+		self.assertIs(read_not_applicable(written), NOT_APPLICABLE)
+
+	def test_read_back_leaves_an_ordinary_object_alone(self):
+		ordinary = {"not_applicable": True, "and": "more"}
+		self.assertIs(read_not_applicable(ordinary), ordinary)
+		self.assertEqual(read_not_applicable("text"), "text")
+
+	def test_not_applicable_survives_a_hash(self):
+		one = {"due_date": NOT_APPLICABLE}
+		two = {"due_date": NOT_APPLICABLE}
+		self.assertEqual(business_hash(one), business_hash(two))
+		self.assertNotEqual(business_hash(one), business_hash({"due_date": ""}))
 
 	def test_booleans_survive_as_booleans(self):
 		self.assertEqual(canonical_bytes({"flag": True}), b'{"flag":true}')
