@@ -277,7 +277,7 @@ Status: Verified for the shape. The rules that read it arrive in P01b.
 
 ## D032 Schema scales are a safety net, not the rounding rule
 
-Choice: the model allows up to 4 decimal places on an amount, 6 on a price, quantity or percentage, and 9 on an exchange rate. These are wide enough to hold what a real invoice carries and narrow enough to catch a value that arrived from floating point arithmetic with seventeen places.
+Choice: the model allows up to 4 decimal places on an amount, 6 on a price, quantity or percentage, and 9 on an exchange rate. A per unit price discount carries price precision rather than amount precision: the official rule requires net price to equal gross price minus the discount exactly, so a narrower scale on the discount would make price combinations the model allows impossible to reconcile. Review caught that. These are wide enough to hold what a real invoice carries and narrow enough to catch a value that arrived from floating point arithmetic with seventeen places.
 Reason: what each currency actually rounds to is a money decision that needs the currency in hand, and spec 5.3 asks for rounding to be documented separately per value class. Encoding that policy in the schema would put it in the wrong place and would break on a currency with three minor units.
 Affected: the money rules in P01b, which own the real per currency rounding and check it at the arithmetic stage.
 Status: Proposed. P01b confirms the per currency rule and may narrow these.

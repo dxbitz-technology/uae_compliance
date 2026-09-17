@@ -177,6 +177,24 @@ class WhatMustBeThere(unittest.TestCase):
 		self.assertEqual(len(set(SCENARIO_FLAGS)), 8)
 
 
+class PricePrecision(unittest.TestCase):
+	def test_the_discount_carries_the_same_precision_as_the_prices(self):
+		line = INVOICE.fields["lines"].of.fields
+		self.assertEqual(line["price_discount"].scale, line["net_price"].scale)
+		self.assertEqual(line["price_discount"].scale, line["gross_price"].scale)
+
+	def test_the_official_price_identity_holds_at_full_precision(self):
+		# Net price equals gross price minus the discount, exactly. The model
+		# must accept every combination that satisfies it.
+		invoice = an_invoice()
+		line = invoice["lines"][0]
+		line["gross_price"] = Decimal("1.000000")
+		line["price_discount"] = Decimal("0.123456")
+		line["net_price"] = Decimal("0.876544")
+		self.assertEqual(line["net_price"], line["gross_price"] - line["price_discount"])
+		self.assertEqual(check(invoice, INVOICE), [])
+
+
 class WhatIsRefused(unittest.TestCase):
 	def test_an_unknown_field_anywhere(self):
 		invoice = an_invoice()
