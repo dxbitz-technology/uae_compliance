@@ -1,0 +1,241 @@
+{
+ "actions": [],
+ "autoname": "field:sales_invoice",
+ "creation": "2026-09-18 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sales_invoice",
+  "company",
+  "mode",
+  "in_scope",
+  "scope_reason",
+  "column_break_state",
+  "readiness",
+  "checked_at",
+  "checked_level",
+  "errors",
+  "warnings",
+  "section_break_details",
+  "input_revision",
+  "credit_reason_code",
+  "credit_reason",
+  "column_break_scenario",
+  "free_zone",
+  "deemed_supply",
+  "margin_scheme",
+  "summary",
+  "continuous_supply",
+  "agent_billing",
+  "ecommerce",
+  "export",
+  "section_break_evidence",
+  "source_fingerprint",
+  "master_fingerprint",
+  "column_break_evidence",
+  "findings",
+  "latest_submission"
+ ],
+ "fields": [
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "options": "Sales Invoice",
+   "label": "Sales Invoice",
+   "reqd": 1,
+   "unique": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "The invoice this belongs to. It never changes."
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "options": "Company",
+   "label": "Company",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "options": "Off\nPreparation\nLive",
+   "label": "Mode",
+   "default": "Off",
+   "read_only": 1,
+   "description": "What the company was set to when this was last checked."
+  },
+  {
+   "fieldname": "in_scope",
+   "fieldtype": "Check",
+   "label": "In Scope",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scope_reason",
+   "fieldtype": "Small Text",
+   "label": "Why",
+   "read_only": 1
+  },
+  {"fieldname": "column_break_state", "fieldtype": "Column Break"},
+  {
+   "fieldname": "readiness",
+   "fieldtype": "Select",
+   "options": "Not checked\nStale\nFurther checks required\nNeeds details\nReady locally\nUnavailable\nOut of scope",
+   "label": "Readiness",
+   "default": "Not checked",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Only a full check that passed can say Ready locally."
+  },
+  {
+   "fieldname": "checked_at",
+   "fieldtype": "Datetime",
+   "label": "Last Checked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "checked_level",
+   "fieldtype": "Select",
+   "options": "\nFast\nFull",
+   "label": "Level Checked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "errors",
+   "fieldtype": "Int",
+   "label": "Errors",
+   "default": "0",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "warnings",
+   "fieldtype": "Int",
+   "label": "Warnings",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_details",
+   "fieldtype": "Section Break",
+   "label": "Details Somebody Supplies"
+  },
+  {
+   "fieldname": "input_revision",
+   "fieldtype": "Int",
+   "label": "Input Revision",
+   "default": "0",
+   "read_only": 1,
+   "description": "Counts up every time these details are saved, so two people editing at once cannot overwrite each other."
+  },
+  {
+   "fieldname": "credit_reason_code",
+   "fieldtype": "Select",
+   "options": "\nDL8.61.1.A\nDL8.61.1.B\nDL8.61.1.C\nDL8.61.1.D\nDL8.61.1.E\nVD",
+   "label": "Credit Note Reason",
+   "description": "Required on a credit note. VD is the volume discount case, which is the one that needs no reference to the original invoice."
+  },
+  {
+   "fieldname": "credit_reason",
+   "fieldtype": "Data",
+   "label": "Reason In Words",
+   "depends_on": "credit_reason_code"
+  },
+  {"fieldname": "column_break_scenario", "fieldtype": "Column Break"},
+  {"fieldname": "free_zone", "fieldtype": "Check", "label": "Free Zone", "default": "0"},
+  {"fieldname": "deemed_supply", "fieldtype": "Check", "label": "Deemed Supply", "default": "0"},
+  {"fieldname": "margin_scheme", "fieldtype": "Check", "label": "Margin Scheme", "default": "0"},
+  {"fieldname": "summary", "fieldtype": "Check", "label": "Summary Invoice", "default": "0"},
+  {"fieldname": "continuous_supply", "fieldtype": "Check", "label": "Continuous Supply", "default": "0"},
+  {"fieldname": "agent_billing", "fieldtype": "Check", "label": "Billed By An Agent", "default": "0"},
+  {"fieldname": "ecommerce", "fieldtype": "Check", "label": "E-commerce", "default": "0"},
+  {"fieldname": "export", "fieldtype": "Check", "label": "Export", "default": "0"},
+  {
+   "fieldname": "section_break_evidence",
+   "fieldtype": "Section Break",
+   "label": "What Was Checked"
+  },
+  {
+   "fieldname": "source_fingerprint",
+   "fieldtype": "Data",
+   "label": "Source Fingerprint",
+   "read_only": 1,
+   "description": "What the invoice looked like when it was last checked."
+  },
+  {
+   "fieldname": "master_fingerprint",
+   "fieldtype": "Data",
+   "label": "Master Fingerprint",
+   "read_only": 1,
+   "description": "What the records it leans on looked like at the same moment."
+  },
+  {"fieldname": "column_break_evidence", "fieldtype": "Column Break"},
+  {
+   "fieldname": "findings",
+   "fieldtype": "Long Text",
+   "label": "Findings",
+   "read_only": 1,
+   "description": "The current findings only. Anything sent keeps its own frozen copy."
+  },
+  {
+   "fieldname": "latest_submission",
+   "fieldtype": "Data",
+   "label": "Latest Submission",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-18 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "UAE e-Invoicing",
+ "name": "UAE Peppol Invoice",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "UAE Peppol Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "UAE Peppol User",
+   "read": 1,
+   "write": 1,
+   "create": 0,
+   "delete": 0,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
