@@ -37,6 +37,7 @@ run "format" "$RUFF" format --check .
 # like a failure of the code rather than of the harness.
 run "domain tests" "$PYTHON" -m unittest discover -s uae_compliance/domain -t . -p 'test_*.py'
 run "validation tests" "$PYTHON" -m unittest discover -s uae_compliance/validation -t . -p 'test_*.py'
+run "connector tests" "$PYTHON" -m unittest discover -s uae_compliance/connectors -t . -p 'test_*.py'
 run "standards tooling tests" "$PYTHON" scripts/standards/test_validate_examples.py
 run "standards lock hashes" "$PYTHON" scripts/standards/check_lock.py
 run "official examples" "$PYTHON" scripts/standards/validate_examples.py
