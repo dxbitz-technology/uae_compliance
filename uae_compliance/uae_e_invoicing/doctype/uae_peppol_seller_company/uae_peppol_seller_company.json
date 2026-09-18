@@ -1,0 +1,68 @@
+{
+ "actions": [],
+ "creation": "2026-09-18 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "editable_grid": 1,
+ "track_changes": 1,
+ "field_order": [
+  "company",
+  "mode",
+  "effective_from",
+  "review_required",
+  "default_address"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "options": "Company",
+   "label": "Company",
+   "reqd": 1,
+   "in_list_view": 1,
+   "unique": 1,
+   "description": "A company belongs to one seller. The database enforces it."
+  },
+  {
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "label": "Mode",
+   "in_list_view": 1,
+   "options": "Off\nPreparation\nLive",
+   "default": "Off",
+   "reqd": 1,
+   "description": "A new company starts off and stays off until somebody changes it."
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "review_required",
+   "fieldtype": "Check",
+   "label": "Review Required",
+   "default": "1",
+   "description": "On by default. Every document waits for a person unless this is turned off."
+  },
+  {
+   "fieldname": "default_address",
+   "fieldtype": "Link",
+   "options": "Address",
+   "label": "Default Address",
+   "description": "Used when an invoice names no address of its own."
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-18 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "UAE e-Invoicing",
+ "name": "UAE Peppol Seller Company",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1
+}

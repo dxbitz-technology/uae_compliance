@@ -410,6 +410,32 @@ Reason: a site test swept into the plain runner errors for want of a database, w
 Consequence, stated rather than glossed: the required `ci` check does not yet run the site tests, so P02's evidence is currently proved locally only. A second workflow that stands up a database is being built alongside. Until it passes, every site test here is Not run in CI.
 Status: Verified as the arrangement. The CI harness is Unresolved, owner: the workflow now in progress, affected phase P02.
 
+## D047 A claim and evidence never touch
+
+Choice: what somebody tells us and what a lookup found are separate fields on both the seller and the party profile. A person may record that a party says it is on the network. Only a lookup may record it as verified, and the verified fields are read only on the form and refused in the controller.
+Reason: spec 4.1 says a manual selection must never set verified. Answering a question about yourself is not evidence, and an invoice held back for missing evidence is a nuisance while an invoice sent on a false claim is the client's problem.
+Source: both profile controllers, with site tests covering the refusal by hand and the lookup path being allowed.
+Affected: routing in P06, which may only act on evidence.
+Status: Verified.
+
+## D048 Profiles save while they are incomplete
+
+Choice: a seller profile saves with nothing but a label, and a party profile with nothing but the party. A seller's internal name is one you choose and does not depend on an identifier it may not have yet.
+Reason: spec 4.1 requires it, and the reason is practical. The details usually arrive after the first invoice does, so refusing the save would leave nowhere to record what is known so far.
+What is still refused: a company bound to two sellers, a second profile for the same party, and going live without a date it takes effect from.
+A note on one of those. The uniqueness check for a new record must not exclude its own name, because a new record shares its name with the one it is about to collide with. That was a real defect here, found when the database caught the duplicate instead of the friendly message. The database remains the actual guarantee; the check exists so a person sees which record already has it.
+Source: uae_compliance/uae_e_invoicing/doctype/, 19 site tests.
+Affected: P04, where these records are created from the party forms.
+Status: Verified.
+
+## D049 No UOM code DocType
+
+Choice: use the native common code field on UOM rather than adding a DocType for it. A unit with no code is reported as a finding for somebody to fill in on the unit itself, not guessed at.
+Reason: spec 4.3 says to reuse a native field where one exists, and P00 established that UOM already carries one. A second record for the same fact would be a second source of truth, which spec 4.2 warns against. This closes the open question in D026.
+Consequence: the mapping quality depends on a native field that is often blank, so the finding for a missing code has to be clear about where to fix it.
+Affected: spec 4.1 lists a `UAE Peppol UOM Code` DocType that this decision does not build. The maintainer may still want it; it would be a fallback table rather than the primary source.
+Status: Proposed, pending the maintainer.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |
@@ -423,6 +449,6 @@ Status: Verified as the arrangement. The CI harness is Unresolved, owner: the wo
 | Issuance and date policy source | maintainer | No issuance deadline logic | P02 |
 | Reporting the Volume discount example defect upstream (D008) | maintainer | Example excluded as an XSD positive case | P01 |
 | Effective applicability and mandate dates | maintainer | No applicability claim; never hard-coded | P02 |
-| Whether the planned UOM code DocType is still needed (D026) | P02 with maintainer | Native common code used, with a fallback | P02 |
+| Whether the planned UOM code DocType is still needed (D026, now D049) | maintainer | The native common code field is used and no DocType was built | P02 |
 | Amending spec 5.2 for the changed tax breakup field (D019) | maintainer | We follow the stricter rule meanwhile | P03 |
 | ASP contract facts | P10 | Simulation only | P10 |
