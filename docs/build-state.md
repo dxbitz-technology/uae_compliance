@@ -1,10 +1,10 @@
 # Build state
 
-Phase: P00 Baseline is merged into develop and Accepted by the maintainer on 17-09-2026. P01a is complete and in review.
-Branch: p01a-connector, open as one pull request into develop carrying all of P01a. Default branch is develop, which takes pull requests with a passing ci check. An approving review is no longer required; the maintainer relaxed that on 17-09-2026 because the approval step could not be satisfied in practice. Tags stay immutable.
-Last verified code commit: the head of p01a-connector, with all eight gates passing.
+Phase: P00 Accepted and merged. P01a and P01b merged. P01c in progress, which finishes P01.
+Branch: p01c-validator, one pull request against develop. Develop takes pull requests with a passing ci check; an approving review is not required, which the maintainer relaxed on 17-09-2026. Tags stay immutable.
+Last verified code commit: develop at the merge of the scope packet, all eight gates passing, 251 domain tests.
 
-Note on the stack. P01a was originally five stacked pull requests. Merging them bottom up deleted each base branch in turn, which closed the pull requests above rather than retargeting them, so the stack came apart. No work was lost: the top branch already carried every commit, and the abandoned branches held only superseded notes. P01a is now one pull request. Later phases use one pull request per packet against develop rather than a stack.
+Note on branching. P01a was originally a stack of five pull requests. Merging them bottom up deleted each base branch, so the ones above hit conflicts and were closed, and the stack came apart. No work was lost and P01a went in as one pull request. Every packet since gets its own pull request against develop and none are stacked.
 Development site: uae.local on bench /Users/aslam/frappe-local/loc16. Frappe v16.22.0 (567c05b), ERPNext v16.26.2 (d1d3b24), Python 3.14.5, MariaDB 12.2.2, Node 24.16.0, macOS arm64 host. This is not the reference host in spec 11.2, so no timing here is a capacity claim.
 
 ## Packet P00 Baseline
@@ -38,17 +38,25 @@ Exclusions: no DocTypes, roles, fixtures, hooks, JavaScript, or v15 work. No pro
 - No Frappe v15 bench on this host, so that lane stays unverified. version-15 and version-14 are the maintainer's later work.
 - uae.local has no hosts entry and this session has no sudo, so browser access needs the maintainer or a separate serve port. Not needed so far.
 
+## Packet P01c-1 The locked validator wrapper
+
+State: In progress on branch p01c-validator, one pull request against develop.
+Requirement IDs: spec 7.1 (stage states, Schematron runs on XML and never on JSON, an absent artifact means unavailable rather than passed), 6.1 (the locked ruleset), 3 (a pinned runtime, compiled artifacts cached per worker), 10.2 (safe XML parsing), 12.2 P01c, 13 A02.
+Expected behavior: run a document through the official schema and both official rule layers, and report what happened as findings and stage outcomes. This is the same path the standards harness already proves against the published examples, made available to the app.
+Affected interfaces: what the canonical, schema and rule stages return during a full check.
+Likely files: uae_compliance/validation/, its tests, a decision entry.
+Checks: an official example passes all three layers; a broken one fails on the rule you would expect; a missing or unreadable artifact reports unavailable rather than passed; a document with a doctype is refused before the engine sees it; the compiled artifacts are built once and reused; every failed rule becomes a finding carrying its official rule id.
+Exclusions: no serializer, so nothing here builds XML. That is the next packet. No network, no provider validator.
+
 ## Packet P01b-2 Scope and the document type matrix
 
-State: In progress on branch p01b-scope, one pull request against develop.
+State: Merged into develop on 17-09-2026. 30 tests; three deliberate breaks confirmed they catch things. See D038 and D039.
 Requirement IDs: spec 2.1 (company modes and what each enforces), 6.2 (document codes chosen through the verified category matrix rather than from a return flag), 6.3, 12.2 P01b, 13 A05 and A09.
 Expected behavior: what a company mode allows, and which document types the official rules permit for a given invoice. No extraction and no scenario conditions.
 Affected interfaces: the scope decision the invoice gate reads in P04, and the document type extraction picks in P03.
 Likely files: uae_compliance/domain/scope.py, its tests, a decision entry.
 Checks: missing configuration reads as off; off creates no intent; preparation is advisory and never blocks; live blocks an in scope submission on a local error or on validation that could not run; the four document types follow the pinned rules, so a commercial document carries only exempt, out of scope or zero rated lines, a tax document is not made up only of exempt and out of scope lines, a seller with no registration cannot issue a tax document, and a commercial document carries no deemed supply, margin or summary flag.
 Exclusions: no per scenario conditions, no serializer, no extraction. Those are the next packets. The rules here constrain the choice rather than making it, so this reports what is permitted and what contradicts, and extraction picks within that.
-
-## Packet P01b-1 Money rules
 
 ## Packet P01b-1 Money rules
 

@@ -31,7 +31,7 @@ run() {
 
 run "lint" "$RUFF" check .
 run "format" "$RUFF" format --check .
-run "domain tests" "$PYTHON" -m unittest discover -s uae_compliance/domain -t . -p 'test_*.py'
+run "app tests" "$PYTHON" -m unittest discover -s uae_compliance -t . -p 'test_*.py'
 run "standards tooling tests" "$PYTHON" scripts/standards/test_validate_examples.py
 run "standards lock hashes" "$PYTHON" scripts/standards/check_lock.py
 run "official examples" "$PYTHON" scripts/standards/validate_examples.py

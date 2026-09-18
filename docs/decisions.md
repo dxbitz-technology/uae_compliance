@@ -349,6 +349,24 @@ Source: uae_compliance/domain/scope.py with 30 tests. Every finding carries the 
 Affected: extraction (P03), the serializer (P01c), acceptance case A05.
 Status: Verified.
 
+## D040 The validator reports three layers separately
+
+Choice: the schema, the shared rule layer and the jurisdiction layer each report their own outcome. A failed official rule becomes a finding carrying that rule's own id and its own words, so a reader can look the rule up rather than take our paraphrase.
+A layer that could not run reports unavailable, never passed. An invoice nobody managed to check is not an invoice that passed, and treating the two alike is how an unchecked document reaches a tax authority. A missing file, an engine that will not start and a rule layer that will not compile all land there.
+Reason: spec 7.1 for the stage states and for Schematron running on XML rather than on our own structures; spec 6.1 for the locked ruleset.
+Source: uae_compliance/validation/ with 15 tests that run the real published files, not a stand-in. A published invoice and credit note pass all three layers; broken copies fail the rule you would expect, by id.
+Affected: the full check in P03 and P04, acceptance case A02.
+Status: Verified.
+
+## D041 One hardened read, before anything else touches the document
+
+Choice: every document is parsed once by a hardened reader that refuses a document type declaration and anything oversized. Only what comes back out of that is handed onward, and the rule engine never sees a file from disk.
+Reason: an XML document can instruct a parser to pull in other files or fetch a URL, which on a document from outside is a way to read private files or make the server call somewhere it should not. The rule engine has its own parser that does expand entities, so it is only ever given text the hardened read already accepted.
+One exception, and only one: the official schema is split across files that reference each other by relative path, so it is read from its path rather than from bytes. That is safe because those files ship with the app and their checksums are recorded, so they are not something a document brought with it. The parser still refuses to reach the network.
+Source: uae_compliance/validation/safe_xml.py, with a test that feeds it a document trying to read a system file and confirms nothing ran.
+Affected: every document boundary, including events and artifacts in P06. This carries out D009.
+Status: Verified.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |
