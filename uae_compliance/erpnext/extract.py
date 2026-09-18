@@ -102,7 +102,30 @@ def extract(invoice, *, environment: str = "Simulation") -> tuple[dict | None, l
 		"scenario": dict.fromkeys(SCENARIO_FLAGS, False),
 		"exchange_rates": _rates(invoice, scales),
 	}
-	return document, resolution.findings
+	return prune(document), resolution.findings
+
+
+def prune(value):
+	"""Drop anything that is simply not there.
+
+	The model asks that absent, zero and not applicable stay three different
+	answers. A key sitting there holding nothing is none of them, so it comes
+	out. Zero, False and an explicit not applicable all stay, because each one
+	says something.
+	"""
+	if isinstance(value, dict):
+		kept = {}
+		for key, item in value.items():
+			item = prune(item)
+			if item is None:
+				continue
+			if isinstance(item, (dict, list)) and not item:
+				continue
+			kept[key] = item
+		return kept
+	if isinstance(value, list):
+		return [prune(item) for item in value]
+	return value
 
 
 def _provenance(invoice, resolution) -> dict:

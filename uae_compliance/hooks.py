@@ -270,6 +270,8 @@ doc_events = {
 	"Sales Invoice": {
 		"on_update": "uae_compliance.services.working.on_invoice_update",
 		"on_cancel": "uae_compliance.services.working.on_invoice_cancel",
+		"before_submit": "uae_compliance.services.gate.before_invoice_submit",
+		"on_submit": "uae_compliance.services.gate.after_invoice_submit",
 	}
 }
 
