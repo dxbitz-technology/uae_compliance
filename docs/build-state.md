@@ -35,7 +35,7 @@ Lane B needs only the connector contract that P01 finished, so it runs alongside
 State: In progress.
 Requirement IDs: spec 5.2 source map, 5.3 money rules, 12.2 P03, acceptance A03 to A06.
 
-- P03a: the source map, master resolution and the address frozen per invoice.
+- P03a: the source map, master resolution and the address frozen per invoice. Done.
 - P03b: lines, taxes, discounts and currency.
 - P03c: an ordinary invoice and credit note all the way to XML the official rules accept.
 
