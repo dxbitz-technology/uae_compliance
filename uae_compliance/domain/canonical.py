@@ -149,6 +149,9 @@ DOCUMENT = obj(
 	required=True,
 	fields={
 		"number": text(required=True),
+		# Required by the rules, and distinct from the legal number: it stays
+		# the same for this document wherever it travels.
+		"uuid": text(required=True),
 		"type_code": code(DOCUMENT_TYPES, required=True),
 		"issue_date": date(required=True),
 		"due_date": date(may_be_not_applicable=True),
@@ -183,7 +186,9 @@ LINE = obj(
 		"item_code": text(),
 		"name": text(required=True),
 		"item_type": code(ITEM_TYPES),
-		"classification": Field(Kind.IDENTIFIER),
+		# More than one, because goods are classified under one scheme and
+		# services under another, and something that is both needs both.
+		"classifications": array(Field(Kind.IDENTIFIER)),
 		"quantity": Field(Kind.DECIMAL, required=True, scale=QUANTITY_SCALE),
 		"uom_code": text(required=True),
 		"base_quantity": Field(Kind.DECIMAL, scale=QUANTITY_SCALE, signed=False),
