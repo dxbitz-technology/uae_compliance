@@ -28,6 +28,32 @@ Exit evidence for P01: pure tests with no framework and no provider; the canonic
 - No Frappe v15 bench on this host, so that lane stays unverified. version-15 and version-14 are the maintainer's later work.
 - uae.local has no hosts entry and this session has no sudo, so browser access needs one line from the maintainer. This starts to matter in P02, which is the first phase with anything to look at.
 
-## Next packet
+## Phase P02 Configuration and masters
 
-P02a: the app module, roles, settings and provider connection records, with proof that credentials are stored encrypted. First write the packet record here, then the work. P02 is the first phase that installs anything on a site, so a clean install starting switched off is part of its evidence.
+State: In progress on branch p02a-settings. One pull request for the whole phase, at the maintainer's request, held until it has been tested by hand. The local site uae.local is kept up to date as each packet lands.
+
+### P02a Module, roles, settings and the provider connection
+
+State: Done locally. 12 site tests passing, three deliberate breaks caught.
+Requirement IDs: spec 4.1 (the settings and provider connection records and their constraints), 10.1 (the two roles and what each may do), 2.1 (a clean install starts off), 11.4 (a repeated migration is safe), 12.2 P02a, 13 A20 and A21.
+Expected behavior: the module, the two roles, one settings record per site and the provider connection record with its credential rows. Credentials are stored through the framework's encrypted field and never returned.
+Affected interfaces: everything P02b and P02c add to, and the connection the worker reads in P06.
+Likely files: the DocType definitions under uae_compliance/uae_e_invoicing, their controllers, site tests, a decision entry.
+Checks: a clean install leaves every company switched off; a provider and an environment cannot be repurposed once the connection has been used; a credential value is never returned by any read path; deleting a credential row or its parent leaves no secret behind; a restricted user cannot read a credential or configure another company; running the migration twice changes nothing.
+Exclusions: no seller or party profiles, no tax or unit mappings, no fixtures beyond the roles, no invoice behaviour. Those are P02b and P02c.
+
+Note on evidence. This is the first packet whose checks need a real site, and the current CI has none. A second workflow that stands up a database and runs site tests is being built alongside this packet. Until it passes, every site test here is Not run in CI and proved locally only, which is stated rather than glossed over.
+
+### P02b Seller and party profiles
+
+Requirement IDs: spec 4.1 (both profile records and their constraints), 10.1, 12.2 P02b, 13 A06.
+Checks: a profile saves while its compliance details are still missing; one company belongs to one seller binding and the database enforces it; a party profile is unique per party and only for a customer or a supplier; a manual participation answer never records the party as verified.
+
+### P02c Tax mapping, unit codes and the install evidence
+
+Requirement IDs: spec 4.1 (the tax category mapping), 4.3 (reuse a native field where one exists), 11.4, 12.2 P02c, 13 A21.
+Checks: a company aware tax mapping resolves without ambiguity and refuses two matches; a unit with no code is reported rather than guessed; a repeated migration changes nothing.
+
+## Next
+
+After the maintainer has tested P02 by hand and it is merged, P03 ERP extraction.

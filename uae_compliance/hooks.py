@@ -258,3 +258,12 @@ required_apps = ["frappe/erpnext"]
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
+
+after_install = "uae_compliance.install.after_install"
+after_migrate = "uae_compliance.install.after_migrate"
+before_tests = "uae_compliance.install.before_tests"
+
+# Only what this app owns. Never another app's fields, roles or scripts.
+fixtures = [
+	{"dt": "Role", "filters": [["role_name", "in", ["UAE Peppol Manager", "UAE Peppol User"]]]},
+]

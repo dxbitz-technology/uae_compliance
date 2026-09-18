@@ -1,0 +1,185 @@
+name: Site tests
+
+# Builds a real Frappe bench, creates a site with ERPNext and this app on it,
+# and runs the app's site tests there. The `ci` job stays pure Python and knows
+# nothing about a database, so anything that needs a site runs in this job.
+
+on:
+  push:
+    branches:
+      - develop
+      - "version-*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  site-tests:
+    name: site-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    env:
+      # Release pins. Tags, not branches, so the build is repeatable. The
+      # commits are the ones the tags point at, checked again after the clone.
+      FRAPPE_TAG: v16.22.0
+      FRAPPE_COMMIT: 567c05b6b7b736b52f08c372a620bd19cba168d1
+      ERPNEXT_TAG: v16.26.2
+      ERPNEXT_COMMIT: d1d3b241ae7bc21d18cf830a4bacd568e21a2a19
+      BENCH_VERSION: 5.31.0
+      BENCH_PATH: /home/runner/frappe-bench
+      SITE: test_site
+      # frappe reads these before common_site_config.json. See frappe/config.py.
+      FRAPPE_REDIS_CACHE: redis://127.0.0.1:6379/0
+      FRAPPE_REDIS_QUEUE: redis://127.0.0.1:6379/1
+
+    services:
+      mariadb:
+        image: mariadb:11.8.9
+        ports:
+          - 3306:3306
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+      redis:
+        image: redis:8.2.9-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      # bench takes the app name from the directory name when it picks an app up
+      # off disk, so the checkout has to sit in a directory called uae_compliance.
+      - uses: actions/checkout@v4
+        with:
+          path: uae_compliance
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Cache pip downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: site-tests-pip-${{ runner.os }}-py3.14-${{ env.FRAPPE_TAG }}-${{ env.ERPNEXT_TAG }}-${{ env.BENCH_VERSION }}
+
+      - name: Cache yarn downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/yarn
+          key: site-tests-yarn-${{ runner.os }}-${{ env.FRAPPE_TAG }}-${{ env.ERPNEXT_TAG }}
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            mariadb-client libmariadb-dev libcups2-dev pkg-config
+
+      - name: Set the MariaDB character set and collation
+        run: |
+          mariadb --host 127.0.0.1 --port 3306 -u root -proot \
+            -e "SET GLOBAL character_set_server = 'utf8mb4'"
+          mariadb --host 127.0.0.1 --port 3306 -u root -proot \
+            -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
+          mariadb --host 127.0.0.1 --port 3306 -u root -proot \
+            -e "SHOW VARIABLES WHERE Variable_name IN ('character_set_server', 'collation_server')"
+
+      - name: Install bench
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "frappe-bench==${BENCH_VERSION}"
+          bench --version
+
+      - name: Start a bench on the pinned frappe
+        run: |
+          bench init "${BENCH_PATH}" \
+            --frappe-path https://github.com/frappe/frappe \
+            --frappe-branch "${FRAPPE_TAG}" \
+            --python "$(which python)" \
+            --skip-assets \
+            --skip-redis-config-generation \
+            --no-backups \
+            --verbose
+
+      - name: Add the pinned erpnext
+        run: |
+          cd "${BENCH_PATH}"
+          bench get-app --skip-assets --branch "${ERPNEXT_TAG}" https://github.com/frappe/erpnext
+
+      - name: Add this app from the checkout
+        run: |
+          # bench reads the branch name off the source repository, and
+          # actions/checkout leaves a detached HEAD on pull requests.
+          git -C "${GITHUB_WORKSPACE}/uae_compliance" checkout -B ci-under-test
+          cd "${BENCH_PATH}"
+          bench get-app --skip-assets "${GITHUB_WORKSPACE}/uae_compliance"
+
+      - name: Check that the pins landed
+        run: |
+          frappe_head=$(git -C "${BENCH_PATH}/apps/frappe" rev-parse HEAD)
+          erpnext_head=$(git -C "${BENCH_PATH}/apps/erpnext" rev-parse HEAD)
+          app_head=$(git -C "${BENCH_PATH}/apps/uae_compliance" rev-parse HEAD)
+          checkout_head=$(git -C "${GITHUB_WORKSPACE}/uae_compliance" rev-parse HEAD)
+          echo "frappe  ${frappe_head}"
+          echo "erpnext ${erpnext_head}"
+          echo "app     ${app_head}"
+          test "${frappe_head}" = "${FRAPPE_COMMIT}"
+          test "${erpnext_head}" = "${ERPNEXT_COMMIT}"
+          test "${app_head}" = "${checkout_head}"
+
+      - name: Create the site
+        run: |
+          cd "${BENCH_PATH}"
+          bench new-site "${SITE}" \
+            --db-type mariadb \
+            --db-host 127.0.0.1 \
+            --db-port 3306 \
+            --db-root-username root \
+            --db-root-password root \
+            --db-name test_frappe \
+            --db-password test_frappe \
+            --admin-password admin \
+            --verbose
+          bench --site "${SITE}" set-config allow_tests true
+
+      - name: Install erpnext on the site
+        run: |
+          cd "${BENCH_PATH}"
+          bench --site "${SITE}" install-app erpnext
+
+      - name: Install uae_compliance on the site
+        run: |
+          cd "${BENCH_PATH}"
+          bench --site "${SITE}" install-app uae_compliance
+
+      - name: Run the app's site tests
+        run: |
+          cd "${BENCH_PATH}"
+          bench --site "${SITE}" run-tests --app uae_compliance
+
+      - name: Show bench logs
+        if: failure()
+        run: |
+          for f in "${BENCH_PATH}"/logs/*; do
+            echo "--- ${f}"
+            cat "${f}" || true
+          done

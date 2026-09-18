@@ -40,6 +40,26 @@ python scripts/standards/validate_examples.py --negative
 python scripts/standards/validate_examples.py --determinism
 ```
 
+## Site tests
+
+`scripts/check.sh` runs without a database, so it cannot cover anything that needs a site. Those tests live in `uae_compliance/tests/` and run on a bench:
+
+```bash
+bench --site uae.local run-tests --app uae_compliance
+```
+
+The site needs `allow_tests` turned on, or the `CI` environment variable set:
+
+```bash
+bench --site uae.local set-config allow_tests true
+```
+
+The test runner disables the scheduler and writes to the site, so point it at a throwaway site, not at anything you care about.
+
+`uae_compliance/tests/` has no `__init__.py` on purpose. Frappe's runner finds `test_*.py` by walking the app directory and imports it as a namespace package. `unittest discover`, which the `ci` job uses, skips any directory without an `__init__.py`, so the pure Python job never tries to import Frappe. Adding an `__init__.py` there would break the `ci` job.
+
+The `site-tests` job in `.github/workflows/site-tests.yml` does the same thing on a clean machine. It pins Frappe and ERPNext by tag and checks the resulting commits before it creates the site.
+
 ## Ground rules
 
 Evidence before claims. Check a framework detail in the pinned source and cite the file and line rather than trusting memory. Label what you record as Verified, Proposed, or Unresolved.

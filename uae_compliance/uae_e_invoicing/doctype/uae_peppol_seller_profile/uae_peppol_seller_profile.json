@@ -1,0 +1,186 @@
+{
+ "actions": [],
+ "creation": "2026-09-18 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "editable_grid": 1,
+ "track_changes": 1,
+ "field_order": [
+  "identity_section",
+  "label",
+  "participant_scheme",
+  "participant_value",
+  "column_break_identity",
+  "vat_state",
+  "vat_number",
+  "in_vat_group",
+  "legal_section",
+  "legal_scheme",
+  "legal_value",
+  "legal_authority",
+  "onboarding_section",
+  "identity_state",
+  "identity_checked_at",
+  "identity_valid_until",
+  "current_asp",
+  "companies_section",
+  "companies"
+ ],
+ "fields": [
+  {
+   "fieldname": "identity_section",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Label",
+   "reqd": 1,
+   "unique": 1,
+   "description": "A name you choose. It does not depend on having a tax number yet."
+  },
+  {
+   "fieldname": "participant_scheme",
+   "fieldtype": "Data",
+   "label": "Participant Scheme",
+   "default": "0235"
+  },
+  {
+   "fieldname": "participant_value",
+   "fieldtype": "Data",
+   "label": "Participant Identifier",
+   "description": "The seller's own identifier on the network. Not the VAT group registration."
+  },
+  {
+   "fieldname": "column_break_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "vat_state",
+   "fieldtype": "Select",
+   "label": "VAT Registration",
+   "options": "Not sure\nRegistered\nNot registered",
+   "default": "Not sure"
+  },
+  {
+   "fieldname": "vat_number",
+   "fieldtype": "Data",
+   "label": "VAT Registration Number",
+   "depends_on": "eval:doc.vat_state=='Registered'"
+  },
+  {
+   "fieldname": "in_vat_group",
+   "fieldtype": "Check",
+   "label": "In a VAT Group",
+   "description": "A shared group registration does not make two companies one participant."
+  },
+  {
+   "fieldname": "legal_section",
+   "fieldtype": "Section Break",
+   "label": "Legal Registration"
+  },
+  {
+   "fieldname": "legal_scheme",
+   "fieldtype": "Data",
+   "label": "Registration Scheme",
+   "default": "TL"
+  },
+  {
+   "fieldname": "legal_value",
+   "fieldtype": "Data",
+   "label": "Registration Number"
+  },
+  {
+   "fieldname": "legal_authority",
+   "fieldtype": "Data",
+   "label": "Issuing Authority",
+   "description": "Required by the rules for a trade licence."
+  },
+  {
+   "fieldname": "onboarding_section",
+   "fieldtype": "Section Break",
+   "label": "Onboarding"
+  },
+  {
+   "fieldname": "identity_state",
+   "fieldtype": "Select",
+   "label": "Identity Checked",
+   "options": "Not checked\nVerified\nNot found\nUnavailable\nExpired",
+   "default": "Not checked",
+   "read_only": 1,
+   "description": "Set by a lookup, never by hand. Answering a question about yourself is not evidence."
+  },
+  {
+   "fieldname": "identity_checked_at",
+   "fieldtype": "Datetime",
+   "label": "Checked At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "identity_valid_until",
+   "fieldtype": "Datetime",
+   "label": "Evidence Valid Until",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_asp",
+   "fieldtype": "Link",
+   "options": "UAE Peppol ASP",
+   "label": "Current Connection"
+  },
+  {
+   "fieldname": "companies_section",
+   "fieldtype": "Section Break",
+   "label": "Companies"
+  },
+  {
+   "fieldname": "companies",
+   "fieldtype": "Table",
+   "options": "UAE Peppol Seller Company",
+   "label": "Companies"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-18 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "UAE e-Invoicing",
+ "name": "UAE Peppol Seller Profile",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "UAE Peppol Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "UAE Peppol User",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "field:label"
+}

@@ -1,0 +1,213 @@
+{
+ "actions": [],
+ "creation": "2026-09-18 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "editable_grid": 1,
+ "track_changes": 1,
+ "field_order": [
+  "party_section",
+  "party_doctype",
+  "party",
+  "column_break_party",
+  "establishment_country",
+  "party_context",
+  "tax_section",
+  "vat_state",
+  "vat_number",
+  "extra_vat_number",
+  "column_break_tax",
+  "peppol_state",
+  "endpoint_scheme",
+  "endpoint_value",
+  "legal_section",
+  "legal_scheme",
+  "legal_value",
+  "legal_authority",
+  "evidence_section",
+  "lookup_state",
+  "lookup_checked_at",
+  "lookup_valid_until",
+  "lookup_method"
+ ],
+ "fields": [
+  {
+   "fieldname": "party_section",
+   "fieldtype": "Section Break",
+   "label": "Party"
+  },
+  {
+   "fieldname": "party_doctype",
+   "fieldtype": "Select",
+   "label": "Party Type",
+   "reqd": 1,
+   "options": "Customer\nSupplier",
+   "in_list_view": 1,
+   "description": "Customers and suppliers only. Nothing else has a party profile."
+  },
+  {
+   "fieldname": "party",
+   "fieldtype": "Dynamic Link",
+   "options": "party_doctype",
+   "label": "Party",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_party",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "establishment_country",
+   "fieldtype": "Link",
+   "options": "Country",
+   "label": "Country of Establishment"
+  },
+  {
+   "fieldname": "party_context",
+   "fieldtype": "Select",
+   "label": "Context",
+   "options": "Not sure\nBusiness\nGovernment\nConsumer",
+   "default": "Not sure",
+   "description": "Being an individual does not by itself make a sale a consumer sale."
+  },
+  {
+   "fieldname": "tax_section",
+   "fieldtype": "Section Break",
+   "label": "Tax and Network"
+  },
+  {
+   "fieldname": "vat_state",
+   "fieldtype": "Select",
+   "label": "VAT Registration",
+   "options": "Not sure\nRegistered\nNot registered",
+   "default": "Not sure"
+  },
+  {
+   "fieldname": "vat_number",
+   "fieldtype": "Data",
+   "label": "VAT Registration Number"
+  },
+  {
+   "fieldname": "extra_vat_number",
+   "fieldtype": "Data",
+   "label": "Additional UAE Registration",
+   "description": "For a foreign party that also holds a UAE registration. It never overwrites its own."
+  },
+  {
+   "fieldname": "column_break_tax",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "peppol_state",
+   "fieldtype": "Select",
+   "label": "On the Network",
+   "options": "Not sure\nRegistered\nNot registered",
+   "default": "Not sure",
+   "description": "What somebody told us. It is not evidence."
+  },
+  {
+   "fieldname": "endpoint_scheme",
+   "fieldtype": "Data",
+   "label": "Endpoint Scheme"
+  },
+  {
+   "fieldname": "endpoint_value",
+   "fieldtype": "Data",
+   "label": "Endpoint Identifier"
+  },
+  {
+   "fieldname": "legal_section",
+   "fieldtype": "Section Break",
+   "label": "Legal Registration"
+  },
+  {
+   "fieldname": "legal_scheme",
+   "fieldtype": "Data",
+   "label": "Registration Scheme"
+  },
+  {
+   "fieldname": "legal_value",
+   "fieldtype": "Data",
+   "label": "Registration Number"
+  },
+  {
+   "fieldname": "legal_authority",
+   "fieldtype": "Data",
+   "label": "Issuing Authority"
+  },
+  {
+   "fieldname": "evidence_section",
+   "fieldtype": "Section Break",
+   "label": "Lookup Evidence"
+  },
+  {
+   "fieldname": "lookup_state",
+   "fieldtype": "Select",
+   "label": "Lookup Result",
+   "options": "Not checked\nVerified\nNot found\nUnavailable\nExpired",
+   "default": "Not checked",
+   "read_only": 1,
+   "description": "Set by a lookup, never by hand."
+  },
+  {
+   "fieldname": "lookup_checked_at",
+   "fieldtype": "Datetime",
+   "label": "Checked At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lookup_valid_until",
+   "fieldtype": "Datetime",
+   "label": "Evidence Valid Until",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lookup_method",
+   "fieldtype": "Data",
+   "label": "Checked By",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-18 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "UAE e-Invoicing",
+ "name": "UAE Peppol Party Profile",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "UAE Peppol Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "UAE Peppol User",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

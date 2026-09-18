@@ -1,0 +1,18 @@
+[
+ {
+  "doctype": "Role",
+  "name": "UAE Peppol Manager",
+  "role_name": "UAE Peppol Manager",
+  "desk_access": 1,
+  "is_custom": 0,
+  "description": "Configures the seller, the provider connection and company policy, and approves or corrects work."
+ },
+ {
+  "doctype": "Role",
+  "name": "UAE Peppol User",
+  "role_name": "UAE Peppol User",
+  "desk_access": 1,
+  "is_custom": 0,
+  "description": "Works on invoices and party details. Cannot configure connections or read credentials."
+ }
+]

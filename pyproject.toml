@@ -9,7 +9,12 @@ readme = "README.md"
 license = { file = "license.txt" }
 dynamic = ["version"]
 dependencies = [
-    # "frappe~=16.0.0" # Installed and managed by bench.
+    # frappe is installed and managed by bench, so it is not listed here.
+    # These two are ours and the app does not work without them. The official
+    # rules are compiled XSLT 2.0, which lxml cannot run, so the Saxon engine
+    # is a hard requirement rather than an optional extra.
+    "lxml>=5.0",
+    "saxonche==13.0.0",
 ]
 
 [build-system]

@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "creation": "2026-09-18 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "editable_grid": 1,
+ "track_changes": 1,
+ "field_order": [
+  "company",
+  "account_head",
+  "item_tax_template",
+  "category",
+  "rate",
+  "reason_code",
+  "reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "options": "Company",
+   "label": "Company",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Mappings are company aware. Two companies can treat the same account differently."
+  },
+  {
+   "fieldname": "account_head",
+   "fieldtype": "Link",
+   "options": "Account",
+   "label": "Tax Account",
+   "in_list_view": 1,
+   "description": "The account the invoice posts its tax to."
+  },
+  {
+   "fieldname": "item_tax_template",
+   "fieldtype": "Link",
+   "options": "Item Tax Template",
+   "label": "Item Tax Template",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Tax Category",
+   "reqd": 1,
+   "options": "S\nE\nO\nAE\nZ\nN",
+   "in_list_view": 1,
+   "description": "Margin is the letter N. There is no category M."
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Percent",
+   "label": "Rate"
+  },
+  {
+   "fieldname": "reason_code",
+   "fieldtype": "Data",
+   "label": "Exemption Reason Code"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Exemption Reason"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-18 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "UAE e-Invoicing",
+ "name": "UAE Peppol Tax Category",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "UAE Peppol Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "UAE Peppol User",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

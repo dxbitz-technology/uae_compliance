@@ -51,3 +51,6 @@ jspm_packages/
 # Helix Editor
 .helix/
 
+
+# Agent worktrees, never part of the app
+.claude/worktrees/
