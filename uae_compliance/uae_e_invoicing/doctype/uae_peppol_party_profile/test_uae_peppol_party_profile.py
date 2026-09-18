@@ -9,6 +9,37 @@ must never do is turn somebody's answer into evidence.
 import frappe
 from frappe.tests import IntegrationTestCase
 
+TEST_COMPANY = "UAE Peppol Test Company"
+
+
+def a_company():
+	"""A company these tests own.
+
+	They used to take whichever company the site happened to have, which
+	works on a development site and fails on a fresh one where there is no
+	company at all. A test that depends on data somebody else created is not
+	a test of anything.
+	"""
+	if not frappe.db.exists("Company", TEST_COMPANY):
+		frappe.get_doc(
+			{
+				"doctype": "Company",
+				"company_name": TEST_COMPANY,
+				"abbr": "UPTC",
+				"default_currency": "AED",
+				"country": "United Arab Emirates",
+			}
+		).insert(ignore_permissions=True)
+		frappe.db.commit()
+	return TEST_COMPANY
+
+
+def a_tax_account():
+	"""Any account belonging to our own company."""
+	return frappe.get_all("Account", filters={"company": a_company(), "is_group": 0}, pluck="name", limit=1)[
+		0
+	]
+
 
 def a_customer(name="Test Buyer LLC"):
 	if not frappe.db.exists("Customer", name):
@@ -94,7 +125,7 @@ class TestUAEPeppolSellerProfile(IntegrationTestCase):
 		return doc
 
 	def any_company(self):
-		return frappe.get_all("Company", pluck="name", limit=1)[0]
+		return a_company()
 
 	def test_a_seller_saves_with_no_tax_number_yet(self):
 		# Its name does not depend on having an identifier it may not have.
@@ -144,10 +175,10 @@ class TestUAEPeppolSellerProfile(IntegrationTestCase):
 
 class TestUAEPeppolTaxCategory(IntegrationTestCase):
 	def any_company(self):
-		return frappe.get_all("Company", pluck="name", limit=1)[0]
+		return a_company()
 
 	def any_account(self):
-		return frappe.get_all("Account", filters={"company": self.any_company()}, pluck="name", limit=1)[0]
+		return a_tax_account()
 
 	def a_mapping(self, **values):
 		doc = frappe.get_doc(
