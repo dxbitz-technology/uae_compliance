@@ -104,6 +104,21 @@ saving it again does not make a second; an invoice for a company with no
 seller binding makes none at all; a person's edit counts the input revision
 up and a check result does not; and readiness cannot be set by hand.
 
+## Lane B, alongside
+
+The connector work needed only the contract P01 settled, so it ran in
+parallel and is finished for now. The adapter registry and the audited way
+out, the local simulator over a real socket covering thirteen awkward cases,
+and the two test adapters that prove one canonical document can be sent as
+XML to one provider and as JSON to another. 105 checks, all over a real
+socket.
+
+Three things the Suntech capability map asks for that the contract cannot say
+yet, listed for a later decision: a provider that can be searched but not by
+the key that was sent; a provider that replaces a document in place rather
+than issuing a new identifier; and the two it simply does not support, which
+the existing rule already handles.
+
 ## Still open for the maintainer
 
 - The published credit note example that fails its own schema (D008).
