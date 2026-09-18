@@ -367,6 +367,25 @@ Source: uae_compliance/validation/safe_xml.py, with a test that feeds it a docum
 Affected: every document boundary, including events and artifacts in P06. This carries out D009.
 Status: Verified.
 
+## D042 One place writes the XML
+
+Choice: every document the app sends is written by one serializer. Element order follows the schema rather than the published examples, because one of those examples fails its own schema on ordering. The eight position scenario string is built here and nowhere else, so nothing in the app depends on those positions.
+Reason: spec 5.1 for the reference serializer, spec 6.3 for keeping the scenario flags as named booleans internally and producing the official string only at serialization.
+How it is judged: not by whether the XML looks right to us. Every passing test builds an invoice, writes it out, and runs the real published schema and both rule layers over the result. An ordinary invoice, an ordinary credit note, a volume discount credit note, a goods line, a services line and a line that is both all come back with nothing.
+Source: uae_compliance/validation/serializer.py with 22 tests. Four deliberate breaks were caught, including reversing the scenario positions and classifying services under the goods scheme.
+Affected: extraction (P03), the frozen payload (P05).
+Status: Verified for the ordinary invoice and credit note, which is the minimum scope in spec 2.3. The advanced scenarios each need their own conditions and belong to P08.
+
+## D043 Three gaps the rules found in the canonical model
+
+Choice: building the serializer against the real rules surfaced three things the model was missing, and all three are now in it.
+- A document carries a unique identifier separate from its legal number. The rules require it and it stays with the document wherever it travels.
+- A line carries a list of classifications rather than one. Goods are classified under one scheme and services under another, they land in different elements, and something that is both needs both.
+- An identifier may name the authority that issued it. The rules require it for a trade licence, and it means different things per scheme: the issuing authority for a licence, the issuing country for a passport. So it is carried rather than derived.
+Reason: each came from a rule failing against real output, not from reading the model and imagining what might be missing. This is the point of writing the serializer before extraction.
+Affected: the canonical model, its version, and extraction in P03. These are contract changes made before P01 was accepted rather than after.
+Status: Verified.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |

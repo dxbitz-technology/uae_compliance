@@ -60,6 +60,7 @@ def an_invoice():
 		},
 		"document": {
 			"number": "SINV-0001",
+			"uuid": "4b6000ca-0128-4bdc-99a6-406f2909247f",
 			"type_code": "380",
 			"issue_date": "2026-09-17",
 			"currency": "AED",
@@ -269,6 +270,25 @@ class CreditNotesAndScenarios(unittest.TestCase):
 				{"number": "SINV-0001", "issue_date": "2026-08-01"},
 				{"number": "SINV-0002", "issue_date": "2026-08-15"},
 			],
+		}
+		self.assertEqual(check(invoice, INVOICE), [])
+
+	def test_a_line_can_carry_more_than_one_classification(self):
+		# Something that is both goods and services needs both schemes.
+		invoice = an_invoice()
+		invoice["lines"][0]["item_type"] = "Both"
+		invoice["lines"][0]["classifications"] = [
+			{"scheme": "HS", "value": "88098432324"},
+			{"scheme": "SAC", "value": "998311"},
+		]
+		self.assertEqual(check(invoice, INVOICE), [])
+
+	def test_an_identifier_may_name_the_authority_that_issued_it(self):
+		invoice = an_invoice()
+		invoice["parties"]["seller"]["legal_registration"] = {
+			"scheme": "TL",
+			"value": "112345678900003",
+			"authority": "Trade License issuing Authority",
 		}
 		self.assertEqual(check(invoice, INVOICE), [])
 

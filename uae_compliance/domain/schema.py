@@ -267,6 +267,11 @@ def _boolean(value, spec: Field, path: str) -> list[Finding]:
 
 
 def _identifier(value, spec: Field, path: str) -> list[Finding]:
+	"""An identifier is a scheme and a value, and sometimes who issued it.
+
+	The authority is optional and only meaningful for some schemes. A trade
+	licence names the authority that issued it; a passport names the country.
+	"""
 	if not isinstance(value, Mapping):
 		return [_wrong_type(path, "identifier", value)]
 	found = []
@@ -281,7 +286,7 @@ def _identifier(value, spec: Field, path: str) -> list[Finding]:
 					field=part,
 				)
 			)
-	for extra in sorted(set(value) - {"scheme", "value"}):
+	for extra in sorted(set(value) - {"scheme", "value", "authority"}):
 		found.append(
 			_finding(
 				CODE_UNKNOWN,
