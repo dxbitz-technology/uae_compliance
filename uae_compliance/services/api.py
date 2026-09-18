@@ -33,8 +33,7 @@ def preview_invoice(source_name: str, level: str = "Fast", inputs: str | None = 
 	"""
 	invoice = _readable(source_name)
 	wanted = Level.FULL if level == "Full" else Level.FAST
-	scenario = _scenario_from(inputs)
-	result = validation.check(invoice, wanted, scenario=scenario)
+	result = validation.check(invoice, wanted, overrides=_allowed_inputs(inputs) if inputs else None)
 	return _as_reply(result)
 
 
@@ -90,7 +89,7 @@ def get_readiness_batch(source_names: str) -> dict:
 	rows = frappe.get_all(
 		WORKING_DOCTYPE,
 		filters={"sales_invoice": ["in", allowed]},
-		fields=["sales_invoice", "readiness", "errors", "warnings", "mode"],
+		fields=["sales_invoice", "readiness", "errors", "warnings", "mode", "input_revision"],
 	)
 	return {row.sales_invoice: row for row in rows}
 
@@ -99,15 +98,6 @@ def _readable(source_name: str, write: bool = False):
 	invoice = frappe.get_doc("Sales Invoice", source_name)
 	invoice.check_permission("write" if write else "read")
 	return invoice
-
-
-def _scenario_from(inputs: str | None) -> dict | None:
-	if not inputs:
-		return None
-	from uae_compliance.domain.canonical import SCENARIO_FLAGS
-
-	supplied = frappe.parse_json(inputs) or {}
-	return {flag: bool(supplied.get(flag)) for flag in SCENARIO_FLAGS if flag in supplied}
 
 
 def _allowed_inputs(inputs: str) -> dict:

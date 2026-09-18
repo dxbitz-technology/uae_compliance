@@ -28,6 +28,7 @@ from uae_compliance.erpnext.numbers import Scales, as_date, as_timestamp, dec, z
 from uae_compliance.validation.artifacts import CUSTOMIZATION_ID, PINT_VERSION, PROFILE_ID
 
 EXTRACTION_VERSION = "1"
+WORKING_DOCTYPE = "UAE Peppol Invoice"
 JURISDICTION = "AE"
 LOCAL_CURRENCY = "AED"
 
@@ -41,12 +42,18 @@ CODE_NO_CREDIT_REASON = "MAP-0007"
 UUID_NAMESPACE = uuid.UUID("6f4d2a4e-9c1f-5d3b-8a72-1f0c6b5e4d21")
 
 
-def extract(invoice, *, environment: str = "Simulation") -> tuple[dict | None, list[Finding]]:
+def extract(
+	invoice, *, environment: str = "Simulation", overrides: dict | None = None
+) -> tuple[dict | None, list[Finding]]:
 	"""Read one Sales Invoice.
 
 	Returns the canonical document and everything worth reporting about it.
 	A company nobody switched on returns nothing at all, because the app has
 	no business describing an invoice it was never asked about.
+
+	The details a person supplied live on the working record. `overrides` is
+	for a preview of what somebody has typed but not yet saved, and it never
+	writes anything.
 	"""
 	resolution = masters.resolve(invoice)
 	if resolution.mode is scope.Mode.OFF:
@@ -55,6 +62,7 @@ def extract(invoice, *, environment: str = "Simulation") -> tuple[dict | None, l
 	source = SourceRef(doctype="Sales Invoice", name=invoice.name)
 	scales = Scales.of(invoice)
 	credit_note = bool(invoice.is_return)
+	supplied = _supplied(invoice.name, overrides)
 
 	rows = line_reader.extract(invoice, resolution, credit_note)
 	vat_rows, charge_rows = taxes.split_tax_rows(invoice, resolution, source)
@@ -73,7 +81,7 @@ def extract(invoice, *, environment: str = "Simulation") -> tuple[dict | None, l
 	if unstated:
 		resolution.note(unstated)
 
-	if credit_note:
+	if credit_note and not supplied["credit_reason_code"]:
 		resolution.note(
 			Finding(
 				code=CODE_NO_CREDIT_REASON,
@@ -96,10 +104,10 @@ def extract(invoice, *, environment: str = "Simulation") -> tuple[dict | None, l
 		"allowances": [],
 		"charges": charges,
 		"totals": totals,
-		"references": _references(invoice),
+		"references": _references(invoice, supplied),
 		"payment": paid_by,
 		"delivery": resolution.delivery,
-		"scenario": dict.fromkeys(SCENARIO_FLAGS, False),
+		"scenario": supplied["scenario"],
 		"exchange_rates": _rates(invoice, scales),
 	}
 	return prune(document), resolution.findings
@@ -126,6 +134,31 @@ def prune(value):
 	if isinstance(value, list):
 		return [prune(item) for item in value]
 	return value
+
+
+def _supplied(invoice_name: str, overrides: dict | None) -> dict:
+	"""The details a person gave, from the working record.
+
+	Every flag is stated, so nothing is left silently off. Anything passed in
+	sits on top for this read only, which is how a preview shows what somebody
+	has typed without saving it first.
+	"""
+	stored = (
+		frappe.db.get_value(
+			WORKING_DOCTYPE,
+			{"sales_invoice": invoice_name},
+			["credit_reason_code", "credit_reason", *SCENARIO_FLAGS],
+			as_dict=True,
+		)
+		or {}
+	)
+	given = overrides or {}
+	scenario = {flag: bool(given.get(flag, stored.get(flag))) for flag in SCENARIO_FLAGS}
+	return {
+		"scenario": scenario,
+		"credit_reason_code": given.get("credit_reason_code", stored.get("credit_reason_code")) or None,
+		"credit_reason": given.get("credit_reason", stored.get("credit_reason")) or None,
+	}
 
 
 def _provenance(invoice, resolution) -> dict:
@@ -200,13 +233,17 @@ def _type_code(rows, resolution, credit_note: bool, source: SourceRef) -> str | 
 	return permitted[0]
 
 
-def _references(invoice) -> dict:
+def _references(invoice, supplied) -> dict:
 	out = {}
 	if invoice.return_against:
 		issued = frappe.db.get_value("Sales Invoice", invoice.return_against, "posting_date")
 		out["preceding"] = [{"number": invoice.return_against, "issue_date": as_date(issued)}]
 	if invoice.po_no:
 		out["purchase_order"] = invoice.po_no
+	if supplied["credit_reason_code"]:
+		out["credit_reason_code"] = supplied["credit_reason_code"]
+	if supplied["credit_reason"]:
+		out["credit_reason"] = supplied["credit_reason"]
 	return out
 
 

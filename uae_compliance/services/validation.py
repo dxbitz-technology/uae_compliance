@@ -36,10 +36,12 @@ FAST = Level.FAST
 FULL = Level.FULL
 
 
-def check(invoice, level: Level = FAST, *, scenario: dict | None = None) -> ValidationResult:
+def check(invoice, level: Level = FAST, *, overrides: dict | None = None) -> ValidationResult:
 	"""Check one invoice and say what was found.
 
 	`invoice` is a Sales Invoice document, saved or not. Nothing is written.
+	`overrides` carries details somebody has typed but not saved, so a preview
+	shows what those would mean without committing them.
 	"""
 	resolution = masters.resolve(invoice)
 	in_scope = resolution.mode is not scope.Mode.OFF
@@ -56,7 +58,7 @@ def check(invoice, level: Level = FAST, *, scenario: dict | None = None) -> Vali
 			stages=(StageOutcome(Stage.SCOPE, StageState.PASSED),),
 		)
 
-	document, findings = extract(invoice)
+	document, findings = extract(invoice, overrides=overrides)
 	findings = list(findings)
 	stages = [StageOutcome(Stage.SCOPE, StageState.PASSED)]
 
@@ -64,9 +66,6 @@ def check(invoice, level: Level = FAST, *, scenario: dict | None = None) -> Vali
 		# Extraction gave up, which only happens when the company went off
 		# underneath us between the two reads.
 		return _unavailable(level, source_print, resolution, "The company was switched off while checking.")
-
-	if scenario:
-		document["scenario"] = {**document["scenario"], **scenario}
 
 	stages.append(_outcome(Stage.MASTERS, findings, Stage.MASTERS))
 	stages.append(_outcome(Stage.MAPPING, findings, Stage.MAPPING))
