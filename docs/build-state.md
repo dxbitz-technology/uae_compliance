@@ -66,7 +66,18 @@ State: In progress.
 Requirement IDs: spec 4.2 the working record, 7.1 the one validation service, 7.2 the native lifecycle, 7.3 party and company entry, 7.5 the service surface, 12.2 P04, acceptance A07 to A10.
 
 - P04a: the working record, its upsert on save, and the revision check. Done.
-- P04b: Fast and Full preview, and the save and submit gates.
+- P04b: Fast and Full preview, and the save and submit gates. Done.
+
+One service answers both the form and the server, so what somebody sees
+before saving is what the submit gate decides with. Fast covers scope,
+masters, mapping and arithmetic. Full adds the canonical model, the XML, the
+schema and both rule layers. Nothing reaches the network at any level.
+
+Checked on uae.local against the demo invoice: Fast says further checks
+required, Full says Ready locally with every stage passed. In Preparation an
+invoice that would fail still submits and says what would have stopped it.
+In Live it does not submit, and the message names what to fix rather than
+repeating a rule id per failure. An incomplete draft still saves either way.
 - P04c: the quick entry extension, company setup, the invoice notice and dialog, and the bulk item fix.
 
 P04a holds to three rules. One record per invoice, ever. Nothing is created
