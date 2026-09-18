@@ -263,6 +263,10 @@ after_install = "uae_compliance.install.after_install"
 after_migrate = "uae_compliance.install.after_migrate"
 before_tests = "uae_compliance.install.before_tests"
 
+# The only form this app touches. It adds one indicator and one button, and
+# nothing at all on a company that is switched off.
+doctype_js = {"Sales Invoice": "public/js/sales_invoice.js"}
+
 # The only place this app attaches to a native document. It keeps one working
 # record beside each draft and never writes back to the invoice, which would
 # put the save into a loop.

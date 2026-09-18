@@ -78,7 +78,21 @@ required, Full says Ready locally with every stage passed. In Preparation an
 invoice that would fail still submits and says what would have stopped it.
 In Live it does not submit, and the message names what to fix rather than
 repeating a rule id per failure. An incomplete draft still saves either way.
-- P04c: the quick entry extension, company setup, the invoice notice and dialog, and the bulk item fix.
+- P04c: the invoice notice and the details dialog. Done.
+- P04d: the quick entry extension, company setup and the bulk item fix.
+
+The form carries one native headline notice and one button, and nothing at
+all on a company that is switched off. The dialog groups findings by where
+the fix is, your company, the customer, addresses, items or the invoice, and
+carries the scenario flags and the credit note reason. A submitted invoice
+gets the findings and no save button, because there is nothing left to edit.
+
+Checked in the browser on uae.local. The notice sits alongside ERPNext's own
+without replacing it. Ticking Export and saving moved the flag onto the
+record, into the document, and into the official positional string as
+00000001, where the AE rules then refused it under ibr-152-ae because a
+standard rated domestic invoice is not an export. That is the scenario flags
+doing their job rather than being decoration.
 
 P04a holds to three rules. One record per invoice, ever. Nothing is created
 for a company that is switched off, so a site that never asked for the app
