@@ -117,7 +117,7 @@ Status: Verified for the ordering rule; the fta_compliance relationship is Unres
 ## D015 Verified official code values
 
 Choice: take these values as the baseline for the P01 decision tables.
-- Document types: 380 tax invoice, 480 commercial invoice, 381 tax credit note, 81 commercial credit note. Only these four exist and ibr-cl-01 enforces them. Selection follows the category rules (ibr-122-ae, ibr-123-ae, ibr-134-ae, ibr-136-ae, ibr-151-ae, ibr-157-ae), never is_return alone.
+- Document types: 380 tax invoice, 480 commercial invoice, 381 tax credit note, 81 commercial credit note. These four are the whole of the billing family, and ibr-cl-01 enforces them. Two more exist in the self-billing family, 389 and 261, which the package we pinned rejects. Spec 2.1 puts them in P12, and their artifacts are not vendored. Selection follows the category rules (ibr-122-ae, ibr-123-ae, ibr-134-ae, ibr-136-ae, ibr-151-ae, ibr-157-ae), never is_return alone.
 - Tax categories: S, E, O, AE, Z, N. Margin is ASCII N. The rules and every example use ASCII N; the code list file stores a Greek capital Nu at that row. Treat the code list character as an upstream typo and keep ASCII N.
 - Transaction flags: eight positions carried in cbc:ProfileExecutionID as an eight character string of 0 and 1 (ibr-154-ae). Order: free zone, deemed supply, margin, summary, continuous supply, agent, e-commerce, export. ibr-157-ae forbids positions 2, 3 and 4 with document type 480 or 81.
 - Electronic address scheme for the UAE TIN is 0235, permitted by ibr-cl-25 for endpoints and ibr-cl-10 for party identification.
@@ -347,6 +347,7 @@ A consequence worth stating: an unregistered seller with standard rated lines ha
 Reason: spec 6.2 requires selection through the verified category matrix rather than from a return flag alone. The matrix itself was read from the pinned publication in P00 and recorded in the evidence.
 Source: uae_compliance/domain/scope.py with 30 tests. Every finding carries the published rule id, so a reader can check rather than trust.
 Affected: extraction (P03), the serializer (P01c), acceptance case A05.
+Scope: the billing family only. Self-billing adds 389 and 261 at P12, on a separate specialisation this app has not pinned.
 Status: Verified.
 
 ## D040 The validator reports three layers separately

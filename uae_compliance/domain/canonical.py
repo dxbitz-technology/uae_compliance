@@ -29,7 +29,9 @@ QUANTITY_SCALE = 6
 PERCENT_SCALE = 6
 EXCHANGE_RATE_SCALE = 9
 
-# Verified against the pinned publication. See decision D015.
+# Verified against the pinned publication. See decision D015. These are the
+# billing family. Self-billing adds 389 and 261 at P12, on a separate
+# specialisation that is not pinned here.
 DOCUMENT_TYPES = ("380", "480", "381", "81")
 TAX_CATEGORIES = ("S", "E", "O", "AE", "Z", "N")
 ENVIRONMENTS = ("Simulation", "Sandbox", "Production")
