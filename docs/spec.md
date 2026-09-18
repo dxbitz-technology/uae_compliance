@@ -1,8 +1,8 @@
 # UAE Compliance: UAE Peppol technical specification
 
-Version 2.0 | 16 September 2026 | Status: implementation baseline, production gated
+Version 2.1 | 18 September 2026 | Status: implementation baseline, production gated
 
-This document supersedes the original build manual and the subsequent architecture review. It specifies the application, work sequence, and acceptance gates. It contains no implementation and claims no completed tests or provider certification. Follow the referenced official rules where a regulatory interpretation remains unresolved.
+This document supersedes the original build manual and the subsequent architecture review. It specifies the application, work sequence, and acceptance gates. It contains no implementation and claims no completed tests or provider certification. Follow the referenced official rules where a regulatory interpretation remains unresolved. Version 2.1 completes the six-code document set, ties scenarios to the 16 official use cases, and records the first real ASP reference (Suntech sandbox) in sections 9.4 and 14; it adds no implementation and no production certification claim.
 
 ## 0. Fixed decisions
 
@@ -290,14 +290,14 @@ The lock records: specification/profile identifiers, billing versus self-billing
 
 | Topic | Required implementation |
 | --- | --- |
-| Document codes | Tax invoice 380; tax credit note 381; commercial invoice 480; commercial credit note 81. Select through the verified category matrix, not `is_return` alone [S03a] [S03b]. |
+| Document codes | Six PINT AE types: tax invoice 380; tax credit note 381; commercial invoice 480; commercial credit note 81; self-billing invoice 389; self-billed credit note 261. Select through the verified category matrix, not `is_return` alone. The UNCL1001 code list is split by transaction family, so no single code-list page shows all six; confirm each against its own transaction path [S03a] [S03b] [S14]. Self-billed 389/261 are enabled in P12. |
 | Tax categories | Use the applicable pinned list. Margin uses ASCII `N`, not `M`; implement its full rules before enabling it [S04]. |
 | VAT identifiers | Apply the AE format in its published context, including 15 digits, initial 1 and final 03. Do not apply the AE rule to all foreign tax IDs [S05]. |
 | Participant versus VAT identity | Keep the participant's TIN distinct from VAT-group registration. Do not enforce an unconditional TIN/TRN prefix equality [S02]. |
 | Credit notes | Require a reason and the applicable reference collection. Implement the published Volume Discount reference exception [S06]. |
 | Free-zone scenario | Include beneficiary ID as required by IBR-007-AE; a beneficiary name alone is insufficient [S06]. |
 | Export | Determine actual transaction treatment and route; foreign customer country does not force zero VAT or a generic endpoint [S02]. |
-| Scenario structure | Agency needs principal identity; summary needs period; e-commerce/export need applicable delivery data; price calculation needs base quantity [S06]. |
+| Scenario structure | Agency needs principal identity; summary needs period; e-commerce/export need applicable delivery data; price calculation needs base quantity [S06]. Drive flag patterns and allowed VAT categories from the 16 official transaction use cases UC1 to UC16, not ad hoc combinations [S01]. |
 | Advance/retention | Define advance tax invoice, payment, final balance invoice, and retention-release documents explicitly. Never subtract an advance only in the ASP payload [S02]. |
 
 Required field counts are not a validator. Resolve each term's conditional requirement from the pinned model and scenario matrix. Do not copy the old blanket TRN/category, self-billing, or exemption-reason rules without confirming their exact context.
@@ -520,6 +520,28 @@ Before production: record the actual appointment/onboarding requirements, endpoi
 
 Keep old submissions bound to their original connection/configuration evidence. Credential rotation is supported; silently repointing historical polling to a new ASP is not. The registry may expose only capabilities that have been implemented and verified for that adapter version.
 
+### 9.4 First real provider reference: Suntech
+
+Verified from the Suntech (Tax Compliance Agent) sandbox API reference and Postman collection [S14]. This records the contract shape only. Real onboarding, returned-XML and acknowledgement verification, and production certification remain P10.
+
+- Base `/api/v1`. Auth is OAuth2 client credentials (`client_id`, `client_secret`) to `/oauth/token/`, refresh at `/oauth/token/refresh/`, Bearer thereafter. One API client per organisation.
+- Submit is `POST /invoices/` in three modes: PINT AE XML by `source_file_path` (preferred), inline JSON `detail`, or an uploaded JSON file. `invoice_type_code` is top level. This confirms the XML-first preference in section 4.5.
+- Status is `GET /invoices/{id}/`. Lifecycle is Processing, Completed, Rejected, Failed, with `c3_mls_status` (exchange/delivery) and `c5_mls_status` (FTA reporting). Map these onto the independent dimensions in section 8.1; do not collapse them into one status.
+- Resubmit is `PUT /invoices/{id}/resubmit/`, a full replacement on the same ID, not permitted after Completed. It maps to the correction path in section 8.6, not a byte-identical transport retry.
+- Documents: `POST /documents/` returns an upload URL, `PUT` uploads the file, the invoice references it by path; download is `POST /documents/download/` with the artefact URI.
+- Receiving is `GET /invoices/?direction=2` with cursor pagination. Webhook events `invoice.received` and `invoice.updated` are configured in the portal, not through the API.
+
+Capability map for this adapter:
+
+| Operation | Suntech |
+| --- | --- |
+| authenticate, submit, get_status, fetch_artifact, fetch_inbound | Supported |
+| find_submission | Via list filters and cursor only; there is no dedicated ambiguity-resolution endpoint, so a lost response stays Unknown and is reconciled by correlation |
+| lookup_participant | Unsupported by the API; onboarding and endpoint registration are portal-only, so buyer endpoints must exist before a live send |
+| withdraw | Unsupported; a Completed invoice is corrected by credit note |
+
+Unsupported operations stay off under the section 9.1 capability rule; the app must not synthesise them.
+
 ## 10. Permissions and evidence
 
 ### 10.1 Access model
@@ -700,6 +722,7 @@ The sources below establish the starting reference, not perpetual applicability.
 | S11 | [Frappe DocType conventions][S11] | Names and database-table conventions |
 | S12 | [AGPL-3.0-only license text][S12] | Chosen license, required notices, source obligations |
 | S13 | [MoF UAE eInvoicing portal][S13] | Current programme documents and five-corner exchange/reporting model |
+| S14 | [Suntech sandbox API reference][S14] and Postman collection | First real ASP contract shape: OAuth2, submit modes, status/MLS model, resubmit, documents, events, receiving; production certification remains P10 |
 
 Resolve these facts in the named phase rather than guessing:
 
@@ -710,7 +733,7 @@ Resolve these facts in the named phase rather than guessing:
 | Real site's tax templates/accounts, currency/rate policy, scope and issue dates | P02/P03 and deployment setup | Affected mappings remain incomplete |
 | Child credential encryption behavior and private-file authorization | P02/P05 | No real credential or evidence release path |
 | Advanced scenario interpretation/accounting | P08 | Scenario remains unsupported |
-| ASP payload/auth/onboarding/IDs/status/idempotency/evidence guarantees | P10 | Simulation/preparation only |
+| ASP payload/auth/onboarding/IDs/status/idempotency/evidence guarantees | P10 | First target is Suntech; sandbox access and API reference obtained [S14], so P10 can begin against it; production certification and returned-XML/acknowledgement evidence remain Unresolved |
 | Deployment workload, retention, reporting deadlines, operational recovery targets | P00/P07/P09 and deployment setup | No capacity, retention, or timing compliance claim |
 
 Do not add forecasts, marketing promises, model-specific prompts, UI mockups, or a code handover to this specification. Keep implementation evidence in version control and the application's behavior in executable contracts and tests.
@@ -729,3 +752,4 @@ Do not add forecasts, marketing promises, model-specific prompts, UI mockups, or
 [S11]: https://docs.frappe.io/framework/user/en/basics/doctypes
 [S12]: https://spdx.org/licenses/AGPL-3.0-only.html
 [S13]: https://mof.gov.ae/en/about-us/initiatives/einvoicing/
+[S14]: https://portal-sandbox.taxcomplianceagent.com/docs/api
