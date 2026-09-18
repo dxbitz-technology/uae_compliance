@@ -43,6 +43,9 @@ jobs:
       - name: Validation tests
         run: python -m unittest discover -s uae_compliance/validation -t . -p 'test_*.py' -v
 
+      - name: Connector tests
+        run: python -m unittest discover -s uae_compliance/connectors -t . -p 'test_*.py' -v
+
       - name: Standards tooling tests
         run: python scripts/standards/test_validate_examples.py
 
