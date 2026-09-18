@@ -1,6 +1,6 @@
 # Build state
 
-Phase: P00, P01 and P02 are done and merged. P03 ERP extraction is in progress.
+Phase: P00 to P03 are done and merged. P04 draft workflow is in progress.
 Baseline: spec version 2.1, 18-09-2026. It adds two self-billing document codes for P12, ties scenario flags to the sixteen official use cases, and names Suntech as the first real provider in section 9.4.
 Branch: develop. Pull requests merge on a passing ci check. No review gate.
 Last verified code commit: develop at the P02 merge. 290 pure tests, 33 site tests.
@@ -32,7 +32,7 @@ Lane B needs only the connector contract that P01 finished, so it runs alongside
 
 ## P03 ERP extraction
 
-State: In progress.
+State: Done.
 Requirement IDs: spec 5.2 source map, 5.3 money rules, 12.2 P03, acceptance A03 to A06.
 
 - P03a: the source map, master resolution and the address frozen per invoice. Done.
@@ -59,6 +59,25 @@ It uses its own company, Peppol Demo Co, so it never collides with the site
 tests, which own UAE Peppol Test Company.
 
 Exclusions: no invoice hooks, no working record, no UI. Those are P04.
+
+## P04 Draft workflow
+
+State: In progress.
+Requirement IDs: spec 4.2 the working record, 7.1 the one validation service, 7.2 the native lifecycle, 7.3 party and company entry, 7.5 the service surface, 12.2 P04, acceptance A07 to A10.
+
+- P04a: the working record, its upsert on save, and the revision check. Done.
+- P04b: Fast and Full preview, and the save and submit gates.
+- P04c: the quick entry extension, company setup, the invoice notice and dialog, and the bulk item fix.
+
+P04a holds to three rules. One record per invoice, ever. Nothing is created
+for a company that is switched off, so a site that never asked for the app
+sees no trace of it. And the record never writes back to the invoice calling
+it, which would put the save into a loop.
+
+Checked on uae.local: saving the demo invoice makes exactly one record and
+saving it again does not make a second; an invoice for a company with no
+seller binding makes none at all; a person's edit counts the input revision
+up and a check result does not; and readiness cannot be set by hand.
 
 ## Still open for the maintainer
 

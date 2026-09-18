@@ -263,6 +263,16 @@ after_install = "uae_compliance.install.after_install"
 after_migrate = "uae_compliance.install.after_migrate"
 before_tests = "uae_compliance.install.before_tests"
 
+# The only place this app attaches to a native document. It keeps one working
+# record beside each draft and never writes back to the invoice, which would
+# put the save into a loop.
+doc_events = {
+	"Sales Invoice": {
+		"on_update": "uae_compliance.services.working.on_invoice_update",
+		"on_cancel": "uae_compliance.services.working.on_invoice_cancel",
+	}
+}
+
 # Only what this app owns. Never another app's fields, roles or scripts.
 fixtures = [
 	{"dt": "Role", "filters": [["role_name", "in", ["UAE Peppol Manager", "UAE Peppol User"]]]},
