@@ -433,8 +433,8 @@ Status: Verified.
 Choice: use the native common code field on UOM rather than adding a DocType for it. A unit with no code is reported as a finding for somebody to fill in on the unit itself, not guessed at.
 Reason: spec 4.3 says to reuse a native field where one exists, and P00 established that UOM already carries one. A second record for the same fact would be a second source of truth, which spec 4.2 warns against. This closes the open question in D026.
 Consequence: the mapping quality depends on a native field that is often blank, so the finding for a missing code has to be clear about where to fix it.
-Affected: spec 4.1 lists a `UAE Peppol UOM Code` DocType that this decision does not build. The maintainer may still want it; it would be a fallback table rather than the primary source.
-Status: Proposed, pending the maintainer.
+Affected: spec 4.1 lists a `UAE Peppol UOM Code` DocType that this decision does not build.
+Status: Verified. The maintainer accepted this on 18-09-2026. If a unit's native code turns out to be blank too often on a real site, a fallback table can be added later as its own packet; it would sit behind the native field rather than replace it.
 
 ## Unresolved facts carried from spec 14
 
@@ -449,6 +449,5 @@ Status: Proposed, pending the maintainer.
 | Issuance and date policy source | maintainer | No issuance deadline logic | P02 |
 | Reporting the Volume discount example defect upstream (D008) | maintainer | Example excluded as an XSD positive case | P01 |
 | Effective applicability and mandate dates | maintainer | No applicability claim; never hard-coded | P02 |
-| Whether the planned UOM code DocType is still needed (D026, now D049) | maintainer | The native common code field is used and no DocType was built | P02 |
 | Amending spec 5.2 for the changed tax breakup field (D019) | maintainer | We follow the stricter rule meanwhile | P03 |
 | ASP contract facts | P10 | Simulation only | P10 |
