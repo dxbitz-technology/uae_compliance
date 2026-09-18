@@ -386,6 +386,30 @@ Reason: each came from a rule failing against real output, not from reading the 
 Affected: the canonical model, its version, and extraction in P03. These are contract changes made before P01 was accepted rather than after.
 Status: Verified.
 
+## D044 A connection's provider and environment settle once it is used
+
+Choice: a provider connection may change freely until something has gone through it. After that its provider and its environment are fixed, and a different one needs a new connection. Rotating the credentials on the same connection stays allowed and expected.
+Reason: old submissions stay bound to the connection that carried them, so repointing one at a different provider, or from sandbox to production, would quietly rewrite what those records mean. Spec 8.2 allows credential rotation on the same identity and requires a new connection for a change of provider or environment.
+Source: uae_compliance/uae_e_invoicing/doctype/uae_peppol_asp/, with site tests covering both directions and a deliberate break confirming they catch it.
+Affected: the worker in P06, and the connection evidence a submission records in P05.
+Status: Verified.
+
+## D045 The app deletes its own credentials
+
+Choice: the connection removes the stored secret of every credential row a save drops, and takes all of them when the connection itself is deleted.
+Reason: this carries out what D023 found. Child row passwords store and read correctly, but the framework deletes a removed row without its secret, and deleting a parent clears only the parent's own. Left alone, a secret would outlive the record that explained what it was for, and would sit in the table after the connection it belonged to was gone.
+The cleanup is worked out from the document as it was before the save, so it only ever touches this connection's own rows. An earlier attempt read the whole credential table, which would have reached other connections' rows.
+Source: site tests covering a dropped row, a deleted connection, and a drop that must leave the other credentials alone. Breaking either path fails those tests.
+Affected: acceptance case A20. It also means these DocTypes must never be exported as fixtures, since the export strips the row name the secret is keyed by.
+Status: Verified.
+
+## D046 Site tests run separately from the rest
+
+Choice: the domain and validation packages run on plain Python with no site. The DocType tests need a database and run through bench. The local gate runner keeps them apart and says plainly that it did not run the site tests.
+Reason: a site test swept into the plain runner errors for want of a database, which reads as the code failing when it is the harness that is missing. Spec 13 says a skipped database test stays Not run and blocks the gate that needs it, so it has to be visible rather than absorbed.
+Consequence, stated rather than glossed: the required `ci` check does not yet run the site tests, so P02's evidence is currently proved locally only. A second workflow that stands up a database is being built alongside. Until it passes, every site test here is Not run in CI.
+Status: Verified as the arrangement. The CI harness is Unresolved, owner: the workflow now in progress, affected phase P02.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |

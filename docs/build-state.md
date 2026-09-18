@@ -28,6 +28,18 @@ Exit evidence for P01: pure tests with no framework and no provider; the canonic
 - No Frappe v15 bench on this host, so that lane stays unverified. version-15 and version-14 are the maintainer's later work.
 - uae.local has no hosts entry and this session has no sudo, so browser access needs one line from the maintainer. This starts to matter in P02, which is the first phase with anything to look at.
 
-## Next packet
+## Packet P02a Module, roles, settings and the provider connection
 
-P02a: the app module, roles, settings and provider connection records, with proof that credentials are stored encrypted. First write the packet record here, then the work. P02 is the first phase that installs anything on a site, so a clean install starting switched off is part of its evidence.
+State: In progress on branch p02a-settings, one pull request against develop.
+Requirement IDs: spec 4.1 (the settings and provider connection records and their constraints), 10.1 (the two roles and what each may do), 2.1 (a clean install starts off), 11.4 (a repeated migration is safe), 12.2 P02a, 13 A20 and A21.
+Expected behavior: the module, the two roles, one settings record per site and the provider connection record with its credential rows. Credentials are stored through the framework's encrypted field and never returned.
+Affected interfaces: everything P02b and P02c add to, and the connection the worker reads in P06.
+Likely files: the DocType definitions under uae_compliance/uae_e_invoicing, their controllers, site tests, a decision entry.
+Checks: a clean install leaves every company switched off; a provider and an environment cannot be repurposed once the connection has been used; a credential value is never returned by any read path; deleting a credential row or its parent leaves no secret behind; a restricted user cannot read a credential or configure another company; running the migration twice changes nothing.
+Exclusions: no seller or party profiles, no tax or unit mappings, no fixtures beyond the roles, no invoice behaviour. Those are P02b and P02c.
+
+Note on evidence. This is the first packet whose checks need a real site, and the current CI has none. A second workflow that stands up a database and runs site tests is being built alongside this packet. Until it passes, every site test here is Not run in CI and proved locally only, which is stated rather than glossed over.
+
+## Next packets
+
+P02b seller and party profiles. P02c tax and unit mappings with the install and migrate evidence. The UOM DocType question in D026 is still open and decides part of P02c.

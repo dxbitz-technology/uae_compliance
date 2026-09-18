@@ -31,12 +31,20 @@ run() {
 
 run "lint" "$RUFF" check .
 run "format" "$RUFF" format --check .
-run "app tests" "$PYTHON" -m unittest discover -s uae_compliance -t . -p 'test_*.py'
+# The domain and validation packages run on plain Python with no site. The
+# DocType tests need a database and run through bench instead, so they are not
+# swept up here; a site test that quietly errored in this runner would look
+# like a failure of the code rather than of the harness.
+run "domain tests" "$PYTHON" -m unittest discover -s uae_compliance/domain -t . -p 'test_*.py'
+run "validation tests" "$PYTHON" -m unittest discover -s uae_compliance/validation -t . -p 'test_*.py'
 run "standards tooling tests" "$PYTHON" scripts/standards/test_validate_examples.py
 run "standards lock hashes" "$PYTHON" scripts/standards/check_lock.py
 run "official examples" "$PYTHON" scripts/standards/validate_examples.py
 run "altered negative examples" "$PYTHON" scripts/standards/validate_examples.py --negative
 run "determinism" "$PYTHON" scripts/standards/validate_examples.py --determinism
+
+echo "note  site tests are not run here. They need a database:"
+echo "      bench --site <site> run-tests --app uae_compliance"
 
 echo
 if [ $failed -eq 0 ]; then

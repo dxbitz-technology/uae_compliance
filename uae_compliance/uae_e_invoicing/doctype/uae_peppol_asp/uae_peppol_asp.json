@@ -1,0 +1,158 @@
+{
+ "actions": [],
+ "creation": "2026-09-18 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "editable_grid": 1,
+ "track_changes": 1,
+ "autoname": "field:label",
+ "field_order": [
+  "identity_section",
+  "label",
+  "provider_key",
+  "environment",
+  "enabled",
+  "column_break_identity",
+  "base_url",
+  "adapter_version",
+  "config_revision",
+  "has_been_used",
+  "health_section",
+  "connection_state",
+  "last_checked_at",
+  "token_expires_on",
+  "credentials_section",
+  "credentials"
+ ],
+ "fields": [
+  {
+   "fieldname": "identity_section",
+   "fieldtype": "Section Break",
+   "label": "Connection"
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Label",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "provider_key",
+   "fieldtype": "Data",
+   "label": "Provider",
+   "reqd": 1,
+   "description": "An installed adapter. It cannot be changed once the connection has been used."
+  },
+  {
+   "fieldname": "environment",
+   "fieldtype": "Select",
+   "label": "Environment",
+   "reqd": 1,
+   "options": "Simulation\nSandbox\nProduction",
+   "default": "Simulation",
+   "description": "It cannot be changed once the connection has been used."
+  },
+  {
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "column_break_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "base_url",
+   "fieldtype": "Data",
+   "label": "Base URL"
+  },
+  {
+   "fieldname": "adapter_version",
+   "fieldtype": "Data",
+   "label": "Adapter Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "config_revision",
+   "fieldtype": "Int",
+   "label": "Configuration Revision",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "has_been_used",
+   "fieldtype": "Check",
+   "label": "Has Been Used",
+   "read_only": 1,
+   "description": "Set the first time anything is sent through this connection."
+  },
+  {
+   "fieldname": "health_section",
+   "fieldtype": "Section Break",
+   "label": "Health"
+  },
+  {
+   "fieldname": "connection_state",
+   "fieldtype": "Select",
+   "label": "Connection State",
+   "options": "Not checked\nReachable\nUnreachable\nUnauthorised",
+   "default": "Not checked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_checked_at",
+   "fieldtype": "Datetime",
+   "label": "Last Checked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "token_expires_on",
+   "fieldtype": "Datetime",
+   "label": "Token Expires On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "credentials_section",
+   "fieldtype": "Section Break",
+   "label": "Credentials"
+  },
+  {
+   "fieldname": "credentials",
+   "fieldtype": "Table",
+   "label": "Credentials",
+   "options": "UAE Peppol ASP Credential"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-18 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "UAE e-Invoicing",
+ "name": "UAE Peppol ASP",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "UAE Peppol Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

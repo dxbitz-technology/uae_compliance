@@ -1,0 +1,144 @@
+{
+ "actions": [],
+ "creation": "2026-09-18 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "issingle": 1,
+ "editable_grid": 1,
+ "track_changes": 1,
+ "field_order": [
+  "operations_section",
+  "pause_outbound",
+  "pause_reason",
+  "column_break_ops",
+  "max_attempts",
+  "first_delay_seconds",
+  "max_delay_seconds",
+  "poll_interval_seconds",
+  "standards_section",
+  "ruleset_id",
+  "ruleset_version",
+  "canonical_version",
+  "serializer_version"
+ ],
+ "fields": [
+  {
+   "fieldname": "operations_section",
+   "fieldtype": "Section Break",
+   "label": "Operations"
+  },
+  {
+   "fieldname": "pause_outbound",
+   "fieldtype": "Check",
+   "label": "Pause Outbound",
+   "description": "Stops new sends and retries. Validation, status recovery and queued work are untouched."
+  },
+  {
+   "fieldname": "pause_reason",
+   "fieldtype": "Small Text",
+   "label": "Pause Reason",
+   "depends_on": "pause_outbound",
+   "mandatory_depends_on": "pause_outbound"
+  },
+  {
+   "fieldname": "column_break_ops",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "max_attempts",
+   "fieldtype": "Int",
+   "label": "Maximum Attempts",
+   "default": "5",
+   "description": "A product default, not a regulatory deadline. Review against the provider contract."
+  },
+  {
+   "fieldname": "first_delay_seconds",
+   "fieldtype": "Int",
+   "label": "First Delay (Seconds)",
+   "default": "30"
+  },
+  {
+   "fieldname": "max_delay_seconds",
+   "fieldtype": "Int",
+   "label": "Maximum Delay (Seconds)",
+   "default": "900"
+  },
+  {
+   "fieldname": "poll_interval_seconds",
+   "fieldtype": "Int",
+   "label": "Status Poll Interval (Seconds)",
+   "default": "300"
+  },
+  {
+   "fieldname": "standards_section",
+   "fieldtype": "Section Break",
+   "label": "Installed Rules"
+  },
+  {
+   "fieldname": "ruleset_id",
+   "fieldtype": "Data",
+   "label": "Ruleset",
+   "read_only": 1,
+   "description": "Set by the release. Rules are never downloaded at runtime."
+  },
+  {
+   "fieldname": "ruleset_version",
+   "fieldtype": "Data",
+   "label": "Ruleset Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "canonical_version",
+   "fieldtype": "Data",
+   "label": "Canonical Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "serializer_version",
+   "fieldtype": "Data",
+   "label": "Serializer Version",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-18 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "UAE e-Invoicing",
+ "name": "UAE Peppol Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "UAE Peppol Manager",
+   "read": 1,
+   "write": 1,
+   "create": 0,
+   "delete": 0,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "UAE Peppol User",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "delete": 0,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 0,
+   "delete": 0,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

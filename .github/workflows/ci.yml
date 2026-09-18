@@ -37,8 +37,11 @@ jobs:
           ruff check .
           ruff format --check .
 
-      - name: App tests
-        run: python -m unittest discover -s uae_compliance -t . -p 'test_*.py' -v
+      - name: Domain tests
+        run: python -m unittest discover -s uae_compliance/domain -t . -p 'test_*.py' -v
+
+      - name: Validation tests
+        run: python -m unittest discover -s uae_compliance/validation -t . -p 'test_*.py' -v
 
       - name: Standards tooling tests
         run: python scripts/standards/test_validate_examples.py
