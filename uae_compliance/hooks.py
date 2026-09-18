@@ -261,6 +261,7 @@ required_apps = ["frappe/erpnext"]
 
 after_install = "uae_compliance.install.after_install"
 after_migrate = "uae_compliance.install.after_migrate"
+before_tests = "uae_compliance.install.before_tests"
 
 # Only what this app owns. Never another app's fields, roles or scripts.
 fixtures = [

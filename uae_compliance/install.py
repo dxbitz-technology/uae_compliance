@@ -35,3 +35,19 @@ def record_installed_rules():
 	settings.serializer_version = str(SERIALIZER_VERSION)
 	settings.flags.ignore_permissions = True
 	settings.save()
+
+
+def before_tests():
+	"""Make a bare site usable before the tests run.
+
+	A site created from nothing has no company and none of the records ERPNext
+	normally lays down through its setup wizard, so creating a company fails on
+	a missing warehouse type. Tests that quietly depend on a developer's
+	existing site are not testing anything, so they set the site up themselves.
+
+	Safe to run again. ERPNext's own installer skips what is already there.
+	"""
+	from erpnext.setup.setup_wizard.operations.install_fixtures import install
+
+	install(country="United Arab Emirates")
+	frappe.db.commit()
