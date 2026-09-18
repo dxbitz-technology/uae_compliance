@@ -36,8 +36,27 @@ State: In progress.
 Requirement IDs: spec 5.2 source map, 5.3 money rules, 12.2 P03, acceptance A03 to A06.
 
 - P03a: the source map, master resolution and the address frozen per invoice. Done.
-- P03b: lines, taxes, discounts and currency.
-- P03c: an ordinary invoice and credit note all the way to XML the official rules accept.
+- P03b: lines, taxes, discounts and currency. Done.
+- P03c: an ordinary invoice and credit note all the way to XML the official rules accept. Done.
+
+Checked on uae.local against a real Sales Invoice built to the first money
+fixture in spec 5.3, two units at AED 100 with a line discount of 20 and VAT
+at 5 percent. ERPNext posted net 180, tax 9, total 189. Extraction, the money
+rules, the schema, the shared rules and the AE rules all pass on the invoice.
+The credit note made from it passes too once a reason code is supplied, which
+is a person's input and arrives with the working record in P04. Until then
+extraction reports it as missing.
+
+To rebuild that invoice on a development site:
+
+```
+bench --site uae.local console
+>>> from uae_compliance.development.build_invoice import run
+>>> run()
+```
+
+It uses its own company, Peppol Demo Co, so it never collides with the site
+tests, which own UAE Peppol Test Company.
 
 Exclusions: no invoice hooks, no working record, no UI. Those are P04.
 

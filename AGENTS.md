@@ -61,6 +61,23 @@ The test runner disables the scheduler and writes to the site, so point it at a 
 
 The `site-tests` job in `.github/workflows/site-tests.yml` does the same thing on a clean machine. It pins Frappe and ERPNext by tag and checks the resulting commits before it creates the site.
 
+## A real invoice to check against
+
+Extraction is only worth trusting against an invoice ERPNext actually posted.
+This builds one, matching the first worked example in spec 5.3:
+
+```bash
+bench --site uae.local console
+```
+
+```
+>>> from uae_compliance.development.build_invoice import run
+>>> run()
+```
+
+It uses its own company, so it does not collide with the site tests. Safe to
+run again.
+
 ## Ground rules
 
 Evidence before claims. Check a framework detail in the pinned source and cite the file and line rather than trusting memory. Label what you record as Verified, Proposed, or Unresolved.

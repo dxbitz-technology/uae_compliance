@@ -1,10 +1,10 @@
 {
  "actions": [],
+ "autoname": "field:label",
  "creation": "2026-09-18 00:00:00.000000",
  "doctype": "DocType",
- "engine": "InnoDB",
  "editable_grid": 1,
- "track_changes": 1,
+ "engine": "InnoDB",
  "field_order": [
   "identity_section",
   "label",
@@ -33,47 +33,47 @@
    "label": "Identity"
   },
   {
+   "description": "A name you choose. It does not depend on having a tax number yet.",
    "fieldname": "label",
    "fieldtype": "Data",
    "label": "Label",
    "reqd": 1,
-   "unique": 1,
-   "description": "A name you choose. It does not depend on having a tax number yet."
+   "unique": 1
   },
   {
+   "default": "0235",
    "fieldname": "participant_scheme",
    "fieldtype": "Data",
-   "label": "Participant Scheme",
-   "default": "0235"
+   "label": "Participant Scheme"
   },
   {
+   "description": "The seller's own identifier on the network. Not the VAT group registration.",
    "fieldname": "participant_value",
    "fieldtype": "Data",
-   "label": "Participant Identifier",
-   "description": "The seller's own identifier on the network. Not the VAT group registration."
+   "label": "Participant Identifier"
   },
   {
    "fieldname": "column_break_identity",
    "fieldtype": "Column Break"
   },
   {
+   "default": "Not sure",
    "fieldname": "vat_state",
    "fieldtype": "Select",
    "label": "VAT Registration",
-   "options": "Not sure\nRegistered\nNot registered",
-   "default": "Not sure"
+   "options": "Not sure\nRegistered\nNot registered"
   },
   {
+   "depends_on": "eval:doc.vat_state=='Registered'",
    "fieldname": "vat_number",
    "fieldtype": "Data",
-   "label": "VAT Registration Number",
-   "depends_on": "eval:doc.vat_state=='Registered'"
+   "label": "VAT Registration Number"
   },
   {
+   "description": "A shared group registration does not make two companies one participant.",
    "fieldname": "in_vat_group",
    "fieldtype": "Check",
-   "label": "In a VAT Group",
-   "description": "A shared group registration does not make two companies one participant."
+   "label": "In a VAT Group"
   },
   {
    "fieldname": "legal_section",
@@ -81,10 +81,12 @@
    "label": "Legal Registration"
   },
   {
+   "default": "TL",
+   "description": "TL trade licence, EID Emirates ID, PAS passport, CD cabinet decision. The rules accept only these four for a UAE party.",
    "fieldname": "legal_scheme",
-   "fieldtype": "Data",
+   "fieldtype": "Select",
    "label": "Registration Scheme",
-   "default": "TL"
+   "options": "\nTL\nEID\nPAS\nCD"
   },
   {
    "fieldname": "legal_value",
@@ -92,10 +94,10 @@
    "label": "Registration Number"
   },
   {
+   "description": "Required by the rules for a trade licence.",
    "fieldname": "legal_authority",
    "fieldtype": "Data",
-   "label": "Issuing Authority",
-   "description": "Required by the rules for a trade licence."
+   "label": "Issuing Authority"
   },
   {
    "fieldname": "onboarding_section",
@@ -103,13 +105,13 @@
    "label": "Onboarding"
   },
   {
+   "default": "Not checked",
+   "description": "Set by a lookup, never by hand. Answering a question about yourself is not evidence.",
    "fieldname": "identity_state",
    "fieldtype": "Select",
    "label": "Identity Checked",
    "options": "Not checked\nVerified\nNot found\nUnavailable\nExpired",
-   "default": "Not checked",
-   "read_only": 1,
-   "description": "Set by a lookup, never by hand. Answering a question about yourself is not evidence."
+   "read_only": 1
   },
   {
    "fieldname": "identity_checked_at",
@@ -126,8 +128,8 @@
   {
    "fieldname": "current_asp",
    "fieldtype": "Link",
-   "options": "UAE Peppol ASP",
-   "label": "Current Connection"
+   "label": "Current Connection",
+   "options": "UAE Peppol ASP"
   },
   {
    "fieldname": "companies_section",
@@ -137,8 +139,8 @@
   {
    "fieldname": "companies",
    "fieldtype": "Table",
-   "options": "UAE Peppol Seller Company",
-   "label": "Companies"
+   "label": "Companies",
+   "options": "UAE Peppol Seller Company"
   }
  ],
  "links": [],
@@ -149,38 +151,38 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
    "role": "UAE Peppol Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "write": 1,
-   "create": 1,
-   "delete": 1
+   "write": 1
   },
   {
-   "role": "UAE Peppol User",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "write": 0,
    "create": 0,
-   "delete": 0
+   "delete": 0,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "UAE Peppol User",
+   "share": 1,
+   "write": 0
   },
   {
-   "role": "System Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "write": 1,
    "create": 1,
-   "delete": 1
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
   }
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "autoname": "field:label"
+ "track_changes": 1
 }

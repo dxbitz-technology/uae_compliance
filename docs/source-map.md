@@ -66,6 +66,8 @@ has to keep meaning what it meant when it was issued.
 | `lines.item_type` | Item `uae_peppol_item_type`, else the item group's | Never read from `is_stock_item` | D042 | P03a |
 | `lines.classifications` | Item `customs_tariff_number` | Goods are classified by tariff heading, services by activity code | BT-158 | P03a |
 | `lines.net_price` | Item row `net_rate` | Already has the row discount taken off | BT-146 | P03b |
+| `payment.means_code` | Mode of Payment `type` on the payments table | Cash is 10, bank is 42. Nothing recorded sends 1, the published value for an instrument not stated, with a warning | ibr-191-ae | P03b |
+| `parties.*.address.subdivision` | Address `emirate`, else `state` | Required by ibr-143-ae and ibr-144-ae. On a UAE site the emirate is its own field, put there by ERPNext | ibr-143-ae | P03a |
 | `lines.price_discount` | Item row `discount_amount` | Carried for the record. Must not be taken off a second time as an allowance | BT-147 | P03b |
 | `lines.net_amount` | Item row `net_amount` | The posted figure, never recalculated | BT-131 | P03b |
 | `lines.tax_category`, `tax_rate` | The tax mapping for the company and the row's tax template or account | Template first, account second. Two matches is refused, not resolved | BT-151, BT-152 | P03a |
@@ -74,8 +76,8 @@ has to keep meaning what it meant when it was issued.
 
 | Canonical path | Source | Condition and transformation | Official term | Packet |
 | --- | --- | --- | --- | --- |
-| `tax_breakdown` | Sales Taxes and Charges rows | Grouped by every dimension the rules need, not by rate alone | BG-23 | P03b |
-| `allowances` | `discount_amount` with `apply_discount_on`, and `distributed_discount_amount` on the rows | ERPNext allocates a document discount to the rows itself and that allocation is used rather than a fresh one | BG-20 | P03b |
+| `tax_breakdown` | The `Item Wise Tax Detail` table, grouped through the lines | Per invoice row, not per item code. Version 16 replaced the old map, so the warning in spec 5.2 no longer applies here | BG-23 | P03b |
+| `allowances` | Nothing | ERPNext has already taken the document discount off every line, so stating it again would take it off twice. A cash discount on the grand total is the one shape this cannot carry and is reported | BG-20 | P03b |
 | `charges` | Tax rows that are not VAT | `total_taxes_and_charges` is not necessarily VAT | BG-21 | P03b |
 | `totals.tax_exclusive` | `net_total` | Checked against the line sum, never recalculated from it | BT-109 | P03b |
 | `totals.prepaid` | `total_advance` | Frozen at issue. A payment made later never rewrites it. `outstanding_amount` is not used | BT-113 | P03b |
@@ -89,7 +91,7 @@ has to keep meaning what it meant when it was issued.
 | Canonical path | Source | Condition and transformation | Official term | Packet |
 | --- | --- | --- | --- | --- |
 | `references.preceding` | `return_against`, plus any explicit extra references | More than one is supported, because a credit note can answer several invoices | BG-3 | P03c |
-| `references.credit_reason` | Explicit input on the working record | Required on a credit note. The volume discount exception is the one case with no preceding reference | ibr-055-ae | P03c |
+| `references.credit_reason_code` | Explicit input on the working record | One of DL8.61.1.A to E or VD, and nothing else. Extraction reports it missing because ERPNext holds no such field | ibr-001-ae, ibr-055-ae | P04 |
 | `scenario.*` | Explicit input on the working record | Named booleans. The eight character official string is built only at serialization | ibr-154-ae | P01 |
 
 ## Not yet decided

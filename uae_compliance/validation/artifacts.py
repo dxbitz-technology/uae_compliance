@@ -21,6 +21,12 @@ STANDARDS_ROOT = PACKAGE_ROOT / "standards"
 PINT_VERSION = "1.0.4"
 UBL_VERSION = "2.1"
 
+# Carried by every published example of this release. Pinned here rather
+# than stored on the site, so a field cannot point a document at a
+# specification the app does not hold. See decision D015.
+CUSTOMIZATION_ID = "urn:peppol:pint:billing-1@ae-1"
+PROFILE_ID = "urn:peppol:bis:billing"
+
 # Which folder and schema each kind of document uses.
 TRANSACTIONS = {
 	"Invoice": ("trn-invoice", "UBL-Invoice-2.1.xsd"),
