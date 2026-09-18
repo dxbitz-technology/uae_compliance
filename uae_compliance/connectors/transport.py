@@ -198,12 +198,18 @@ class Request:
 	label: str = ""
 	correlation: str | None = None
 	connection: str | None = None
+	secret_response: bool = False
 
 	def __post_init__(self):
 		if not self.method:
 			raise PolicyError("a request needs a method")
 		if self.body is not None and not isinstance(self.body, bytes):
 			raise PolicyError("a request body is bytes, already encoded")
+		if self.operation is Operation.AUTHENTICATE:
+			# The answer to this one is a credential. Nothing can mask a token
+			# we have not seen yet, so the body is never kept at all. Forced
+			# here rather than left to each adapter to remember.
+			object.__setattr__(self, "secret_response", True)
 
 
 @dataclass(frozen=True)
@@ -457,7 +463,7 @@ class Transport:
 				response_headers=redact_headers(response_headers, secrets),
 				response_digest=digest(payload),
 				response_bytes=len(payload),
-				snippet=_snippet(payload, secrets),
+				snippet=REDACTED if request.secret_response else _snippet(payload, secrets),
 				started_at=_now_text(),
 				elapsed_ms=elapsed,
 				result="Completed",
