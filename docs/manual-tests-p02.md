@@ -9,20 +9,16 @@ something being refused, the refusal is the pass.
 
 ## Before you start
 
-The site needs one line in your hosts file, which needs your password:
-
-```bash
-echo "127.0.0.1 uae.local" | sudo tee -a /etc/hosts
-```
-
-Then start the bench and open the site:
+Start the bench:
 
 ```bash
 cd /Users/aslam/frappe-local/loc16 && bench start
 ```
 
-Go to `http://uae.local:8002` and sign in as Administrator. Everything below is
-reached from the search bar at the top by typing the record name.
+Go to `http://localhost:8002` and sign in as Administrator. The bench serves
+uae.local as its default site, so localhost reaches it with nothing else to
+set up. Everything below is reached from the search bar at the top by typing
+the record name.
 
 ## A. A fresh site does nothing
 
