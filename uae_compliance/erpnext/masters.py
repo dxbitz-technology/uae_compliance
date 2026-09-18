@@ -297,10 +297,20 @@ def _address(name: str | None, out: Resolution) -> dict | None:
 		"line1": doc.address_line1 or None,
 		"line2": doc.address_line2 or None,
 		"city": doc.city or None,
-		"subdivision": doc.state or None,
+		"subdivision": _subdivision(doc),
 		"postal_code": doc.pincode or None,
 		"country": _country_code(doc.country, out),
 	}
+
+
+def _subdivision(address) -> str | None:
+	"""The country subdivision, which ibr-143-ae and ibr-144-ae both require.
+
+	On a UAE site the emirate is its own field, put there by ERPNext's own
+	regional setup, and the general state field is usually left empty. So the
+	emirate is asked first and the state answers for everywhere else.
+	"""
+	return address.get("emirate") or address.state or None
 
 
 def _contact(invoice) -> dict:

@@ -437,6 +437,45 @@ Consequence: the mapping quality depends on a native field that is often blank, 
 Affected: spec 4.1 lists a `UAE Peppol UOM Code` DocType that this decision does not build.
 Status: Verified. The maintainer accepted this on 18-09-2026. If a unit's native code turns out to be blank too often on a real site, a fallback table can be added later as its own packet; it would sit behind the native field rather than replace it.
 
+## D050 Version 16 keeps the per line tax in a table, not a map
+
+Choice: read the per line tax from the `Item Wise Tax Detail` child table on the invoice.
+Reason: spec 5.2 warns against `item_wise_tax_detail[item_code]`, because it was a map keyed by item code and two rows of the same item were added together with no way back to either. Version 16 replaced it with a child table holding the invoice row and the tax row by name, and ships a patch that migrates the old data into it. The thing the spec warns about no longer exists in the release we build on.
+Consequence: a line's category can be resolved even when the same item appears twice at different rates, which is the second money fixture in spec 5.3. The table holds company currency amounts, so a foreign currency invoice converts them and the leftover from rounding settles on the largest group.
+Source: erpnext/controllers/taxes_and_totals.py and accounts/doctype/item_wise_tax_detail, read on the pinned release.
+Affected: spec 5.2 should drop the warning for version 16. D019 recorded the old field as dropped; it was replaced, which is the more useful fact.
+Status: Verified.
+
+## D051 A document discount is already in the line amounts
+
+Choice: never state an ERPNext document discount as a document allowance.
+Reason: the pinned controller spreads the discount across the rows and rewrites each row's net amount and net rate before tax is worked out. The reduced amount is already in every line, so putting it back at document level would take it off twice, which spec 5.3 forbids outright.
+Consequence: `totals.allowances` is zero on an ordinary invoice and the taxable base still reconciles, which the fourth money fixture in spec 5.3 confirms.
+The one shape this cannot carry: a cash or non trade discount applied to the grand total. The controller returns early and leaves the lines alone, so the deduction sits after tax with no line and no tax group it belongs to. It is reported as an error rather than approximated, which is invariant I11.
+Source: erpnext/controllers/taxes_and_totals.py, the discount amount block.
+Status: Verified.
+
+## D052 Payment means when the invoice does not say
+
+Choice: map Mode of Payment type to the official code, Cash to 10 and Bank to 42. Where the invoice records no payment at all, or a type with no safe equivalent, send 1 and raise a warning.
+Reason: ibr-191-ae requires a payment means code on an invoice. ERPNext records how an invoice was paid through Mode of Payment, which carries a type rather than an official code, so something has to line the two up. Code 1 is the published value for an instrument that has not been stated, so it states absence rather than guessing at an answer.
+Consequence: an invoice with no payment recorded still validates, and the warning says the document did not state one.
+Status: Proposed. Worth confirming with the tax adviser that code 1 is acceptable on a UAE invoice that was simply not paid at the time of issue. If it is not, the code becomes a required input on the working record in P04.
+
+## D053 The legal registration scheme is one of four
+
+Choice: the legal registration scheme on both profiles is a list of TL, EID, PAS and CD rather than free text.
+Reason: ibr-173-ae accepts only those four for a UAE party, and a free text field let a wrong value through to Full validation, where it failed with a rule id and nothing else. The list stops it at entry.
+Consequence: an existing profile holding anything else has to be corrected. No real site has one yet.
+Status: Verified.
+
+## D054 Credit note reasons are a closed list of six
+
+Choice: the credit reason code is one of DL8.61.1.A to DL8.61.1.E or VD, and nothing else.
+Reason: ibr-001-ae tests the value against exactly that list. VD is the volume discount case, which is also the one exception that needs no preceding invoice reference.
+Consequence: extraction cannot supply a reason, because ERPNext has no field holding one. A credit note is reported as needing a reason until the working record in P04 carries it. The field there is a list, not free text.
+Status: Verified.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |
@@ -446,6 +485,7 @@ Status: Verified. The maintainer accepted this on 18-09-2026. If a unit's native
 | Real site tax templates, accounts, currency policy | deployment setup | Mappings incomplete | P02/P03 |
 | Whether this app reads fta_compliance fields when co-installed (D014) | P01 | Stay independent for now | P01 |
 | Currency precision fallback (D018) | money rules packet | No rounding table yet | P01/P03 |
+| Whether payment means code 1 is acceptable when an invoice states no payment (D052) | maintainer with the tax adviser | A warning, and the code is sent | P03/P04 |
 | Which registration a tax group member shows on its invoice (D016) | maintainer with the tax adviser | Seller profile keeps both identities separate | P02 |
 | Issuance and date policy source | maintainer | No issuance deadline logic | P02 |
 | Reporting the Volume discount example defect upstream (D008) | maintainer | Example excluded as an XSD positive case | P01 |

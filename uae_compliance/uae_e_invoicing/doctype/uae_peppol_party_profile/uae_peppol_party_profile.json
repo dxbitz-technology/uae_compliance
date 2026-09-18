@@ -2,9 +2,8 @@
  "actions": [],
  "creation": "2026-09-18 00:00:00.000000",
  "doctype": "DocType",
- "engine": "InnoDB",
  "editable_grid": 1,
- "track_changes": 1,
+ "engine": "InnoDB",
  "field_order": [
   "party_section",
   "party_doctype",
@@ -37,21 +36,21 @@
    "label": "Party"
   },
   {
+   "description": "Customers and suppliers only. Nothing else has a party profile.",
    "fieldname": "party_doctype",
    "fieldtype": "Select",
-   "label": "Party Type",
-   "reqd": 1,
-   "options": "Customer\nSupplier",
    "in_list_view": 1,
-   "description": "Customers and suppliers only. Nothing else has a party profile."
+   "label": "Party Type",
+   "options": "Customer\nSupplier",
+   "reqd": 1
   },
   {
    "fieldname": "party",
    "fieldtype": "Dynamic Link",
-   "options": "party_doctype",
+   "in_list_view": 1,
    "label": "Party",
-   "reqd": 1,
-   "in_list_view": 1
+   "options": "party_doctype",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_party",
@@ -60,16 +59,16 @@
   {
    "fieldname": "establishment_country",
    "fieldtype": "Link",
-   "options": "Country",
-   "label": "Country of Establishment"
+   "label": "Country of Establishment",
+   "options": "Country"
   },
   {
+   "default": "Not sure",
+   "description": "Being an individual does not by itself make a sale a consumer sale.",
    "fieldname": "party_context",
    "fieldtype": "Select",
    "label": "Context",
-   "options": "Not sure\nBusiness\nGovernment\nConsumer",
-   "default": "Not sure",
-   "description": "Being an individual does not by itself make a sale a consumer sale."
+   "options": "Not sure\nBusiness\nGovernment\nConsumer"
   },
   {
    "fieldname": "tax_section",
@@ -77,11 +76,11 @@
    "label": "Tax and Network"
   },
   {
+   "default": "Not sure",
    "fieldname": "vat_state",
    "fieldtype": "Select",
    "label": "VAT Registration",
-   "options": "Not sure\nRegistered\nNot registered",
-   "default": "Not sure"
+   "options": "Not sure\nRegistered\nNot registered"
   },
   {
    "fieldname": "vat_number",
@@ -89,22 +88,22 @@
    "label": "VAT Registration Number"
   },
   {
+   "description": "For a foreign party that also holds a UAE registration. It never overwrites its own.",
    "fieldname": "extra_vat_number",
    "fieldtype": "Data",
-   "label": "Additional UAE Registration",
-   "description": "For a foreign party that also holds a UAE registration. It never overwrites its own."
+   "label": "Additional UAE Registration"
   },
   {
    "fieldname": "column_break_tax",
    "fieldtype": "Column Break"
   },
   {
+   "default": "Not sure",
+   "description": "What somebody told us. It is not evidence.",
    "fieldname": "peppol_state",
    "fieldtype": "Select",
    "label": "On the Network",
-   "options": "Not sure\nRegistered\nNot registered",
-   "default": "Not sure",
-   "description": "What somebody told us. It is not evidence."
+   "options": "Not sure\nRegistered\nNot registered"
   },
   {
    "fieldname": "endpoint_scheme",
@@ -122,9 +121,11 @@
    "label": "Legal Registration"
   },
   {
+   "description": "TL trade licence, EID Emirates ID, PAS passport, CD cabinet decision. The rules accept only these four for a UAE party.",
    "fieldname": "legal_scheme",
-   "fieldtype": "Data",
-   "label": "Registration Scheme"
+   "fieldtype": "Select",
+   "label": "Registration Scheme",
+   "options": "\nTL\nEID\nPAS\nCD"
   },
   {
    "fieldname": "legal_value",
@@ -142,13 +143,13 @@
    "label": "Lookup Evidence"
   },
   {
+   "default": "Not checked",
+   "description": "Set by a lookup, never by hand.",
    "fieldname": "lookup_state",
    "fieldtype": "Select",
    "label": "Lookup Result",
    "options": "Not checked\nVerified\nNot found\nUnavailable\nExpired",
-   "default": "Not checked",
-   "read_only": 1,
-   "description": "Set by a lookup, never by hand."
+   "read_only": 1
   },
   {
    "fieldname": "lookup_checked_at",
@@ -177,37 +178,38 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
    "role": "UAE Peppol Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "write": 1,
-   "create": 1,
-   "delete": 1
+   "write": 1
   },
   {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "print": 1,
+   "read": 1,
    "role": "UAE Peppol User",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "write": 1,
-   "create": 1,
-   "delete": 0
+   "write": 1
   },
   {
-   "role": "System Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "write": 1,
    "create": 1,
-   "delete": 1
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
   }
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }
