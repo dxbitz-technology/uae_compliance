@@ -427,11 +427,10 @@ class Transport:
 		try:
 			parts = self._check_url(url)
 			address, family = self._pick_address(parts)
-			remaining = deadline - time.monotonic()
-			if remaining <= 0:
+			if deadline - time.monotonic() <= 0:
 				raise RequestTimedOut(f"{request.label or request.operation.value} ran out of time")
 			status, response_headers, payload = self._send(
-				parts, address, family, method, headers, body, remaining
+				parts, address, family, method, headers, body, deadline
 			)
 		except TransportError as error:
 			self._record_refusal(request, url, method, body, error, started)
@@ -541,8 +540,8 @@ class Transport:
 				return (address, port), family
 		raise BlockedAddress(f"{host} resolves to an address this app will not call")
 
-	def _send(self, parts, address, family, method, headers, body, remaining):
-		connect_timeout = min(self._policy.connect_timeout, remaining)
+	def _send(self, parts, address, family, method, headers, body, deadline):
+		connect_timeout = min(self._policy.connect_timeout, max(0.001, deadline - time.monotonic()))
 		sock = self._connect(address, family, connect_timeout)
 		try:
 			if parts.scheme == "https":
@@ -551,7 +550,7 @@ class Transport:
 					context.check_hostname = False
 					context.verify_mode = ssl.CERT_NONE
 				sock = context.wrap_socket(sock, server_hostname=parts.hostname)
-			sock.settimeout(min(self._policy.read_timeout, max(0.001, remaining)))
+			self._allow_until(sock, deadline)
 			connection = http.client.HTTPConnection(parts.hostname, parts.port or None)
 			connection.sock = sock
 			target = parts.path or "/"
@@ -559,7 +558,7 @@ class Transport:
 				target = f"{target}?{parts.query}"
 			connection.request(method, target, body, dict(headers))
 			response = connection.getresponse()
-			payload = self._read_bounded(response)
+			payload = self._read_bounded(response, sock, deadline)
 			return response.status, dict(response.getheaders()), payload
 		finally:
 			try:
@@ -567,17 +566,38 @@ class Transport:
 			except OSError:
 				pass
 
-	def _read_bounded(self, response) -> bytes:
+	def _allow_until(self, sock, deadline):
+		"""Give the socket the smaller of one read and everything that is left.
+
+		The read timeout limits one read. The deadline limits the whole
+		exchange, and without this it limited nothing: a provider dribbling a
+		body a chunk at a time got a fresh read timeout for every chunk, so a
+		call with a two minute deadline could run for half an hour and outlive
+		the worker's claim on the work.
+		"""
+		remaining = deadline - time.monotonic()
+		if remaining <= 0:
+			raise RequestTimedOut("the provider did not answer in time")
+		sock.settimeout(min(self._policy.read_timeout, remaining))
+
+	def _read_bounded(self, response, sock, deadline) -> bytes:
 		"""Read up to the limit and refuse anything past it.
 
 		One byte over the limit is read on purpose, so an oversized body is
 		caught rather than quietly truncated into something that parses.
+
+		`read1` rather than `read`, so the loop belongs to us. `read` keeps
+		asking the socket until it has everything it was told to fetch, and a
+		provider sending the body slowly enough never trips a read timeout
+		while doing it. The deadline is checked between pieces instead, which
+		is the only place it can be checked at all.
 		"""
 		limit = self._policy.max_response_bytes
 		chunks = []
 		total = 0
 		while total <= limit:
-			chunk = response.read(min(65536, limit + 1 - total))
+			self._allow_until(sock, deadline)
+			chunk = response.read1(min(65536, limit + 1 - total))
 			if not chunk:
 				break
 			chunks.append(chunk)

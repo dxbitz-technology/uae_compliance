@@ -125,6 +125,12 @@ class ReferenceXmlAdapter:
 		found = api.body_of(response).get("results") or []
 		if response.status == 200 and found:
 			return api.status_outcome(call, response, self.descriptor, found[0])
+		if response.status == 200:
+			# The search worked and this provider does not have the document.
+			# That is a real answer and it says Not sent. Reading an empty
+			# result as a received document is how an invoice that never left
+			# ends up marked as gone.
+			return api.nothing_found(call, response)
 		return api.status_outcome(call, response, self.descriptor)
 
 	def _artifact(self, call: Call, transport: Transport) -> Outcome:

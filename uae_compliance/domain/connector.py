@@ -342,6 +342,14 @@ def _check_advice_is_safe(outcome: Outcome) -> None:
 		raise ContractError(
 			"the provider already took this; fetch what is missing rather than sending it again"
 		)
+	if outcome.effect is not Effect.NOT_APPLIED and outcome.advice is Advice.REFRESH_AUTHENTICATION:
+		# Refreshing a credential ends in the same bytes going again, so it is
+		# a retry wearing a different name. Only an outcome that provably
+		# applied nothing may ask for one.
+		raise ContractError(
+			"only an outcome that applied nothing may ask for a credential refresh, "
+			"because refreshing one sends the same document again"
+		)
 	if outcome.disposition is Disposition.BUSINESS_REJECTED and outcome.advice in (
 		Advice.RETRY_SAME_PAYLOAD,
 		Advice.RECONCILE_FIRST,

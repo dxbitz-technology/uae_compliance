@@ -61,7 +61,9 @@ def send_one(submission: str) -> bool:
 	try:
 		connection, adapter = _connection_and_adapter(submission)
 	except Exception as error:
-		outbox.release(submission, "Attention required", _plainly(error, _("reach the provider")))
+		outbox.release(
+			submission, "Attention required", _plainly(error, _("reach the provider")), token=token
+		)
 		frappe.db.commit()
 		return False
 
@@ -69,7 +71,7 @@ def send_one(submission: str) -> bool:
 
 	allowed, why = may_send(connection.environment.value)
 	if not allowed:
-		outbox.release(submission, "Stopped", why)
+		outbox.release(submission, "Stopped", why, token=token)
 		frappe.db.commit()
 		return False
 
@@ -79,7 +81,7 @@ def send_one(submission: str) -> bool:
 		# Nothing has gone out and nothing will. Approving something whose
 		# bytes are gone is not the same as sending it, so this stops rather
 		# than trying.
-		outbox.release(submission, "Attention required", str(error))
+		outbox.release(submission, "Attention required", str(error), token=token)
 		frappe.db.commit()
 		return False
 
@@ -218,12 +220,18 @@ def _canonical_of(submission: str) -> dict | None:
 
 def _record_unknown(submission: str, attempt: str, token: int, reason: str):
 	"""Something went out and we cannot say what became of it."""
-	outbox.finish_attempt(
+	written = outbox.finish_attempt(
 		attempt, token, effect="Unknown", advice=Advice.RECONCILE_FIRST.value, error_class=reason[:140]
 	)
-	frappe.db.set_value(
-		SUBMISSION_DOCTYPE,
+	if not written:
+		# A newer claim has been and gone. Our request failed against a world
+		# that has already moved on, and saying Unknown now would put that
+		# over the top of whatever the newer worker found out.
+		return
+
+	outbox.write_if_current(
 		submission,
+		token,
 		{
 			"processing_state": "Unknown",
 			"asp_receipt": AspReceipt.UNKNOWN.value,
@@ -272,7 +280,7 @@ def _apply(submission: str, attempt: str, token: int, outcome, adapter):
 	if reference:
 		values["provider_id"] = reference
 	values.update(_next_step(submission, outcome, final, acks))
-	frappe.db.set_value(SUBMISSION_DOCTYPE, submission, values)
+	outbox.write_if_current(submission, token, values)
 
 
 def _provider_reference(outcome) -> str | None:

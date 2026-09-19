@@ -309,6 +309,26 @@ def submit_outcome(call: Call, response, adapter: Adapter) -> Outcome:
 	return replace(outcome, advice=advise(outcome, adapter))
 
 
+def nothing_found(call: Call, response) -> Outcome:
+	"""A search that ran and came back empty.
+
+	This is an answer, not a failure, and it is the opposite of the one
+	above. The search itself worked, so the operation applied; what it
+	proved is that the provider does not hold the document. Reporting a
+	successful search as a received document would mark an invoice that
+	never left as sent, and nothing would ever send it.
+	"""
+	return Outcome(
+		operation=call.operation,
+		disposition=Disposition.SUCCEEDED,
+		effect=Effect.APPLIED,
+		advice=Advice.DO_NOT_RETRY,
+		acknowledgements=Acknowledgements(asp_receipt=AspReceipt.NOT_SENT, evidence=Evidence.UNAVAILABLE),
+		provider_code=str(response.status),
+		diagnostic_ref=response.diagnostic_ref,
+	)
+
+
 def status_outcome(call: Call, response, adapter: Adapter, payload: dict | None = None) -> Outcome:
 	"""What the provider said about a document.
 

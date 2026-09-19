@@ -17,16 +17,17 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime
 
+from uae_compliance.domain.recovery import (
+	CORRECTABLE,
+	IN_FLIGHT,
+	STOPPABLE,
+	WITH_THE_PROVIDER,
+	why_it_may_be_out_there,
+)
+from uae_compliance.services import outbox
 from uae_compliance.services.freeze import SUBMISSION_DOCTYPE
 from uae_compliance.services.outbox import LOG_DOCTYPE
-
-# Nothing has gone out and nobody is holding it, so the intent can be
-# stopped and the invoice cancelled underneath it.
-STOPPABLE = ("Awaiting review", "Ready", "Retry scheduled", "Stopped")
-
-# Something is in flight or we do not know. Cancelling now would leave the
-# local record saying one thing and the provider holding another.
-IN_FLIGHT = ("Sending", "Awaiting outcome", "Unknown")
+from uae_compliance.services.working import WORKING_DOCTYPE
 
 
 def before_invoice_cancel(invoice, method=None):
@@ -71,7 +72,7 @@ def _check(row):
 		)
 
 	if (
-		row.asp_receipt in ("Received",)
+		row.asp_receipt in WITH_THE_PROVIDER
 		or row.exchange_state == "Delivered"
 		or row.reporting_state == "Accepted"
 	):
@@ -99,18 +100,50 @@ def _stop(submission: str):
 	The snapshot, the artifacts and the history stay exactly as they are.
 	What is removed is only the app's intention to send, which is the one
 	thing that has to go before the invoice underneath it does.
+
+	One update, and it has to bite. Reading the state and then writing it
+	leaves a gap, and a worker that claims the submission inside that gap
+	sends an invoice whose local record then says it was stopped.
 	"""
-	frappe.db.set_value(
-		SUBMISSION_DOCTYPE,
+	_take_out_of_reach(
 		submission,
-		{
-			"processing_state": "Stopped",
-			"next_attempt_at": None,
-			"lease_owner": None,
-			"lease_expires_at": None,
-			"attention_reason": "The invoice was cancelled before anything was sent.",
-		},
+		"Stopped",
+		"The invoice was cancelled before anything was sent.",
+		STOPPABLE,
+		_("A worker picked this up while it was being cancelled. Find out what happened to it first."),
 	)
+
+
+def _take_out_of_reach(submission: str, state: str, reason: str, permitted, refusal: str):
+	"""Move a submission somewhere no worker can claim it, or refuse.
+
+	The where clause carries the whole test, so nobody can claim the row
+	between the check and the write. The fencing token goes up as well, which
+	does two jobs: the update always changes something, so the row count is a
+	real answer, and any worker still holding the old token is stopped from
+	writing a result over the top of this.
+	"""
+	states = ", ".join(f"'{name}'" for name in permitted if name != state)
+	frappe.db.sql(
+		f"""
+		update `tab{SUBMISSION_DOCTYPE}`
+		set processing_state = %(state)s,
+			attention_reason = %(reason)s,
+			next_attempt_at = null,
+			lease_owner = null,
+			lease_expires_at = null,
+			fencing_token = fencing_token + 1,
+			modified = %(now)s
+		where name = %(name)s
+			and processing_state in ({states})
+			and (lease_expires_at is null or lease_expires_at < %(now)s)
+		""",
+		{"state": state, "reason": reason, "now": now_datetime(), "name": submission},
+	)
+	took = outbox.changed_rows()
+	frappe.clear_document_cache(SUBMISSION_DOCTYPE, submission)
+	if not took:
+		frappe.throw(refusal, title=_("Somebody else has this"))
 
 
 @frappe.whitelist()
@@ -126,14 +159,41 @@ def correct(submission: str, reason: str) -> str:
 	old.check_permission("write")
 	if not reason:
 		frappe.throw(_("A correction has to say what was wrong."))
-	if old.processing_state in IN_FLIGHT:
-		frappe.throw(_("We are still waiting to hear about this one. Correcting it now could send two."))
-	if _pending_attempt(submission):
-		frappe.throw(_("A request for this has not come back yet. It has to be reconciled first."))
-	if old.exchange_state == "Delivered" or old.reporting_state == "Accepted":
-		frappe.throw(_("This has already reached the other side. A credit note is the way to change it."))
 
-	invoice_name = frappe.db.get_value("UAE Peppol Invoice", old.control, "sales_invoice")
+	out_there = why_it_may_be_out_there(
+		old.processing_state,
+		old.asp_receipt,
+		old.exchange_state,
+		old.reporting_state,
+		pending_attempt=_pending_attempt(submission),
+		lease_live=outbox.lease_held(submission),
+	)
+	if out_there:
+		frappe.throw(
+			_("This cannot be corrected because {0}. A credit note is the way to change it.").format(
+				out_there
+			),
+			title=_("Already gone"),
+		)
+
+	# Lock the control row the way freezing does, and in the same order. The
+	# revision number is read from it, and two corrections reading the same
+	# highest revision would build two documents claiming to be the same one.
+	frappe.db.sql(f"select name from `tab{WORKING_DOCTYPE}` where name = %s for update", (old.control,))
+
+	# Out of reach before anything is built. If a worker has claimed it since
+	# the read above, this refuses and no second revision exists to be sent.
+	# Everything below can still throw, and that rolls this back with it, so
+	# a correction that fails leaves the old one exactly as it was.
+	_take_out_of_reach(
+		submission,
+		"Superseded",
+		reason,
+		CORRECTABLE,
+		_("A worker picked this up while it was being corrected. Find out what happened to it first."),
+	)
+
+	invoice_name = frappe.db.get_value(WORKING_DOCTYPE, old.control, "sales_invoice")
 	invoice = frappe.get_doc("Sales Invoice", invoice_name)
 
 	from uae_compliance.domain.findings import Level
@@ -150,11 +210,6 @@ def correct(submission: str, reason: str) -> str:
 	new_name = create_submission(invoice, old.control, document, result)
 
 	frappe.db.set_value(SUBMISSION_DOCTYPE, new_name, "predecessor", submission, update_modified=False)
-	frappe.db.set_value(
-		SUBMISSION_DOCTYPE,
-		submission,
-		{"processing_state": "Superseded", "attention_reason": reason, "next_attempt_at": None},
-	)
 	return new_name
 
 

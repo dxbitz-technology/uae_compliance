@@ -305,6 +305,37 @@ class NeverResendWhatTheProviderAlreadyHas(unittest.TestCase):
 		with self.assertRaises(ContractError):
 			an_outcome(effect=Effect.APPLIED, advice=Advice.RETRY_SAME_PAYLOAD)
 
+	def test_nor_can_it_ask_for_a_credential_refresh(self):
+		# A refresh ends in the same bytes going out again, so it is a retry
+		# under another name. The worker schedules one without looking at the
+		# effect, which is why the contract has to refuse the pairing here.
+		with self.assertRaises(ContractError) as caught:
+			an_outcome(
+				operation=Operation.SUBMIT,
+				disposition=Disposition.SUCCEEDED,
+				effect=Effect.APPLIED,
+				advice=Advice.REFRESH_AUTHENTICATION,
+			)
+		self.assertIn("applied nothing", str(caught.exception))
+
+	def test_and_neither_can_an_outcome_nobody_could_read(self):
+		with self.assertRaises(ContractError):
+			an_outcome(
+				operation=Operation.SUBMIT,
+				disposition=Disposition.TIMED_OUT,
+				effect=Effect.UNKNOWN,
+				advice=Advice.REFRESH_AUTHENTICATION,
+			)
+
+	def test_stale_credentials_that_sent_nothing_may_still_refresh(self):
+		outcome = an_outcome(
+			operation=Operation.SUBMIT,
+			disposition=Disposition.AUTHENTICATION_FAILED,
+			effect=Effect.NOT_APPLIED,
+			advice=Advice.REFRESH_AUTHENTICATION,
+		)
+		self.assertIs(outcome.advice, Advice.REFRESH_AUTHENTICATION)
+
 	def test_a_missing_artifact_is_fetched_not_resubmitted(self):
 		outcome = an_outcome(
 			operation=Operation.FETCH_ARTIFACT,
