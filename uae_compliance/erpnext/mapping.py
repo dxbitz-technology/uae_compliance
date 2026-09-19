@@ -95,24 +95,31 @@ def _group_item_type(item_group: str | None, out) -> str | None:
 
 def tax_category(
 	company: str,
-	account_head: str | None,
+	account_head: str | list | tuple | None,
 	item_tax_template: str | None,
 	out,
 	source: SourceRef,
 	row_id: str | None = None,
+	quiet: bool = False,
 ) -> dict | None:
 	"""Which official tax category a posted tax belongs to.
 
 	The item's own tax template is the closer fact, so it is tried first. The
-	tax account is the fallback. Two mappings that both match is refused
-	rather than resolved, because picking the first would make the tax on an
-	invoice depend on the order rows happen to sit in.
+	tax accounts a line's tax was posted to are the fallback, and more than
+	one may be given: a line carrying freight and then VAT has two, and only
+	the second is a tax treatment. Each is tried in turn.
+
+	Two mappings that both match one account is refused rather than resolved,
+	because picking the first would make the tax on an invoice depend on the
+	order rows happen to sit in.
 	"""
 	where = SourceRef(doctype=source.doctype, name=source.name, row_id=row_id)
 
 	for index, filters in enumerate(_candidate_filters(company, account_head, item_tax_template)):
 		matches = out.remember(
-			("tax", company, account_head, item_tax_template, index),
+			# The cache key has to be something hashable, and a line can
+			# arrive with a list of accounts.
+			("tax", company, tuple(_as_accounts(account_head)), item_tax_template, index),
 			lambda filters=filters: frappe.get_all(
 				TAX_CATEGORY_DOCTYPE,
 				filters=filters,
@@ -144,6 +151,13 @@ def tax_category(
 			"reason": found.get("reason") or None,
 		}
 
+	if quiet:
+		# Asked as a question rather than an expectation. Telling the two
+		# apart is how a row is classified as VAT or as a charge, and a
+		# charge being unmapped is the answer rather than a problem.
+		return None
+
+	accounts = _as_accounts(account_head)
 	out.note(
 		Finding(
 			code=CODE_NO_TAX_MAPPING,
@@ -153,13 +167,22 @@ def tax_category(
 			path="lines.tax_category",
 			source=where,
 			repair="Add a tax mapping for this company and tax account.",
-			params={"company": company, "account": account_head or ""},
+			params={"company": company, "account": ", ".join(accounts)},
 		)
 	)
 	return None
 
 
-def _candidate_filters(company: str, account_head: str | None, item_tax_template: str | None):
+def _as_accounts(account_head) -> list[str]:
+	"""One account or several, always as a list."""
+	if not account_head:
+		return []
+	if isinstance(account_head, str):
+		return [account_head]
+	return [account for account in account_head if account]
+
+
+def _candidate_filters(company: str, account_head, item_tax_template: str | None):
 	"""The lookups to try, closest fact first.
 
 	The template describes the item's own treatment. The account only says
@@ -168,5 +191,10 @@ def _candidate_filters(company: str, account_head: str | None, item_tax_template
 	"""
 	if item_tax_template:
 		yield {"company": company, "item_tax_template": item_tax_template}
-	if account_head:
-		yield {"company": company, "account_head": account_head, "item_tax_template": ["in", ["", None]]}
+	for account in _as_accounts(account_head):
+		if account:
+			yield {
+				"company": company,
+				"account_head": account,
+				"item_tax_template": ["in", ["", None]],
+			}

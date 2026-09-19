@@ -13,9 +13,11 @@ belongs to, and say so plainly when it cannot.
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 from uae_compliance.domain.findings import SourceRef
 from uae_compliance.erpnext import mapping
-from uae_compliance.erpnext.numbers import Scales, dec, flip
+from uae_compliance.erpnext.numbers import Scales, dec, flip, zero
 
 
 def tax_by_row(invoice) -> dict[str, list[dict]]:
@@ -62,7 +64,7 @@ def tax_by_row(invoice) -> dict[str, list[dict]]:
 	return found
 
 
-def extract(invoice, resolution, credit_note: bool) -> list[dict]:
+def extract(invoice, resolution, credit_note: bool, conversion_rate=None) -> list[dict]:
 	"""Every row of the invoice as a canonical line."""
 	scales = Scales.of(invoice)
 	source = SourceRef(doctype="Sales Invoice", name=invoice.name)
@@ -72,12 +74,34 @@ def extract(invoice, resolution, credit_note: bool) -> list[dict]:
 	lines = []
 	for position, row in enumerate(invoice.get("items") or [], start=1):
 		lines.append(
-			_line(row, position, invoice, resolution, scales, source, attribution, accounts, credit_note)
+			_line(
+				row,
+				position,
+				invoice,
+				resolution,
+				scales,
+				source,
+				attribution,
+				accounts,
+				credit_note,
+				conversion_rate,
+			)
 		)
 	return lines
 
 
-def _line(row, position, invoice, resolution, scales, source, attribution, accounts, credit_note) -> dict:
+def _line(
+	row,
+	position,
+	invoice,
+	resolution,
+	scales,
+	source,
+	attribution,
+	accounts,
+	credit_note,
+	conversion_rate=None,
+) -> dict:
 	facts = mapping.item_facts(row.item_code, row.item_group, resolution)
 	treatment = _treatment(row, attribution.get(row.name) or [], accounts, invoice, resolution, source)
 
@@ -105,6 +129,14 @@ def _line(row, position, invoice, resolution, scales, source, attribution, accou
 		"net_amount": net_amount,
 		"tax_category": treatment.get("category"),
 		"tax_rate": dec(treatment.get("rate"), scales.price),
+		"tax_amount": _posted_tax(
+			attribution.get(row.name) or [],
+			accounts,
+			treatment.get("account"),
+			scales,
+			credit_note,
+			conversion_rate,
+		),
 		"tax_reason": treatment.get("reason"),
 		"tax_reason_code": treatment.get("reason_code"),
 	}
@@ -112,6 +144,35 @@ def _line(row, position, invoice, resolution, scales, source, attribution, accou
 	if row.description and row.description != line["name"]:
 		line["note"] = row.description
 	return line
+
+
+def _posted_tax(attributed, accounts, account, scales, credit_note, conversion_rate):
+	"""The tax ERPNext actually posted against this line.
+
+	Read, never worked out. Multiplying the line by its rate and rounding
+	gives a figure that can disagree with the document total, and the
+	document total is the one that was posted.
+
+	Only the row that gave this line its treatment. A line can have several
+	rows against it and only one of them is tax: freight before a VAT row
+	put 20 and 6 against the same line, and adding both stated 26 of tax.
+
+	The per row table holds company currency amounts, so an invoice in
+	another currency converts them the same way the group totals do.
+	"""
+	if not attributed or not account:
+		return None
+	total = zero(scales.amount)
+	for hit in attributed:
+		if accounts.get(hit["tax_row"]) != account:
+			continue
+		amount = dec(hit["amount"], scales.amount)
+		if amount is None:
+			continue
+		if conversion_rate and conversion_rate != 1:
+			amount = dec(amount / Decimal(str(conversion_rate)), scales.amount)
+		total += amount
+	return flip(total) if credit_note else total
 
 
 def _prices(row, scales, invoice) -> dict:
@@ -144,18 +205,29 @@ def _treatment(row, attributed, accounts, invoice, resolution, source) -> dict:
 	instead. A row with no tax at all still needs a category, so the lookup
 	runs either way and reports when nothing covers it.
 	"""
-	account = None
-	for hit in attributed:
-		account = accounts.get(hit["tax_row"]) or account
-		if account:
-			break
+	# Every account this line's tax was posted to, in order. A line carrying
+	# freight and then VAT has two, and only the second is a tax treatment.
+	# Taking the first meant a line like that came back with no category at
+	# all, and the invoice with no tax breakdown.
+	touched = [accounts[hit["tax_row"]] for hit in attributed if hit["tax_row"] in accounts]
 
+	# Asked one account at a time, so we know which one answered. Its own
+	# row is the one carrying this line's tax, and the others are not tax.
+	for account in touched:
+		found = mapping.tax_category(
+			invoice.company, account, row.item_tax_template, resolution, source, quiet=True
+		)
+		if found:
+			return {**found, "account": account}
+
+	# Nothing matched. Asked again without the quiet, so the finding says
+	# every account it tried rather than only the last.
 	found = mapping.tax_category(
 		invoice.company,
-		account,
+		touched,
 		row.item_tax_template,
 		resolution,
 		source,
 		row_id=row.name,
 	)
-	return found or {}
+	return {**found, "account": None} if found else {}

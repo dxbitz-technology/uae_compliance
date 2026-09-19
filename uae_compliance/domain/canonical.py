@@ -207,6 +207,10 @@ LINE = obj(
 		"net_amount": amount(required=True),
 		"tax_category": code(TAX_CATEGORIES, required=True),
 		"tax_rate": Field(Kind.DECIMAL, required=True, scale=PERCENT_SCALE),
+		# The tax ERPNext posted against this line. Carried rather than
+		# worked out from the rate, because three lines of 33.33 at five
+		# percent each round to 1.67 and state 5.01 against a posted 5.00.
+		"tax_amount": amount(),
 		"tax_reason": text(),
 		"tax_reason_code": text(),
 		"note": text(),

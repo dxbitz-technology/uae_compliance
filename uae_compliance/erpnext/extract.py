@@ -65,11 +65,11 @@ def extract(
 	supplied = _supplied(invoice.name, overrides)
 
 	company_currency = frappe.get_cached_value("Company", invoice.company, "default_currency")
-	rows = line_reader.extract(invoice, resolution, credit_note)
+	rows = line_reader.extract(invoice, resolution, credit_note, invoice.conversion_rate)
 	vat_rows, charge_rows = taxes.split_tax_rows(invoice, resolution, source)
 	attribution = line_reader.tax_by_row(invoice)
 	breakdown = taxes.breakdown(invoice, rows, vat_rows, attribution, scales, credit_note, company_currency)
-	charges = taxes.charge_rows(charge_rows, invoice, scales, credit_note)
+	charges = taxes.charge_rows(charge_rows, invoice, scales, credit_note, breakdown, source, resolution)
 
 	tax_total = sum((group["tax_amount"] for group in breakdown), zero(scales.amount))
 	totals = taxes.totals(invoice, charges, tax_total, scales, credit_note, company_currency)
