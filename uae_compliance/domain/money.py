@@ -313,6 +313,22 @@ def check_currency(document: Mapping) -> list[Finding]:
 	found: list[Finding] = []
 
 	stated_total = _get(document, "totals", "tax_in_aed")
+
+	# An invoice not in dirhams has to state its tax in dirhams as well. A
+	# company keeping its books in dirhams has that figure posted; one that
+	# does not has nothing evidenced to state, and inventing a rate is worse
+	# than saying so. Said here, plainly, rather than left for the official
+	# rules to refuse later under a rule number.
+	if _get(document, "document", "tax_currency") == "AED" and not isinstance(stated_total, Decimal):
+		found.append(
+			_finding(
+				CODE_RATE_MISSING,
+				"totals.tax_in_aed",
+				"The tax must be stated in dirhams as well, and there is no posted dirham figure to state.",
+				"supply_exchange_rate",
+			)
+		)
+
 	if isinstance(stated_total, Decimal):
 		from_groups = _sum(_get(document, "tax_breakdown", default=[]) or [], "tax_amount_aed")
 		if stated_total != from_groups:

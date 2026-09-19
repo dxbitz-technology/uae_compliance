@@ -400,6 +400,28 @@ class ForeignCurrency(unittest.TestCase):
 		}
 		self.assertNotIn(CODE_AED, codes(check_currency(invoice)))
 
+	def test_books_in_another_currency_say_plainly_that_dirhams_are_missing(self):
+		# A foreign currency invoice reports its tax in dirhams. When the
+		# company's books are not in dirhams either, there is no posted
+		# figure to report and no evidenced rate to make one. That is a
+		# finding a person can read, not a rule number to fail on later.
+		invoice = {
+			"document": {"tax_currency": "AED"},
+			"totals": {"tax": D("5.00")},
+			"tax_breakdown": [tax_row("100.00", "5.00")],
+		}
+		self.assertIn(CODE_RATE_MISSING, codes(check_currency(invoice)))
+
+	def test_an_invoice_already_in_dirhams_states_nothing_twice(self):
+		from uae_compliance.domain.encoding import NOT_APPLICABLE
+
+		invoice = {
+			"document": {"tax_currency": NOT_APPLICABLE},
+			"totals": {"tax": D("5.00")},
+			"tax_breakdown": [tax_row("100.00", "5.00")],
+		}
+		self.assertEqual(check_currency(invoice), [])
+
 	def test_a_dirham_figure_past_that_rounding_is_reported(self):
 		invoice = {
 			"lines": [line("60.00", net_price="60.00"), line("40.00", id="2", net_price="40.00")],
