@@ -79,7 +79,68 @@ uae_compliance.invoice = {
 			primary_action: editable ? (values) => this.save(frm, dialog, values, state) : null,
 		});
 		if (editable) this.fill(dialog, state);
+		this.offer_item_fix(frm, dialog, result);
 		dialog.show();
+	},
+
+	// One dialog for every item that needs the same thing, rather than the
+	// same fix repeated once per row. Deduplicated by item, because an item
+	// on three rows is one thing to fix.
+	offer_item_fix(frm, dialog, result) {
+		const rows = (result.findings || [])
+			.filter((finding) => finding.row)
+			.map((finding) => finding.row);
+		if (!rows.length) return;
+
+		const items = {};
+		frm.doc.items.forEach((row) => {
+			if (rows.indexOf(row.name) !== -1 && row.item_code) {
+				items[row.item_code] = items[row.item_code] || [];
+				items[row.item_code].push(row.idx);
+			}
+		});
+		const codes = Object.keys(items);
+		if (!codes.length) return;
+
+		dialog.set_secondary_action_label(__("Fix {0} items", [codes.length]));
+		dialog.set_secondary_action(() => this.item_dialog(frm, codes, items));
+	},
+
+	item_dialog(frm, codes, items) {
+		const lines = codes
+			.map((code) => {
+				const where = __("row {0}", [items[code].join(", ")]);
+				return `<li>${frappe.utils.escape_html(code)} <span class="text-muted small">${where}</span></li>`;
+			})
+			.join("");
+
+		const fix = new frappe.ui.Dialog({
+			title: __("Fix these items"),
+			fields: [
+				{ fieldtype: "HTML", options: `<ul>${lines}</ul>` },
+				{
+					fieldtype: "Select",
+					fieldname: "item_type",
+					label: __("These are"),
+					options: ["", "Goods", "Services", "Both"],
+					reqd: 1,
+					description: __("Saved on the items themselves, so it applies everywhere they are used."),
+				},
+			],
+			primary_action_label: __("Save on the items"),
+			primary_action: (values) => {
+				frappe.call({
+					method: "uae_compliance.services.party_entry.set_item_type",
+					args: { items: JSON.stringify(codes), item_type: values.item_type },
+					freeze: true,
+					callback: (reply) => {
+						frappe.show_alert(__("Updated {0} items.", [reply.message || 0]));
+						fix.hide();
+					},
+				});
+			},
+		});
+		fix.show();
 	},
 
 	fill(dialog, state) {
