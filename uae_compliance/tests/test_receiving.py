@@ -49,6 +49,29 @@ def a_connection() -> str:
 	return CONNECTION
 
 
+PROD_CONNECTION = "Entering Order Connection"
+
+
+def a_production_connection() -> str:
+	"""A Production connection, so entering a purchase is not blocked.
+
+	Nothing is ever sent through it. It exists because a simulation document
+	must never become a real purchase, and these tests need one that can.
+	"""
+	if not frappe.db.exists("UAE Peppol ASP", PROD_CONNECTION):
+		frappe.get_doc(
+			{
+				"doctype": "UAE Peppol ASP",
+				"label": PROD_CONNECTION,
+				"provider_key": "reference_xml",
+				"environment": "Production",
+				"base_url": "https://asp.example.test/api/v1",
+			}
+		).insert(ignore_permissions=True)
+		frappe.db.commit()
+	return PROD_CONNECTION
+
+
 def a_supplier() -> str:
 	if not frappe.db.exists("Supplier", SUPPLIER):
 		frappe.get_doc(
@@ -246,3 +269,114 @@ class EnteringWhatArrived(IntegrationTestCase):
 		self.assertIn("no supplier", joined)
 		self.assertIn("which company", joined)
 		self.assertIn("simulation", joined)
+
+
+class EnteringAgainstAnOrder(IntegrationTestCase):
+	"""A document that names our order is entered against the order itself.
+
+	The mapped path carries each row's link back to the order line, so the
+	order's billed quantities move. A draft built from the document alone
+	left the order untouched, and the same goods could be paid for twice:
+	once against the arrived invoice and once against the order.
+	"""
+
+	def setUp(self):
+		super().setUp()
+		self.company = a_company()
+		frappe.db.set_value("Company", self.company, "tax_id", "134567890123003")
+		self.addCleanup(frappe.db.set_value, "Company", self.company, "tax_id", None)
+		a_supplier()
+		self.connection = frappe.get_doc("UAE Peppol ASP", a_production_connection())
+
+	def an_order(self) -> str:
+		from uae_compliance.development.fixtures import an_item
+
+		order = frappe.get_doc(
+			{
+				"doctype": "Purchase Order",
+				"company": self.company,
+				"supplier": SUPPLIER,
+				"currency": "AED",
+				"conversion_rate": 1,
+				"schedule_date": frappe.utils.nowdate(),
+				"items": [
+					{
+						"item_code": an_item(),
+						"qty": 2,
+						"rate": 100,
+						"schedule_date": frappe.utils.nowdate(),
+					}
+				],
+			}
+		)
+		order.set_missing_values()
+		order.insert(ignore_permissions=True)
+		order.submit()
+		self.addCleanup(frappe.db.sql, "delete from `tabPurchase Order Item` where parent=%s", order.name)
+		self.addCleanup(frappe.db.sql, "delete from `tabPurchase Order` where name=%s", order.name)
+		return order.name
+
+	def land_with_reference(self, reference: str | None, identifier: str) -> str:
+		from uae_compliance.connectors.registry import ArtifactRef
+		from uae_compliance.services import receiving
+
+		body = an_example()
+		if reference:
+			named = f"<cac:OrderReference><cbc:ID>{reference}</cbc:ID></cac:OrderReference>"
+			body = body.replace(
+				b"<cac:AccountingSupplierParty>", named.encode() + b"<cac:AccountingSupplierParty>", 1
+			)
+		receiving._land(
+			self.connection,
+			ArtifactRef(kind="inbound", identifier=identifier, media_type="application/xml", body=body),
+		)
+		name = frappe.db.get_value("UAE Peppol Inbound", {"document_uuid": identifier}, "name")
+		self.addCleanup(frappe.db.sql, "delete from `tabUAE Peppol Inbound` where name=%s", name)
+		return name
+
+	def test_a_document_naming_our_order_is_entered_against_it(self):
+		from uae_compliance.services import purchasing
+
+		order = self.an_order()
+		inbound = self.land_with_reference(order, "entering-order-1")
+		found = purchasing.plan(inbound)
+		self.assertEqual(found["order"], order)
+		self.assertTrue(found["can_enter"], found["blocks"])
+
+		name = purchasing.create_draft(inbound)
+		self.addCleanup(frappe.db.sql, "delete from `tabPurchase Invoice Item` where parent=%s", name)
+		self.addCleanup(frappe.db.sql, "delete from `tabPurchase Invoice` where name=%s", name)
+		invoice = frappe.get_doc("Purchase Invoice", name)
+		self.assertEqual(invoice.docstatus, 0)
+		self.assertEqual(invoice.items[0].purchase_order, order)
+		self.assertTrue(invoice.items[0].po_detail, "the row does not point back at the order line")
+		self.assertEqual(
+			invoice.bill_no, frappe.db.get_value("UAE Peppol Inbound", inbound, "document_number")
+		)
+
+	def test_a_reference_matching_no_order_is_said_plainly(self):
+		from uae_compliance.services import purchasing
+
+		inbound = self.land_with_reference("PO-NOBODY-KNOWS", "entering-order-2")
+		found = purchasing.plan(inbound)
+		self.assertIsNone(found["order"])
+		self.assertIn("PO-NOBODY-KNOWS", found["order_note"])
+
+	def test_a_fully_billed_order_blocks_entry(self):
+		from uae_compliance.services import purchasing
+
+		order = self.an_order()
+		frappe.db.set_value("Purchase Order", order, "per_billed", 100)
+		inbound = self.land_with_reference(order, "entering-order-3")
+		found = purchasing.plan(inbound)
+		self.assertFalse(found["can_enter"])
+		self.assertTrue(any("fully billed" in block for block in found["blocks"]), found["blocks"])
+
+	def test_a_document_naming_no_order_lists_the_open_ones(self):
+		from uae_compliance.services import purchasing
+
+		order = self.an_order()
+		inbound = self.land_with_reference(None, "entering-order-4")
+		found = purchasing.plan(inbound)
+		self.assertIsNone(found["order"])
+		self.assertIn(order, [row.name for row in found["open_orders"]])

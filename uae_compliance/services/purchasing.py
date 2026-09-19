@@ -56,16 +56,25 @@ def plan(inbound: str) -> dict:
 		rows = []
 		blocks.append(_("This document cannot be read: {0}").format(error))
 
-	fallback = _fallback(doc.company) if doc.company else {}
-	matched, unmatched = _match_lines(rows, doc.supplier, fallback)
-	taxes, missing_tax = _match_taxes(rows, doc.company)
+	order, order_note = _order_for(doc)
+	if order and _fully_billed(order):
+		blocks.append(_("It names order {0}, which is already fully billed.").format(order))
 
-	if unmatched:
-		blocks.append(
-			_("{0} lines match nothing of ours and no fallback item is set.").format(len(unmatched))
-		)
-	for category, rate in missing_tax:
-		blocks.append(_("No tax mapping covers category {0} at {1} percent.").format(category, rate))
+	if order:
+		# The draft comes from the order itself, so the document's own lines
+		# are not matched against our items. A person compares the two.
+		matched, unmatched, taxes, missing_tax = [], [], [], []
+	else:
+		fallback = _fallback(doc.company) if doc.company else {}
+		matched, unmatched = _match_lines(rows, doc.supplier, fallback)
+		taxes, missing_tax = _match_taxes(rows, doc.company)
+
+		if unmatched:
+			blocks.append(
+				_("{0} lines match nothing of ours and no fallback item is set.").format(len(unmatched))
+			)
+		for category, rate in missing_tax:
+			blocks.append(_("No tax mapping covers category {0} at {1} percent.").format(category, rate))
 
 	return {
 		"inbound": doc.name,
@@ -74,6 +83,9 @@ def plan(inbound: str) -> dict:
 		"their_number": doc.document_number,
 		"currency": doc.currency,
 		"payable": doc.payable,
+		"order": order,
+		"order_note": order_note,
+		"open_orders": [] if order else _open_orders(doc),
 		"lines": matched,
 		"unmatched": unmatched,
 		"taxes": taxes,
@@ -103,6 +115,39 @@ def create_draft(inbound: str) -> str:
 	if not found["can_enter"]:
 		frappe.throw("<br>".join(found["blocks"]), title=_("Cannot enter this yet"))
 
+	invoice = _order_draft(doc, found["order"]) if found["order"] else _standalone_draft(doc, found)
+	frappe.db.set_value(
+		INBOUND_DOCTYPE,
+		doc.name,
+		{"purchase_invoice": invoice.name, "state": "Accepted"},
+		update_modified=False,
+	)
+	return invoice.name
+
+
+def _order_draft(doc, order: str):
+	"""The draft from the order itself, through the framework's own mapping.
+
+	That path carries each row's link back to the order line, so the order's
+	billed quantities move and a second billing of the same order shows up as
+	over billing rather than as a fresh claim. Building the rows by hand from
+	the document skipped all of that, which is how a supplier could have been
+	paid twice: once against the arrived invoice and once against the order.
+	"""
+	from erpnext.buying.doctype.purchase_order.purchase_order import make_purchase_invoice
+
+	invoice = make_purchase_invoice(order)
+	# Their number and their date, kept as theirs. The rest is the order's.
+	invoice.bill_no = doc.document_number
+	invoice.bill_date = doc.issue_date
+	# Inserted as the person, so the company on the document is checked
+	# against what they are allowed to see as well.
+	invoice.insert()
+	return invoice
+
+
+def _standalone_draft(doc, found: dict):
+	"""The draft built from the document alone, when it names no order of ours."""
 	invoice = frappe.new_doc("Purchase Invoice")
 	invoice.company = doc.company
 	invoice.supplier = doc.supplier
@@ -145,13 +190,55 @@ def create_draft(inbound: str) -> str:
 	# Inserted as the person, so the company on the document is checked
 	# against what they are allowed to see as well.
 	invoice.insert()
-	frappe.db.set_value(
-		INBOUND_DOCTYPE,
-		doc.name,
-		{"purchase_invoice": invoice.name, "state": "Accepted"},
-		update_modified=False,
+	return invoice
+
+
+def _order_for(doc) -> tuple[str | None, str | None]:
+	"""The purchase order the document names, when it is really ours.
+
+	Matched only on our own order number, for this supplier and this company.
+	A reference that matches nothing does not block the document forever: the
+	sender may be quoting their own numbering, so it is said plainly and the
+	document is entered on its own, in front of a person either way.
+	"""
+	reference = (doc.order_reference or "").strip()
+	if not reference or not doc.supplier or not doc.company:
+		return None, None
+	name = frappe.db.get_value(
+		"Purchase Order",
+		{"name": reference, "supplier": doc.supplier, "company": doc.company, "docstatus": 1},
+		"name",
 	)
-	return invoice.name
+	if not name:
+		return None, _(
+			"It names order {0}, which matches none of ours for this supplier. It will be entered on its own."
+		).format(reference)
+	return name, None
+
+
+def _fully_billed(order: str) -> bool:
+	return flt(frappe.db.get_value("Purchase Order", order, "per_billed")) >= 100
+
+
+def _open_orders(doc) -> list[dict]:
+	"""The orders this document could be answering, for the person to look at.
+
+	Through get_list, so a caller sees only orders they may see anyway.
+	"""
+	if not doc.supplier or not doc.company:
+		return []
+	return frappe.get_list(
+		"Purchase Order",
+		filters={
+			"supplier": doc.supplier,
+			"company": doc.company,
+			"docstatus": 1,
+			"per_billed": ["<", 100],
+		},
+		fields=["name", "transaction_date", "grand_total", "per_billed"],
+		order_by="transaction_date desc",
+		limit=5,
+	)
 
 
 def _our_uom(code: str | None, item_code: str) -> str | None:

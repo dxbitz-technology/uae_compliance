@@ -50,6 +50,9 @@ def summarise(data: bytes) -> dict:
 		"issue_date": _text(root, f"{CBC}IssueDate"),
 		"type_code": _text(root, f"{CBC}CreditNoteTypeCode" if credit_note else f"{CBC}InvoiceTypeCode"),
 		"currency": _text(root, f"{CBC}DocumentCurrencyCode"),
+		# The buyer's own order number, when the document names one. It is
+		# how an arrived invoice finds the purchase order it answers.
+		"order_reference": _text(root, f"{CAC}OrderReference/{CBC}ID"),
 		"supplier_name": supplier["name"],
 		"supplier_tax_id": supplier["tax_id"],
 		"supplier_endpoint": supplier["endpoint"],

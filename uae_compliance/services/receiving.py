@@ -153,6 +153,7 @@ def _read(body: bytes) -> dict:
 		"document_number": found["document_number"],
 		"type_code": found["type_code"],
 		"issue_date": found["issue_date"],
+		"order_reference": found["order_reference"],
 		"currency": found["currency"],
 		"tax_exclusive": found["tax_exclusive"],
 		"tax_total": found["tax_total"],

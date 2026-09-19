@@ -25,6 +25,7 @@ FIXED_FIELDS = (
 	"document_uuid",
 	"type_code",
 	"issue_date",
+	"order_reference",
 	"currency",
 	"tax_exclusive",
 	"tax_total",
