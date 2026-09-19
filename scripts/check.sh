@@ -43,6 +43,7 @@ run "standards lock hashes" "$PYTHON" scripts/standards/check_lock.py
 run "official examples" "$PYTHON" scripts/standards/validate_examples.py
 run "altered negative examples" "$PYTHON" scripts/standards/validate_examples.py --negative
 run "determinism" "$PYTHON" scripts/standards/validate_examples.py --determinism
+run "published capabilities" "$PYTHON" scripts/capabilities.py
 
 echo "note  site tests are not run here. They need a database:"
 echo "      bench --site <site> run-tests --app uae_compliance"
