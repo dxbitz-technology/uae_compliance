@@ -16,9 +16,17 @@ because extraction only ever reads.
 
 from __future__ import annotations
 
+import sys
+import types
 import unittest
 from decimal import Decimal
 from unittest.mock import patch
+
+# The reader modules import frappe the moment they load. This runner has no
+# bench and no site, and nothing here ever reaches a frappe call, because the
+# masters are handed straight to the reader. So an empty module stands in far
+# enough to let the import through. The real one wins wherever it exists.
+sys.modules.setdefault("frappe", types.ModuleType("frappe"))
 
 from uae_compliance.domain.money import (
 	CODE_LINE_NET,
@@ -464,14 +472,14 @@ class PriceAndDiscount(unittest.TestCase):
 
 	def test_the_rule_still_holds_when_the_price_has_tax_inside_it(self):
 		# The discount was taken off a figure that included tax, so restating
-		# it without tax would be a number nobody posted. It is left off and
-		# the gross price is the net price, which still satisfies the rule.
+		# it without tax would be a number nobody posted. It is left off, the
+		# gross price is the net price, and the serializer writes nothing as
+		# the discount, so the net price is still the gross price less it.
 		row = Record(net_rate=90.0, discount_amount=10.0)
 		source = invoice(items=[], taxes=[tax("t1", account="VAT 5%", amount=5.00, inclusive=1)])
 		prices = line_reader._prices(row, Scales(2, 2, 3, 9), source)
 		self.assertNotIn("price_discount", prices)
-		self.assertEqual(prices["gross_price"], D("90.00"))
-		self.assertEqual(prices["gross_price"] - D(0), D("90.00"))
+		self.assertEqual(prices["gross_price"] - prices.get("price_discount", D(0)), D("90.00"))
 
 	def test_a_discount_inside_the_price_is_never_taken_off_the_line_again(self):
 		source = invoice(

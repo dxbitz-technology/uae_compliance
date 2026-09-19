@@ -261,7 +261,7 @@ class TheTaxBreakdown(unittest.TestCase):
 
 class ThePriceOnALine(unittest.TestCase):
 	def test_the_net_price_is_the_gross_price_less_the_discount(self):
-		# ibr-co-... reads the price amount as the base amount less the
+		# aligned-ibrp-004 reads the price amount as the base amount less the
 		# discount on it. Both are always written, so both can be read back.
 		root = parse(
 			document(
