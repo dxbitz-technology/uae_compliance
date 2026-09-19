@@ -102,14 +102,7 @@ def _land(asp, artifact) -> int:
 		if existing.payload_digest != digest:
 			# Same reference, different document. Somebody has to look at
 			# that rather than us picking one.
-			frappe.db.set_value(
-				INBOUND_DOCTYPE,
-				existing.name,
-				{
-					"state": "Unmatched",
-					"match_note": _("This arrived again with different contents. Both are kept."),
-				},
-			)
+			_keep_conflict(existing.name, artifact, digest)
 		return 0
 
 	summary = _read(artifact.body)
@@ -141,6 +134,37 @@ def _land(asp, artifact) -> int:
 	_store_body(doc, artifact)
 	_match(doc, summary)
 	return 1
+
+
+def _keep_conflict(name: str, artifact, digest: str):
+	"""The same reference arrived again saying something else.
+
+	The difference between the two bodies is the evidence, so the later one
+	is kept beside the first rather than dropped. The person who looks at
+	this decides which one is real; nothing here does.
+	"""
+	marker = f"{name}-conflict-{digest[:12]}.xml"
+	if not frappe.db.exists(
+		"File", {"attached_to_doctype": INBOUND_DOCTYPE, "attached_to_name": name, "file_name": marker}
+	):
+		frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": marker,
+				"attached_to_doctype": INBOUND_DOCTYPE,
+				"attached_to_name": name,
+				"is_private": 1,
+				"content": artifact.body,
+			}
+		).insert(ignore_permissions=True)
+	frappe.db.set_value(
+		INBOUND_DOCTYPE,
+		name,
+		{
+			"state": "Unmatched",
+			"match_note": _("This arrived again with different contents. Both versions are kept."),
+		},
+	)
 
 
 def _read(body: bytes) -> dict:

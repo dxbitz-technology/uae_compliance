@@ -167,6 +167,29 @@ class LandingWhatArrived(IntegrationTestCase):
 		self.assertEqual(state.state, "Unmatched")
 		self.assertIn("different contents", state.match_note)
 
+	def test_the_conflicting_contents_are_kept_too(self):
+		# The difference between the two bodies is the evidence. A note that
+		# says both are kept while one was dropped would send an auditor to a
+		# file that does not exist.
+		self.land(an_example(), "landing-10")
+		altered = an_example().replace(b"<cbc:ID>", b"<cbc:ID>X", 1)
+		self.land(altered, "landing-10")
+		self.land(altered, "landing-10")
+		name = frappe.db.get_value(
+			"UAE Peppol Inbound", {"connection": self.connection.name, "document_uuid": "landing-10"}, "name"
+		)
+		kept = frappe.get_all(
+			"File",
+			filters={
+				"attached_to_doctype": "UAE Peppol Inbound",
+				"attached_to_name": name,
+				"file_name": ["like", "%conflict%"],
+			},
+			pluck="name",
+		)
+		self.assertEqual(len(kept), 1, "the same conflicting body should be kept exactly once")
+		self.assertIn("Both versions are kept", frappe.db.get_value("UAE Peppol Inbound", name, "match_note"))
+
 	def test_the_database_itself_refuses_a_second_landing(self):
 		# The dedup check reads before it writes, so two collectors racing
 		# the same page can both pass it. The constraint cannot be raced.
