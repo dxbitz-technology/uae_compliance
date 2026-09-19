@@ -33,7 +33,16 @@ RESULT_FIELDS = (
 	"latest_submission",
 )
 
-INPUT_FIELDS = ("credit_reason_code", "credit_reason", *SCENARIO_FLAGS)
+PARTY_FIELDS = (
+	"beneficiary_name",
+	"beneficiary_scheme",
+	"beneficiary_value",
+	"principal_name",
+	"principal_scheme",
+	"principal_value",
+)
+
+INPUT_FIELDS = ("credit_reason_code", "credit_reason", *SCENARIO_FLAGS, *PARTY_FIELDS)
 
 
 class UAEPeppolInvoice(Document):

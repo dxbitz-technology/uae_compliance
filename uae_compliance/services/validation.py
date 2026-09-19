@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 
 import frappe
 
-from uae_compliance.domain import money, scope
+from uae_compliance.domain import money, scenarios, scope
 from uae_compliance.domain.findings import (
 	Level,
 	Severity,
@@ -66,6 +66,16 @@ def check(invoice, level: Level = FAST, *, overrides: dict | None = None) -> Val
 		# Extraction gave up, which only happens when the company went off
 		# underneath us between the two reads.
 		return _unavailable(level, source_print, resolution, "The company was switched off while checking.")
+
+	# Before the XML, so a missing scenario detail names its field rather
+	# than coming back later as a rule id.
+	findings.extend(scenarios.check(document))
+	stages[0] = StageOutcome(
+		Stage.SCOPE,
+		StageState.FAILED
+		if any(f.stage is Stage.SCOPE and f.blocking for f in findings)
+		else StageState.PASSED,
+	)
 
 	stages.append(_outcome(Stage.MASTERS, findings, Stage.MASTERS))
 	stages.append(_outcome(Stage.MAPPING, findings, Stage.MAPPING))

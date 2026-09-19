@@ -98,7 +98,7 @@ def extract(
 		"provenance": _provenance(invoice, resolution),
 		"context": _context(invoice, resolution, environment),
 		"document": _document(invoice, rows, resolution, credit_note, source),
-		"parties": {"seller": resolution.seller, "buyer": resolution.buyer},
+		"parties": _parties(resolution, supplied),
 		"lines": rows,
 		"tax_breakdown": breakdown,
 		"allowances": [],
@@ -154,11 +154,48 @@ def _supplied(invoice_name: str, overrides: dict | None) -> dict:
 	)
 	given = overrides or {}
 	scenario = {flag: bool(given.get(flag, stored.get(flag))) for flag in SCENARIO_FLAGS}
+
+	def value(name):
+		return given.get(name, stored.get(name)) or None
+
 	return {
 		"scenario": scenario,
-		"credit_reason_code": given.get("credit_reason_code", stored.get("credit_reason_code")) or None,
-		"credit_reason": given.get("credit_reason", stored.get("credit_reason")) or None,
+		"credit_reason_code": value("credit_reason_code"),
+		"credit_reason": value("credit_reason"),
+		"beneficiary": _named_party(value, "beneficiary"),
+		"principal": _named_party(value, "principal"),
 	}
+
+
+def _named_party(value, role: str) -> dict | None:
+	"""A party that exists only because a scenario asked for it.
+
+	Built only when it has an identifier, because the rules ask for the
+	identifier and a name on its own satisfies nothing.
+	"""
+	identifier = value(f"{role}_value")
+	if not identifier:
+		return None
+	return {
+		"legal_name": value(f"{role}_name") or identifier,
+		"country": "AE",
+		"participant": {"scheme": value(f"{role}_scheme") or "0235", "value": identifier},
+	}
+
+
+def _parties(resolution, supplied) -> dict:
+	"""The seller and buyer, plus anybody a scenario brings with it.
+
+	A free zone supply names who benefits, and an agent's invoice names the
+	party actually being billed for. Neither appears anywhere on an ordinary
+	invoice, so both come from what somebody supplied.
+	"""
+	parties = {"seller": resolution.seller, "buyer": resolution.buyer}
+	for role in ("beneficiary", "principal"):
+		party = supplied.get(role)
+		if party:
+			parties[role] = party
+	return parties
 
 
 def _provenance(invoice, resolution) -> dict:
@@ -201,7 +238,20 @@ def _document(invoice, rows, resolution, credit_note: bool, source: SourceRef) -
 		# not already in them.
 		"tax_currency": NOT_APPLICABLE if currency == LOCAL_CURRENCY else LOCAL_CURRENCY,
 		"buyer_reference": invoice.po_no or None,
+		# Carried whenever the invoice states one. A summary invoice must
+		# have it, which ibr-138-ae enforces, and an ordinary invoice may
+		# still cover a period worth stating.
+		"period": _period(invoice),
 	}
+
+
+def _period(invoice) -> dict | None:
+	"""The period this invoice covers, where ERPNext holds one."""
+	start = as_date(invoice.get("from_date"))
+	end = as_date(invoice.get("to_date"))
+	if not start or not end:
+		return None
+	return {"start_date": start, "end_date": end}
 
 
 def _type_code(rows, resolution, credit_note: bool, source: SourceRef) -> str | None:

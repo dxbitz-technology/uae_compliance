@@ -1,6 +1,6 @@
 # Build state
 
-Phase: P00 to P06 are done and merged, except receiving events, which needs a provider that sends them. P07 operations is in progress.
+Phase: P00 to P07 are done and merged, bar receiving events and upgrade testing, neither of which can be done yet. P08 scenario coverage is in progress.
 Baseline: spec version 2.1, 18-09-2026. It adds two self-billing document codes for P12, ties scenario flags to the sixteen official use cases, and names Suntech as the first real provider in section 9.4.
 Branch: develop. Pull requests merge on a passing ci check. No review gate.
 Last verified code commit: develop at the P02 merge. 290 pure tests, 33 site tests.
@@ -321,6 +321,41 @@ and then the one that mattered is ignored too.
 Fixed something the report exposed. A raw Python error was reaching a field
 people read. The plain sentence goes in the field now and the technical
 detail goes to the error log, which is where it belongs.
+
+## P08 Scenario coverage
+
+State: In progress.
+Requirement IDs: spec 2.3 the capability rows, 6.2 and 6.3 scenario structure, 12.2 P08, acceptance A23.
+
+- P08a: the scenario table and the two parties it needs. Done.
+- P08b: reverse charge, advances and retention, which need the accounting settling first.
+
+The table was read out of the pinned rules rather than written from scratch.
+Thirteen rules key off the eight character transaction string, and each one
+says what its scenario makes necessary. Every row cites the rule that
+demands it, and on a real invoice each local finding fired alongside the
+official rule it names, which is how the reading was checked.
+
+| Scenario | State | What it needs |
+| --- | --- | --- |
+| Free zone | Supported | The beneficiary's identifier |
+| Deemed supply | Supported | A payment means, and a due date once anything is payable |
+| Margin scheme | Not supported | Every line at category N, and the margin worked out |
+| Summary | Supported | The period it covers |
+| Continuous supply | Supported | Nothing beyond an ordinary invoice |
+| Billed by an agent | Supported | The principal, and a seller registration that differs from it |
+| E-commerce | Supported | Where it was delivered |
+| Export | Supported | Where the goods went, and who the buyer is |
+
+Checked on uae.local against a real invoice, every flag one at a time and
+two together. Each one that was missing something said which field, before
+the XML was built. Each one that had what it needed passed the schema and
+both rule layers. Margin scheme is refused rather than approximated.
+
+Two serializer gaps came out of it, recorded as D058. The party
+identification element was never written, and the principal was going into
+the payee element rather than the seller supplier one, so the two rules
+looking for it never found it.
 
 ## Lane B, alongside
 
