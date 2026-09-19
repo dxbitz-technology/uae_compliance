@@ -95,20 +95,20 @@ def recover_abandoned(limit: int = 50) -> int:
 			{"state": "Abandoned", "error_class": "No answer came back"},
 		)
 		if submission and held:
-			# Fenced on the token this submission carried a moment ago. A
-			# worker that claimed it in between owns it now, and recovery
-			# must not reach past that claim.
-			outbox.release(
+			# One fenced write, not two. A worker that claimed this in
+			# between owns it now, and recovery must not get half of its
+			# view of the world onto the row past that claim.
+			outbox.write_if_current(
 				submission,
-				"Unknown",
-				"A request went out and nothing came back. Asking the provider.",
-				token=held.fencing_token,
-			)
-			frappe.db.set_value(
-				SUBMISSION_DOCTYPE,
-				submission,
-				{"asp_receipt": AspReceipt.UNKNOWN.value, "next_attempt_at": None},
-				update_modified=False,
+				held.fencing_token,
+				{
+					"processing_state": "Unknown",
+					"asp_receipt": AspReceipt.UNKNOWN.value,
+					"lease_owner": None,
+					"lease_expires_at": None,
+					"next_attempt_at": None,
+					"attention_reason": "A request went out and nothing came back. Asking the provider.",
+				},
 			)
 		count += 1
 	return count
