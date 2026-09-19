@@ -123,6 +123,11 @@ def _take_out_of_reach(submission: str, state: str, reason: str, permitted, refu
 	real answer, and any worker still holding the old token is stopped from
 	writing a result over the top of this.
 	"""
+	if frappe.db.get_value(SUBMISSION_DOCTYPE, submission, "processing_state") == state:
+		# Already where we are trying to put it. Nothing to take away, and
+		# nothing can claim it from there, so there is nothing to race for.
+		return
+
 	states = ", ".join(f"'{name}'" for name in permitted if name != state)
 	frappe.db.sql(
 		f"""
