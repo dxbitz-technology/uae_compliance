@@ -1,6 +1,6 @@
 # Build state
 
-Phase: P00 to P04 are done and merged. P05 submission ledger is next.
+Phase: P00 to P04 are done and merged. P05 submission ledger is in progress.
 Baseline: spec version 2.1, 18-09-2026. It adds two self-billing document codes for P12, ties scenario flags to the sixteen official use cases, and names Suntech as the first real provider in section 9.4.
 Branch: develop. Pull requests merge on a passing ci check. No review gate.
 Last verified code commit: develop at the P02 merge. 290 pure tests, 33 site tests.
@@ -121,6 +121,41 @@ Checked on uae.local: saving the demo invoice makes exactly one record and
 saving it again does not make a second; an invoice for a company with no
 seller binding makes none at all; a person's edit counts the input revision
 up and a check result does not; and readiness cannot be set by hand.
+
+## P05 Submission ledger
+
+State: In progress.
+Requirement IDs: spec 4.2 the submission record, 8.1 the independent states, 8.2 freeze and approval, 10.2 the artifact contract, 12.2 P05, acceptance A11 and A12.
+
+- P05a: the frozen submission and its artifacts. Done.
+- P05b: approval and the atomic claim.
+- P05c: cancellation, correction and the immutable field controls.
+
+Freezing happens in the invoice's own transaction, so the invoice and its
+submission arrive together or neither does. The control row is locked first,
+so two people submitting at once produce one submission rather than two
+documents carrying the same number. Only Live freezes. Preparation checks,
+shows and sends nothing, so it has nothing to freeze.
+
+The bytes are written and read back before the work could ever be picked up.
+A database transaction does not roll back a file, and work that can transmit
+without its request evidence is worse than work that cannot transmit.
+
+Checked on uae.local, five things:
+
+- Submitting in Live froze a submission at revision 1, Awaiting review, not
+  approved, with a stable key taken from the document identifier rather than
+  from a display series, separate hashes for the business content and the
+  exact bytes, and both artifacts stored and read back.
+- A frozen field cannot be edited afterwards.
+- An approval whose hash does not match the content is refused.
+- Editing the buyer's address afterwards did not move the frozen hash.
+- Rolling the transaction back left no submission and no sendable work.
+
+One gap, for P07. A rollback removes the file records but the bytes stay on
+disk with nothing pointing at them. Cleaning those up needs a sweep that can
+prove a file is unreferenced, which belongs with the other operational
+repair tools.
 
 ## Lane B, alongside
 
