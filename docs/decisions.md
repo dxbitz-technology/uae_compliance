@@ -569,6 +569,14 @@ Source: frappe/utils/backups.py:371 `copy_site_config`; checked on uae.local by 
 Consequence: no code change. The operations guide now says a configuration backup is as sensitive as the passwords inside it, and tells a deployment to check the key on a copy instead of assuming it is absent. A site test pins the fact that the configuration is copied unfiltered, so the old description cannot drift back in.
 Status: Verified. Mutation checked: filtering a secret out of the copied configuration fails the test.
 
+## D066 The recomputing money checks use the official slack
+
+Choice: the group rate check works exactly as the pinned rule does: expected tax rounded half up to two places, two fils allowed either side. The dirham group check allows half a quantum per invoice line plus one, which is the room the per line conversion rounding and the settle can legitimately take. The identity checks that only read posted values stay exact.
+Reason: the checks recomputed a figure and demanded an exact match under one rounding mode. The framework lets a site post with banker's or commercial rounding, so 10.10 at 5 per cent legitimately posts as 0.50 or 0.51, and the exact check reported one of them on every such site while the official rules, which carry a 0.02 slack in every calculation assert, accept both. A local check stricter than the rules blocks invoices the rules would pass, and the money rules say a documented rounding rule is the only tolerance permitted, so the documented rule is now the official one.
+Source: `PINT-jurisdiction-aligned-rules.sch` aligned-ibrp-s-09 and the u:slack function, pinned under `uae_compliance/standards/pint_ae/1.0.4`.
+Consequence: `domain/money.py` MONEY-0003 mirrors the official arithmetic; MONEY-0008 carries the per line bound; MONEY-0009 ties the dirham total to its breakdown exactly, because both sides of that identity are posted figures. Tests pin the boundary on each.
+Status: Verified against the pinned Schematron text.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |

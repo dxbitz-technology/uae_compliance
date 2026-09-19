@@ -278,6 +278,25 @@ class TaxGrouping(unittest.TestCase):
 		self.assertIn(CODE_TAX_AMOUNT, codes(found))
 		self.assertEqual(found[0].params["expected"], "5.00")
 
+	def test_the_official_slack_on_the_rate_is_allowed(self):
+		# 10.10 at 5 per cent is 0.505. A site posting with commercial
+		# rounding writes 0.51 and one with banker's rounding writes 0.50.
+		# The official rule accepts both, so this check has to as well, or
+		# it blocks invoices the rules would pass.
+		for posted in ("0.49", "0.50", "0.51", "0.52", "0.53"):
+			invoice = {
+				"lines": [line("10.10", net_price="10.10")],
+				"tax_breakdown": [tax_row("10.10", posted)],
+			}
+			self.assertEqual(check_tax_breakdown(invoice), [], posted)
+
+	def test_past_the_official_slack_is_still_reported(self):
+		invoice = {
+			"lines": [line("10.10", net_price="10.10")],
+			"tax_breakdown": [tax_row("10.10", "0.54")],
+		}
+		self.assertIn(CODE_TAX_AMOUNT, codes(check_tax_breakdown(invoice)))
+
 
 class LineAmounts(unittest.TestCase):
 	def test_quantity_times_price_gives_the_line_amount(self):
@@ -369,6 +388,25 @@ class ForeignCurrency(unittest.TestCase):
 
 	def test_an_invoice_with_no_dirham_figures_needs_no_rate(self):
 		self.assertEqual(check_currency({"tax_breakdown": [tax_row("100.00", "5.00")]}), [])
+
+	def test_a_dirham_figure_within_the_rounding_of_its_lines_is_clean(self):
+		# Each line's dirham figure rounds once when it is posted, and the
+		# settle puts the leftovers on one group. Two lines at two decimal
+		# places make room for 0.015 either side of the rate's own figure.
+		invoice = {
+			"lines": [line("60.00", net_price="60.00"), line("40.00", id="2", net_price="40.00")],
+			"tax_breakdown": [tax_row("100.00", "5.00", tax_amount_aed=D("18.37"))],
+			"exchange_rates": {"to_aed": {"rate": D("3.6725")}},
+		}
+		self.assertNotIn(CODE_AED, codes(check_currency(invoice)))
+
+	def test_a_dirham_figure_past_that_rounding_is_reported(self):
+		invoice = {
+			"lines": [line("60.00", net_price="60.00"), line("40.00", id="2", net_price="40.00")],
+			"tax_breakdown": [tax_row("100.00", "5.00", tax_amount_aed=D("18.40"))],
+			"exchange_rates": {"to_aed": {"rate": D("3.6725")}},
+		}
+		self.assertIn(CODE_AED, codes(check_currency(invoice)))
 
 
 class WhatTheseChecksAre(unittest.TestCase):

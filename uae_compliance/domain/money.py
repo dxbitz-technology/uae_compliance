@@ -15,7 +15,7 @@ document carries its own rounding figure, so there is nothing left to absorb.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from uae_compliance.domain.findings import Finding, Severity, Stage
 
@@ -31,6 +31,15 @@ CODE_AED = "MONEY-0008"
 CODE_AED_TOTAL = "MONEY-0009"
 
 ZERO = Decimal("0")
+
+# The official calculation rules round the expected figure to two places and
+# allow two fils either side (aligned-ibrp-s-09 and its siblings, the
+# u:slack calls in the pinned Schematron). The recomputing checks below use
+# the same numbers, because checking tighter than the rules blocked invoices
+# the rules accept: a site may post with a different rounding method than
+# this module would guess.
+OFFICIAL_STEP = Decimal("0.01")
+OFFICIAL_SLACK = Decimal("0.02")
 
 
 def _finding(code: str, path: str, message: str, repair: str, **params) -> Finding:
@@ -232,17 +241,17 @@ def check_tax_breakdown(document: Mapping) -> list[Finding]:
 def _check_rate_applied(row: Mapping, index: int, found: list[Finding]) -> None:
 	"""The stated tax matches the stated base at the stated rate.
 
-	Worked at the precision the document already used, so this reports a real
-	disagreement rather than a difference this module invented.
+	The same arithmetic as the official rule, slack and all. An exact check
+	here reported figures the rules accept: the rounding of the posted tax
+	belongs to the site that posted it, not to this module.
 	"""
 	base = row.get("taxable_amount")
 	tax = row.get("tax_amount")
 	rate = row.get("rate")
 	if not all(isinstance(v, Decimal) for v in (base, tax, rate)):
 		return
-	scale = _scale_of(tax, base)
-	expected = (base * rate / Decimal(100)).quantize(Decimal(1).scaleb(-scale))
-	if tax != expected:
+	expected = (abs(base) * rate / Decimal(100)).quantize(OFFICIAL_STEP, rounding=ROUND_HALF_UP)
+	if abs(abs(tax) - expected) > OFFICIAL_SLACK:
 		found.append(
 			_finding(
 				CODE_TAX_AMOUNT,
@@ -337,13 +346,20 @@ def check_currency(document: Mapping) -> list[Finding]:
 		)
 		return found
 
+	# Each line's dirham figure was rounded once on posting, and the settle
+	# puts the collected leftovers on one group, so a group may sit half a
+	# quantum per line away from its own rate. That bound is the documented
+	# rounding rule here. Anything past it is a real disagreement: a stale
+	# rate, or a figure converted twice.
+	line_count = len(_get(document, "lines", default=[]) or [])
 	for index, row in needs_aed:
 		tax = row.get("tax_amount")
 		if not isinstance(tax, Decimal):
 			continue
 		stated = row["tax_amount_aed"]
-		expected = (tax * rate).quantize(Decimal(1).scaleb(-_scale_of(stated)))
-		if stated != expected:
+		quantum = Decimal(1).scaleb(-_scale_of(stated))
+		allowed = quantum / 2 * (line_count + 1)
+		if abs(stated - tax * rate) > allowed:
 			found.append(
 				_finding(
 					CODE_AED,
@@ -351,7 +367,7 @@ def check_currency(document: Mapping) -> list[Finding]:
 					"The dirham tax does not match the invoice tax at the recorded rate.",
 					"check_exchange_rate",
 					stated=stated,
-					expected=expected,
+					expected=(tax * rate).quantize(quantum),
 					rate=rate,
 				)
 			)
