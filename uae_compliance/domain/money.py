@@ -260,6 +260,11 @@ def check_lines(document: Mapping) -> list[Finding]:
 
 	A price discount is already inside the net price, so it is never taken off
 	again here. Taking it twice is the classic way an invoice ends up short.
+
+	Exact, because ibr-147-ae is exact. Where ERPNext worked the unit price
+	back out of the line amount and rounded it, the two really do not multiply
+	out and the document really would be refused, so this says so here with
+	the figures on it rather than leaving it to a rule id later on.
 	"""
 	found: list[Finding] = []
 	for index, line in enumerate(_get(document, "lines", default=[]) or []):
