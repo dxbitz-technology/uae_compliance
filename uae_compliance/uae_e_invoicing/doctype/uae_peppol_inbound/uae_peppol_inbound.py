@@ -51,3 +51,29 @@ class UAEPeppolInbound(Document):
 
 	def on_trash(self):
 		frappe.throw(_("Received documents are kept."))
+
+
+# A document that has not been matched to a company yet belongs to nobody,
+# and a company restriction cannot restrict a blank. Until a manager matches
+# it, only a manager sees it. Both halves below are needed: the query
+# condition covers lists and reports, the permission check covers opening
+# one record, and the framework does not derive either from the other.
+
+MANAGES_UNMATCHED = ("UAE Peppol Manager", "System Manager")
+
+
+def _sees_unmatched(user: str | None) -> bool:
+	roles = frappe.get_roles(user or frappe.session.user)
+	return any(role in roles for role in MANAGES_UNMATCHED)
+
+
+def get_permission_query_conditions(user=None, doctype=None) -> str:
+	if _sees_unmatched(user):
+		return ""
+	return "`tabUAE Peppol Inbound`.`company` is not null and `tabUAE Peppol Inbound`.`company` != ''"
+
+
+def has_permission(doc, ptype=None, user=None, debug=False) -> bool:
+	if doc.get("company"):
+		return True
+	return _sees_unmatched(user)

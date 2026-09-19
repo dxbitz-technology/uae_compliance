@@ -123,3 +123,60 @@ class A19AnotherCompanysWork(IntegrationTestCase):
 		self.as_restricted()
 		with self.assertRaises(frappe.PermissionError):
 			api.save_invoice_inputs(self.invoice.name, 0, frappe.as_json({"export": 1}))
+
+
+class UnmatchedInboundDocuments(IntegrationTestCase):
+	"""A received document nobody has matched belongs to no company yet.
+
+	A company restriction cannot restrict a blank, so without its own rule
+	every unmatched supplier invoice was readable across companies. Until a
+	manager matches one, only a manager sees it.
+	"""
+
+	def setUp(self):
+		super().setUp()
+		self.user = a_restricted_user()
+		self.unmatched = self.an_inbound("access-unmatched", company=None)
+		self.mine = self.an_inbound("access-mine", company=OTHER_COMPANY)
+		frappe.db.commit()
+		self.addCleanup(frappe.set_user, "Administrator")
+
+	def an_inbound(self, identifier: str, company: str | None) -> str:
+		from uae_compliance.domain.encoding import sha256_hex
+		from uae_compliance.tests.test_receiving import a_connection
+
+		doc = frappe.new_doc("UAE Peppol Inbound")
+		doc.connection = a_connection()
+		doc.environment = "Simulation"
+		doc.document_uuid = identifier
+		doc.payload_digest = sha256_hex(identifier.encode())
+		doc.received_at = frappe.utils.now_datetime()
+		doc.state = "Unmatched" if company is None else "Received"
+		doc.company = company
+		doc.insert(ignore_permissions=True)
+		self.addCleanup(frappe.db.sql, "delete from `tabUAE Peppol Inbound` where name=%s", doc.name)
+		return doc.name
+
+	def test_an_unmatched_document_is_not_listed_for_them(self):
+		frappe.set_user(self.user)
+		names = [row.name for row in frappe.get_list("UAE Peppol Inbound", fields=["name"])]
+		self.assertNotIn(self.unmatched, names)
+		self.assertIn(self.mine, names)
+
+	def test_an_unmatched_document_cannot_be_opened_by_them(self):
+		frappe.set_user(self.user)
+		with self.assertRaises(frappe.PermissionError):
+			frappe.get_doc("UAE Peppol Inbound", self.unmatched).check_permission("read")
+
+	def test_their_own_companys_document_still_opens(self):
+		frappe.set_user(self.user)
+		frappe.get_doc("UAE Peppol Inbound", self.mine).check_permission("read")
+
+	def test_a_manager_still_sees_the_unmatched_ones(self):
+		from uae_compliance.uae_e_invoicing.doctype.uae_peppol_inbound.uae_peppol_inbound import (
+			get_permission_query_conditions,
+		)
+
+		# A manager gets no extra condition, so the unmatched rows stay in
+		# front of the people whose job they are.
+		self.assertEqual(get_permission_query_conditions("Administrator"), "")

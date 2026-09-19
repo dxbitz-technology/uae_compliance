@@ -294,6 +294,21 @@ scheduler_events = {
 	}
 }
 
+# A received document that has not been matched to a company yet is visible
+# to managers only. A company restriction cannot restrict a blank, so without
+# this every unmatched supplier invoice would be readable across companies.
+permission_query_conditions = {
+	"UAE Peppol Inbound": (
+		"uae_compliance.uae_e_invoicing.doctype.uae_peppol_inbound.uae_peppol_inbound"
+		".get_permission_query_conditions"
+	),
+}
+has_permission = {
+	"UAE Peppol Inbound": (
+		"uae_compliance.uae_e_invoicing.doctype.uae_peppol_inbound.uae_peppol_inbound.has_permission"
+	),
+}
+
 # The only place this app attaches to a native document. It keeps one working
 # record beside each draft and never writes back to the invoice, which would
 # put the save into a loop.
