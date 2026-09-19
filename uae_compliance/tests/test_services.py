@@ -287,6 +287,23 @@ class _HookedAdapter:
 HOOKED_ADAPTER = _HookedAdapter()
 
 
+class RecordedTimestamps(IntegrationTestCase):
+	def test_a_transport_timestamp_lands_on_the_site_clock(self):
+		# The transport writes UTC and every other row is written on the
+		# site's clock. Stripped instead of converted, the exchange sorted
+		# hours before the intent that caused it.
+		import datetime
+		from zoneinfo import ZoneInfo
+
+		from uae_compliance.services.recorder import _as_local
+
+		landed = _as_local("2026-09-19T12:00:00Z")
+		self.assertIsNone(landed.tzinfo)
+		site = ZoneInfo(frappe.utils.get_system_timezone())
+		expected = datetime.datetime(2026, 9, 19, 12, tzinfo=datetime.UTC).astimezone(site)
+		self.assertEqual(landed, expected.replace(tzinfo=None))
+
+
 class ThirdPartyAdapters(IntegrationTestCase):
 	def test_an_adapter_declared_through_the_hook_is_installed(self):
 		# The registry refuses import paths from configuration on purpose, so

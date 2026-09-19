@@ -81,14 +81,18 @@ class FrappeRecorder:
 
 
 def _as_local(text: str):
-	"""The transport writes UTC with its offset. The database wants neither.
+	"""The transport writes UTC with its offset. The database stores naive site time.
 
 	Parsing it properly rather than trimming characters off the end, because
 	the offset form and the Z form both turn up and a string that almost
 	parses is how an attempt record quietly fails to be written.
+
+	And converted, not stripped. A stripped timestamp kept the UTC clock and
+	sorted the exchange four hours before the intent that caused it, so the
+	log read as if the answer came back before the question went out.
 	"""
 	try:
 		moment = datetime.fromisoformat(text.replace("Z", "+00:00"))
 	except TypeError, ValueError:
 		return frappe.utils.now_datetime()
-	return moment.replace(tzinfo=None)
+	return frappe.utils.convert_utc_to_system_timezone(moment).replace(tzinfo=None)
