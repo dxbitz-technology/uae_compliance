@@ -84,7 +84,7 @@ def freeze_on_submit(invoice) -> str | None:
 	if document is None:
 		raise NotFrozen("the company was switched off while freezing")
 
-	return _create(invoice, control, document, result)
+	return create_submission(invoice, control, document, result)
 
 
 def _already_active(control: str) -> str | None:
@@ -95,7 +95,7 @@ def _already_active(control: str) -> str | None:
 	)
 
 
-def _create(invoice, control: str, document: dict, result) -> str:
+def create_submission(invoice, control: str, document: dict, result) -> str:
 	canonical = canonical_bytes(document)
 	xml = to_xml(document)
 	revision = _next_revision(control)

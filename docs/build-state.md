@@ -1,6 +1,6 @@
 # Build state
 
-Phase: P00 to P04 are done and merged. P05 submission ledger is in progress.
+Phase: P00 to P05 are done and merged. P06 transport is next, and half of it already exists in the connector lane.
 Baseline: spec version 2.1, 18-09-2026. It adds two self-billing document codes for P12, ties scenario flags to the sixteen official use cases, and names Suntech as the first real provider in section 9.4.
 Branch: develop. Pull requests merge on a passing ci check. No review gate.
 Last verified code commit: develop at the P02 merge. 290 pure tests, 33 site tests.
@@ -124,7 +124,7 @@ up and a check result does not; and readiness cannot be set by hand.
 
 ## P05 Submission ledger
 
-State: In progress.
+State: Done.
 Requirement IDs: spec 4.2 the submission record, 8.1 the independent states, 8.2 freeze and approval, 10.2 the artifact contract, 12.2 P05, acceptance A11 and A12.
 
 - P05a: the frozen submission and its artifacts. Done.
@@ -152,7 +152,36 @@ right one works; two workers reaching for the same submission means exactly
 one gets it; a stale fencing token cannot write a result; policy approval
 declines while review is required and works once it is off, recorded as
 Policy; and a pause empties the due list without touching anything else.
-- P05c: cancellation, correction and the immutable field controls.
+- P05c: cancellation, correction and the immutable field controls. Done.
+
+Cancelling in ERPNext and cancelling at the other end are not the same act.
+ERPNext cancelling succeeded says nothing about a document that has already
+left, so nothing here ever marks a remote document cancelled because a local
+one was.
+
+And no attempts having been made is not proof that nothing was issued. It is
+proof that we made no attempts. Where that bites is the request that went out
+and never came back, which is held rather than guessed either way.
+
+A correction is not a retry. A retry sends the same bytes because nothing
+about the document was wrong. A correction says it was, so it gets a new
+revision, points back at the one it replaces, carries a different key, and
+needs approving on its own.
+
+Checked on uae.local, six cases:
+
+| Submission | Cancelling the invoice |
+| --- | --- |
+| Ready, nothing sent | Allowed, and the intent is stopped first |
+| Sending | Refused, still in flight |
+| Unknown | Refused, still in flight |
+| Delivered | Refused, a credit note is the way |
+| Reported and accepted | Refused, a credit note is the way |
+| A request that never came back | Refused, reconcile first |
+
+And a correction on a rejected submission made revision 2 pointing back at
+revision 1, unapproved, with its own key, while revision 1 went to
+Superseded carrying the reason.
 
 Freezing happens in the invoice's own transaction, so the invoice and its
 submission arrive together or neither does. The control row is locked first,

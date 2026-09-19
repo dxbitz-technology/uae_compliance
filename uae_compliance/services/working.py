@@ -111,16 +111,3 @@ def on_invoice_update(invoice, method=None):
 			reference_doctype="Sales Invoice",
 			reference_name=invoice.name,
 		)
-
-
-def on_invoice_cancel(invoice, method=None):
-	"""Hook. Keeps the record and marks it, rather than removing it.
-
-	A cancelled invoice still has a history worth reading, and anything
-	already sent keeps its own frozen copy regardless.
-	"""
-	name = frappe.db.get_value(WORKING_DOCTYPE, {"sales_invoice": invoice.name}, "name")
-	if name:
-		frappe.db.set_value(
-			WORKING_DOCTYPE, name, {"readiness": "Out of scope", "scope_reason": "The invoice was cancelled."}
-		)
