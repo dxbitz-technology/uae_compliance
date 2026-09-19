@@ -245,6 +245,13 @@ def _find_company(tax_id: str | None) -> str | None:
 	seller = frappe.db.get_value("UAE Peppol Seller Profile", {"vat_number": tax_id}, "name")
 	if not seller:
 		return None
-	return frappe.db.get_value(
-		"UAE Peppol Seller Company", {"parent": seller, "parenttype": "UAE Peppol Seller Profile"}, "company"
+
+	# A profile can cover several companies, and a tax number shared across
+	# a group tells us nothing about which of them the document was for.
+	# Picking the first row would attribute a supplier's invoice by luck.
+	companies = frappe.get_all(
+		"UAE Peppol Seller Company",
+		filters={"parent": seller, "parenttype": "UAE Peppol Seller Profile"},
+		pluck="company",
 	)
+	return companies[0] if len(companies) == 1 else None

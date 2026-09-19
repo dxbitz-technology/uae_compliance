@@ -20,34 +20,56 @@ QUIET_HOURS = 4
 
 
 def daily_summary() -> dict:
-	"""Scheduler entry. Count what needs a person and tell the managers."""
-	counts = what_needs_attention()
-	if not any(counts.values()):
-		return counts
-	_notify(counts)
-	return counts
+	"""Scheduler entry. Tell each manager about their own companies.
+
+	Counted per person rather than once for everybody. A count is not a
+	document, but a manager of one company learning how many submissions are
+	stuck across the site still tells them about companies that are not
+	theirs.
+	"""
+	sent = {}
+	for user in _managers():
+		counts = what_needs_attention(_companies_for(user))
+		if not any(counts.values()):
+			continue
+		_notify(user, counts)
+		sent[user] = counts
+	return sent
 
 
-def what_needs_attention() -> dict:
+def _companies_for(user: str) -> list[str] | None:
+	"""The companies this person may see, or None when that is all of them."""
+	allowed = frappe.get_all(
+		"User Permission",
+		filters={"user": user, "allow": "Company"},
+		pluck="for_value",
+	)
+	return allowed or None
+
+
+def what_needs_attention(companies: list[str] | None = None) -> dict:
 	"""The counts worth waking somebody for.
 
 	Deliberately short. Each one means a person has to do something, and
 	anything the app will sort out by itself is left off.
 	"""
 	quiet = add_to_date(now_datetime(), hours=-QUIET_HOURS)
+	mine = {"company": ["in", companies]} if companies else {}
 	return {
-		"unknown": frappe.db.count("UAE Peppol Submission", {"processing_state": "Unknown"}),
+		"unknown": frappe.db.count(
+			"UAE Peppol Submission", {**{"processing_state": "Unknown", **mine}, **mine}
+		),
 		"needs_a_person": frappe.db.count(
-			"UAE Peppol Submission", {"processing_state": "Attention required"}
+			"UAE Peppol Submission", {"processing_state": "Attention required", **mine}
 		),
 		"waiting_for_review": frappe.db.count(
-			"UAE Peppol Submission", {"processing_state": "Awaiting review", "modified": ["<", quiet]}
+			"UAE Peppol Submission", {"processing_state": "Awaiting review", "modified": ["<", quiet], **mine}
 		),
 		"no_answer": frappe.db.count(
-			"UAE Peppol Transmission Log", {"state": "Pending", "started_at": ["<", quiet]}
+			"UAE Peppol Transmission Log", {"state": "Pending", "started_at": ["<", quiet], **mine}
 		),
 		"evidence_missing": frappe.db.count(
-			"UAE Peppol Submission", {"asp_receipt": "Received", "evidence_state": ["!=", "Complete"]}
+			"UAE Peppol Submission", {"asp_receipt": "Received", "evidence_state": ["!=", "Complete"], **mine}
 		),
 		"credentials_expiring": _credentials_expiring(),
 		"paused": 1 if frappe.db.get_single_value("UAE Peppol Settings", "pause_outbound") else 0,
@@ -75,7 +97,7 @@ LINES = {
 }
 
 
-def _notify(counts: dict):
+def _notify(user: str, counts: dict):
 	message = _("UAE e-invoicing needs attention.")
 	parts = []
 	for key, count in counts.items():
@@ -84,17 +106,16 @@ def _notify(counts: dict):
 		line = LINES[key]
 		parts.append(_(line).format(count) if "{0}" in line else _(line))
 
-	for user in _managers():
-		frappe.get_doc(
-			{
-				"doctype": "Notification Log",
-				"for_user": user,
-				"type": "Alert",
-				"subject": message,
-				"email_content": "<br>".join(parts),
-				"document_type": "UAE Peppol Submission",
-			}
-		).insert(ignore_permissions=True)
+	frappe.get_doc(
+		{
+			"doctype": "Notification Log",
+			"for_user": user,
+			"type": "Alert",
+			"subject": message,
+			"email_content": "<br>".join(parts),
+			"document_type": "UAE Peppol Submission",
+		}
+	).insert(ignore_permissions=True)
 
 
 def _managers() -> list[str]:
