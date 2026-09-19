@@ -71,7 +71,7 @@ def rows(filters):
 	if filters.get("readiness"):
 		conditions["readiness"] = filters.readiness
 
-	records = frappe.get_all(
+	records = frappe.get_list(
 		"UAE Peppol Invoice",
 		filters=conditions,
 		fields=["name", "sales_invoice", "company", "mode", "readiness", "errors", "checked_at", "findings"],
@@ -93,7 +93,7 @@ def rows(filters):
 
 	sources = {
 		row.name: row
-		for row in frappe.get_all(
+		for row in frappe.get_list(
 			"Sales Invoice",
 			filters=invoice_filters,
 			fields=["name", "posting_date", "customer", "grand_total", "currency"],

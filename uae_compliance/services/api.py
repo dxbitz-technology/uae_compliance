@@ -84,9 +84,9 @@ def get_readiness_batch(source_names: str) -> dict:
 		frappe.throw(_("Expected a list of invoices."))
 	names = names[:MAX_BATCH]
 	allowed = [
-		row.name for row in frappe.get_all("Sales Invoice", filters={"name": ["in", names]}, fields=["name"])
+		row.name for row in frappe.get_list("Sales Invoice", filters={"name": ["in", names]}, fields=["name"])
 	]
-	rows = frappe.get_all(
+	rows = frappe.get_list(
 		WORKING_DOCTYPE,
 		filters={"sales_invoice": ["in", allowed]},
 		fields=["sales_invoice", "readiness", "errors", "warnings", "mode", "input_revision"],
