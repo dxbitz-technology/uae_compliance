@@ -241,6 +241,9 @@ TOTALS = obj(
 		"rounding": amount(),
 		"payable": amount(required=True),
 		"tax_in_aed": amount(),
+		# The rules ask for this one as text on the document, so it is
+		# carried rather than worked out at serialization.
+		"tax_inclusive_aed": amount(),
 	},
 )
 
