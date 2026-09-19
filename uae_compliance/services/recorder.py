@@ -66,10 +66,17 @@ class FrappeRecorder:
 			)
 			log.insert(ignore_permissions=True)
 			self.references.append(reference)
-		except Exception:
+		except Exception as error:
+			from uae_compliance.connectors.transport import safe_traceback
+
 			# Losing the note is bad. Losing the send because the note could
-			# not be written would be worse.
-			frappe.log_error(title="UAE e-invoicing could not record an exchange")
+			# not be written would be worse. The message is built rather
+			# than left out, because left out the framework writes every
+			# frame's local variables and the attempt is one of them.
+			frappe.log_error(
+				title="UAE e-invoicing could not record an exchange",
+				message=safe_traceback(error),
+			)
 		return reference
 
 

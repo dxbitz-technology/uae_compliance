@@ -105,9 +105,15 @@ def on_invoice_update(invoice, method=None):
 	"""
 	try:
 		upsert(invoice)
-	except Exception:
+	except Exception as error:
+		from uae_compliance.connectors.transport import safe_traceback
+
+		# The message is built rather than left out. Left out, the framework
+		# writes the local variables of every frame, which here is the whole
+		# invoice and its customer.
 		frappe.log_error(
 			title="UAE e-invoicing working record",
+			message=safe_traceback(error),
 			reference_doctype="Sales Invoice",
 			reference_name=invoice.name,
 		)
