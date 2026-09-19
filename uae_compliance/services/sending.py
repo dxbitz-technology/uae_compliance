@@ -118,12 +118,12 @@ def send_one(submission: str) -> bool:
 	return True
 
 
-def _connection_and_adapter(submission: str):
-	name = frappe.db.get_value(SUBMISSION_DOCTYPE, submission, "connection")
-	if not name:
-		raise ValueError("This submission is not bound to a provider connection.")
+def _connection_and_adapter_for(asp, operation: Operation):
+	"""Build the connection for one provider record and pick its adapter.
 
-	asp = frappe.get_doc(ASP_DOCTYPE, name)
+	Shared, because receiving needs exactly the same thing as sending and
+	two copies of credential handling is one too many.
+	"""
 	if not asp.enabled:
 		raise ValueError(f"The connection {asp.label} is switched off.")
 
@@ -140,11 +140,20 @@ def _connection_and_adapter(submission: str):
 		base_url=asp.base_url,
 		credentials={key: value for key, value in credentials.items() if value},
 	)
+	adapter = connectors.installed().for_connection(connection, operation)
+	return connection, adapter
 
-	# This checks the operation and the environment together. An adapter that
-	# only serves a simulator must not reach a production connection even
-	# where it can technically do the operation.
-	adapter = connectors.installed().for_connection(connection, Operation.SUBMIT)
+
+def _connection_and_adapter(submission: str):
+	name = frappe.db.get_value(SUBMISSION_DOCTYPE, submission, "connection")
+	if not name:
+		raise ValueError("This submission is not bound to a provider connection.")
+
+	asp = frappe.get_doc(ASP_DOCTYPE, name)
+	# The shared builder checks the operation and the environment together.
+	# An adapter that only serves a simulator must not reach a production
+	# connection even where it can technically do the operation.
+	connection, adapter = _connection_and_adapter_for(asp, Operation.SUBMIT)
 
 	# A connection that has carried work is settled, and this marks it so.
 	if not asp.has_been_used:

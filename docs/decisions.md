@@ -511,6 +511,21 @@ Consequence: only the beneficiary and the principal are written with an identifi
 Source: found by running each scenario flag against a real invoice and comparing our finding with the official one.
 Status: Verified.
 
+## D059 Receiving comes before P09, not after it
+
+Choice: build the receiving side now rather than at P12 where the spec puts it.
+Reason: the maintainer asked for it, and the sequencing argument holds. Spec 12.2 makes P12 depend on P09, but that dependency was about provider contracts rather than anything technical, and the Suntech reference in 9.4 already documents how receiving works there. Buying is half of what an e-invoicing app is for on a UAE site, and finding out at P12 that the model does not fit would mean redoing work from P03 onward.
+Consequence: the phase order in spec 12.2 no longer matches what was built. P09 will cover receiving as well, which makes it a larger gate rather than a different one.
+Status: Verified. Accepted by the maintainer on 19-09-2026.
+
+## D060 Nothing arriving becomes a purchase on its own
+
+Choice: an arrived document lands as its own record and stops there. No supplier is created, no item is invented, nothing posts.
+Reason: a supplier's invoice arriving is a claim about what we owe, not a fact. Creating a supplier record from a document somebody else wrote is how a forged invoice becomes a real payee, and spec 12.2 requires no supplier or item creation and no posting without review.
+How a sender is matched: by tax number, or by the network address on a supplier profile. A name is never enough, and a near miss is not a match. Where nothing matches, the document waits and says so.
+How the company is worked out: by the tax number the document was addressed to, and nothing else. This one nearly went wrong. Frappe fills a company link from the site default when nothing sets it, so the first run attributed two suppliers' invoices to whichever company happened to be the default. The field is now cleared before the record is written and written explicitly afterwards, either way.
+Status: Verified.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |

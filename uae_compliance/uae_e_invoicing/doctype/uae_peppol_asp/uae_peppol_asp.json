@@ -22,7 +22,11 @@
   "last_checked_at",
   "token_expires_on",
   "credentials_section",
-  "credentials"
+  "credentials",
+  "section_break_inbound",
+  "receive_enabled",
+  "inbound_cursor",
+  "inbound_checked_at"
  ],
  "fields": [
   {
@@ -122,6 +126,31 @@
    "fieldtype": "Table",
    "label": "Credentials",
    "options": "UAE Peppol ASP Credential"
+  },
+  {
+   "fieldname": "section_break_inbound",
+   "fieldtype": "Section Break",
+   "label": "Receiving"
+  },
+  {
+   "fieldname": "receive_enabled",
+   "fieldtype": "Check",
+   "label": "Collect Incoming Documents",
+   "default": "0",
+   "description": "Off until somebody turns it on. Nothing is pulled in from a connection nobody asked to receive on."
+  },
+  {
+   "fieldname": "inbound_cursor",
+   "fieldtype": "Data",
+   "label": "Place Marker",
+   "read_only": 1,
+   "description": "Where this connection had got to. Kept so a restart carries on rather than starting again."
+  },
+  {
+   "fieldname": "inbound_checked_at",
+   "fieldtype": "Datetime",
+   "label": "Last Collected",
+   "read_only": 1
   }
  ],
  "links": [],

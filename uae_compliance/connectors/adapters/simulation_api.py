@@ -398,3 +398,31 @@ def _ids(payload: dict) -> dict:
 	if payload.get("number"):
 		ids["number"] = str(payload["number"])
 	return ids
+
+
+def inbound_documents(body: dict) -> list[ArtifactRef]:
+	"""The documents in an inbox page, each with its bytes.
+
+	The provider's own identifier is kept as the reference, because that is
+	what tells two arrivals of the same document apart from two documents.
+	"""
+	import base64
+
+	found = []
+	for row in body.get("results") or ():
+		raw = row.get("payload")
+		if not raw:
+			continue
+		try:
+			content = base64.b64decode(raw)
+		except TypeError, ValueError:
+			continue
+		found.append(
+			ArtifactRef(
+				kind="inbound",
+				identifier=str(row.get("id") or row.get("number") or ""),
+				media_type=row.get("media_type") or "application/xml",
+				body=content,
+			)
+		)
+	return found

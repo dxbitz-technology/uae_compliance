@@ -357,6 +357,36 @@ identification element was never written, and the principal was going into
 the payee element rather than the seller supplier one, so the two rules
 looking for it never found it.
 
+## Receiving, brought forward
+
+The maintainer asked for the buying side before P09 rather than at P12. The
+reasoning is in D059: buying is half of what this app is for on a UAE site,
+and finding out at P12 that the model does not fit would mean redoing work
+from P03 onward.
+
+Done: the connector contract now carries fetched bytes, the simulator has an
+inbox, the adapter reads a page of it with a cursor, and arrived documents
+land as their own records, parsed, matched where they can be matched and
+deduplicated.
+
+Not done: turning one into a Purchase Invoice. That needs item matching and
+tax mapping in reverse, and it is where the care belongs.
+
+Nothing arriving becomes a purchase on its own. No supplier is created, no
+item is invented, nothing posts. A sender is matched by tax number or by the
+network address on a supplier profile, never by name, and where nothing
+matches the document waits and says so.
+
+Checked against the simulator with two real published invoices seeded into
+an inbox, neither of them written by this app. Both were pulled in, read,
+and landed. The one whose sender matched a supplier came in as Received and
+the other as Unmatched. Collecting again from the start stored nothing new.
+
+One bug worth knowing about. Frappe fills a company link from the site
+default when nothing sets it, so the first run quietly attributed two
+suppliers' invoices to whichever company happened to be default. On a
+document somebody else wrote that is worse than leaving it blank.
+
 ## Lane B, alongside
 
 The connector work needed only the contract P01 settled, so it ran in
