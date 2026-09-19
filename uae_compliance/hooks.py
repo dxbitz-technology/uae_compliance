@@ -282,7 +282,12 @@ scheduler_events = {
 		"* * * * *": ["uae_compliance.services.sending.send_due"],
 		# Slower, because asking a provider where something got to is not
 		# urgent and asking constantly is its own kind of rude.
-		"*/5 * * * *": ["uae_compliance.services.reconcile.reconcile_due"],
+		"*/5 * * * *": [
+			"uae_compliance.services.reconcile.reconcile_due",
+			# Collecting what suppliers sent. Only from connections
+			# somebody has turned receiving on for.
+			"uae_compliance.services.receiving.collect_all",
+		],
 		# One message a day carrying everything. One alert per problem
 		# teaches people to ignore the alerts.
 		"0 7 * * *": ["uae_compliance.services.alerts.daily_summary"],
