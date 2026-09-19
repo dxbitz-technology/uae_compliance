@@ -650,7 +650,6 @@ class ForeignCurrency(unittest.TestCase):
 		# dirham figures the controller wrote are 6.13 and 6.10, and 12.23
 		# over 3.6725 is 3.33 again.
 		source = self.rows(3.6725, [(33.33, 6.13), (33.33, 6.10)], 3.33, [STANDARD, STANDARD])
-		source.items[0].item_tax_template = None
 		document = canonical(source, Masters({"VAT 5%": STANDARD}))
 		self.assertEqual(document["tax_breakdown"][0]["taxable_amount"], D("66.66"))
 		self.assertEqual(document["tax_breakdown"][0]["tax_amount"], D("3.33"))
