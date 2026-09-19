@@ -27,6 +27,22 @@ UBL_VERSION = "2.1"
 CUSTOMIZATION_ID = "urn:peppol:pint:billing-1@ae-1"
 PROFILE_ID = "urn:peppol:bis:billing"
 
+# Self-billing is its own published specification with its own rules. The
+# billing package refuses its document types outright through ibr-cl-01,
+# so a self-billed document has to be checked against its own package or
+# not at all.
+SELF_BILLING_CUSTOMIZATION_ID = "urn:peppol:pint:selfbilling-1@ae-1"
+SELF_BILLING_PROFILE_ID = "urn:peppol:bis:selfbilling"
+
+# Which vendored package answers for which specification. A document says
+# which one it follows and is checked against that. One we do not hold is
+# not checked at all, which reports as unavailable rather than passed.
+FAMILIES = {
+	CUSTOMIZATION_ID: "pint_ae",
+	SELF_BILLING_CUSTOMIZATION_ID: "pint_ae_sb",
+}
+DEFAULT_FAMILY = "pint_ae"
+
 # Which folder and schema each kind of document uses.
 TRANSACTIONS = {
 	"Invoice": ("trn-invoice", "UBL-Invoice-2.1.xsd"),
@@ -55,7 +71,21 @@ class Paths:
 		return absent
 
 
-def paths_for(root_name: str, *, root: Path | None = None) -> Paths:
+def family_for(customization_id: str | None) -> str:
+	"""Which package checks a document that says it follows this specification.
+
+	An unknown one raises rather than falling back, because checking a
+	document against rules it does not claim to follow proves nothing.
+	"""
+	if not customization_id:
+		return DEFAULT_FAMILY
+	folder = FAMILIES.get(customization_id.strip())
+	if folder is None:
+		raise ArtifactsUnavailable(f"no official rules are held for {customization_id}")
+	return folder
+
+
+def paths_for(root_name: str, *, root: Path | None = None, family: str = DEFAULT_FAMILY) -> Paths:
 	"""Where the files for this kind of document live."""
 	if root_name not in TRANSACTIONS:
 		raise ArtifactsUnavailable(f"no official rules for a {root_name} document")
@@ -64,7 +94,7 @@ def paths_for(root_name: str, *, root: Path | None = None) -> Paths:
 	return Paths(
 		schema=base / "ubl" / UBL_VERSION / "xsd" / "maindoc" / schema_name,
 		rule_layers=tuple(
-			(label, base / "pint_ae" / PINT_VERSION / folder / "schematron" / name)
+			(label, base / family / PINT_VERSION / folder / "schematron" / name)
 			for label, name in RULE_LAYERS
 		),
 	)
@@ -110,21 +140,25 @@ class Compiled:
 					raise ArtifactsUnavailable(f"the schema will not compile: {exc}") from exc
 			return self._schemas[root_name]
 
-	def rule_layers(self, root_name: str):
+	def rule_layers(self, root_name: str, family: str = DEFAULT_FAMILY):
+		# Keyed by both, because two specifications hold different rules for
+		# the same kind of document and sharing them would check a
+		# self-billed invoice against the billing package.
+		key = f"{family}:{root_name}"
 		with self._lock:
-			if root_name not in self._layers:
+			if key not in self._layers:
 				engine = self._engine()
 				compiler = engine.new_xslt30_processor()
 				built = []
-				for label, path in paths_for(root_name, root=self._root).rule_layers:
+				for label, path in paths_for(root_name, root=self._root, family=family).rule_layers:
 					if not path.is_file():
 						raise ArtifactsUnavailable(f"a rule layer is missing: {path.name}")
 					try:
 						built.append((label, compiler.compile_stylesheet(stylesheet_file=str(path))))
 					except Exception as exc:
 						raise ArtifactsUnavailable(f"{label} will not compile: {exc}") from exc
-				self._layers[root_name] = tuple(built)
-			return self._layers[root_name]
+				self._layers[key] = tuple(built)
+			return self._layers[key]
 
 	def parse(self, text: str):
 		return self._engine().parse_xml(xml_text=text)

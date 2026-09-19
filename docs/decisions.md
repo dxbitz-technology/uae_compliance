@@ -117,7 +117,7 @@ Status: Verified for the ordering rule; the fta_compliance relationship is Unres
 ## D015 Verified official code values
 
 Choice: take these values as the baseline for the P01 decision tables.
-- Document types: 380 tax invoice, 480 commercial invoice, 381 tax credit note, 81 commercial credit note. These four are the whole of the billing family, and ibr-cl-01 enforces them. Two more exist in the self-billing family, 389 and 261, which the package we pinned rejects. Spec 2.1 puts them in P12, and their artifacts are not vendored. Selection follows the category rules (ibr-122-ae, ibr-123-ae, ibr-134-ae, ibr-136-ae, ibr-151-ae, ibr-157-ae), never is_return alone.
+- Document types: 380 tax invoice, 480 commercial invoice, 381 tax credit note, 81 commercial credit note. These four are the whole of the billing family, and ibr-cl-01 enforces them. Two more exist in the self-billing family, 389 and 261. That package is now pinned as well, so those two can be validated. See D064. Selection follows the category rules (ibr-122-ae, ibr-123-ae, ibr-134-ae, ibr-136-ae, ibr-151-ae, ibr-157-ae), never is_return alone.
 - Tax categories: S, E, O, AE, Z, N. Margin is ASCII N. The rules and every example use ASCII N; the code list file stores a Greek capital Nu at that row. Treat the code list character as an upstream typo and keep ASCII N.
 - Transaction flags: eight positions carried in cbc:ProfileExecutionID as an eight character string of 0 and 1 (ibr-154-ae). Order: free zone, deemed supply, margin, summary, continuous supply, agent, e-commerce, export. ibr-157-ae forbids positions 2, 3 and 4 with document type 480 or 81.
 - Electronic address scheme for the UAE TIN is 0235, permitted by ibr-cl-25 for endpoints and ibr-cl-10 for party identification.
@@ -347,7 +347,7 @@ A consequence worth stating: an unregistered seller with standard rated lines ha
 Reason: spec 6.2 requires selection through the verified category matrix rather than from a return flag alone. The matrix itself was read from the pinned publication in P00 and recorded in the evidence.
 Source: uae_compliance/domain/scope.py with 30 tests. Every finding carries the published rule id, so a reader can check rather than trust.
 Affected: extraction (P03), the serializer (P01c), acceptance case A05.
-Scope: the billing family only. Self-billing adds 389 and 261 at P12, on a separate specialisation this app has not pinned.
+Scope: the billing family only. Self-billing adds 389 and 261 on a separate specialisation, now pinned, though issuing one is still not built. See D064.
 Status: Verified.
 
 ## D040 The validator reports three layers separately
@@ -550,6 +550,15 @@ Reason: ibr-147-ae is exact. The line amount must equal the quantity times the u
 Nothing is altered to make it fit. The amount, the price and the quantity are all what was posted, and the rule's own arithmetic makes room for the difference. A reader sees a one fils adjustment with its reason instead of a document that will not go.
 The bound matters as much as the adjustment: it is only applied where rounding the unit price could actually have produced the difference, which is half a unit of price precision across the quantity. A row with an amount and no quantity disagrees by the whole amount and is still reported, because stating that as an adjustment would hide exactly what the arithmetic check exists to find.
 Status: Verified. The maintainer asked for this on 19-09-2026.
+
+## D064 The self-billing package is pinned, and the document says which one checks it
+
+Choice: vendor PINT AE Self-Billing 1.0.4 alongside the billing package, and decide which one validates a document from the customization the document itself states.
+Reason: the two are separate published specifications with separate rules, and each refuses the other's document types. The billing package rejects 389 and 261 through ibr-cl-01, which P00 recorded and which is checked here rather than assumed. Checking a document against rules it does not claim to follow proves nothing, so the document chooses.
+A specification we do not hold is refused rather than guessed at, and reports as unavailable. Spec 6.1 is explicit that missing artifacts mean validation unavailable and not passed, which is a different thing from the document being fine.
+Source: https://docs.peppol.eu/poac/ae/pint-ae-sb/ resources.zip, sha256 7e6e58f120132dd2d2a6acf21b4a9318f0d07f2685c30ff282fae0e2a6613d15, downloaded 19-09-2026. The billing archive was downloaded again at the same time and its checksum still matches what P00 recorded, so the publication has not moved underneath us.
+Consequence: a self-billed invoice or credit note can now be read and checked. Issuing one on a supplier's behalf is a separate workflow and is still not built, which the published capability list says.
+Status: Verified. Both official self-billing examples pass all three layers, and the same document forced through the billing package is refused by ibr-cl-01.
 
 ## Unresolved facts carried from spec 14
 

@@ -28,6 +28,10 @@ from lxml import etree
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PINT_ROOT = REPO_ROOT / "uae_compliance" / "standards" / "pint_ae" / "1.0.4"
+# Self-billing is a separate published package with its own rules. Its
+# examples are run the same way, against its own rules and not the
+# billing ones, which would refuse them.
+SELF_BILLING_ROOT = REPO_ROOT / "uae_compliance" / "standards" / "pint_ae_sb" / "1.0.4"
 XSD_ROOT = REPO_ROOT / "uae_compliance" / "standards" / "ubl" / "2.1" / "xsd" / "maindoc"
 
 # Transaction folder -> expected root element local name.
@@ -120,7 +124,7 @@ class Validator:
 		self.proc = proc
 		self.xslt = proc.new_xslt30_processor()
 		self._schemas: dict[str, etree.XMLSchema] = {}
-		self._executables: dict[tuple[str, str], saxonche.PyXsltExecutable] = {}
+		self._executables: dict[tuple[str, str, str], saxonche.PyXsltExecutable] = {}
 
 	def schema(self, root_name: str) -> etree.XMLSchema:
 		if root_name not in self._schemas:
@@ -131,14 +135,20 @@ class Validator:
 			self._schemas[root_name] = etree.XMLSchema(xsd_tree)
 		return self._schemas[root_name]
 
-	def executable(self, transaction: str, stylesheet: str) -> saxonche.PyXsltExecutable:
-		key = (transaction, stylesheet)
+	def executable(
+		self, transaction: str, stylesheet: str, root: Path | None = None
+	) -> saxonche.PyXsltExecutable:
+		# Keyed by the package as well, because billing and self-billing
+		# hold different rules under the same file names and sharing them
+		# would check one specification against the other's.
+		base = root or PINT_ROOT
+		key = (str(base), transaction, stylesheet)
 		if key not in self._executables:
-			path = PINT_ROOT / transaction / "schematron" / stylesheet
+			path = base / transaction / "schematron" / stylesheet
 			self._executables[key] = self.xslt.compile_stylesheet(stylesheet_file=str(path))
 		return self._executables[key]
 
-	def validate(self, path: Path, transaction: str) -> Result:
+	def validate(self, path: Path, transaction: str, root: Path | None = None) -> Result:
 		tree = parse_hardened(path)
 		root_name = etree.QName(tree.getroot()).localname
 		schema = self.schema(root_name)
@@ -152,7 +162,7 @@ class Validator:
 		failed: list[FailedAssert] = []
 		svrl: dict[str, str] = {}
 		for stylesheet in STYLESHEETS:
-			output = self.executable(transaction, stylesheet).transform_to_string(xdm_node=node)
+			output = self.executable(transaction, stylesheet, root).transform_to_string(xdm_node=node)
 			svrl[stylesheet] = output
 			report = etree.fromstring(output.encode("utf-8"), hardened_parser())
 			for item in report.iter(SVRL + "failed-assert"):
@@ -202,40 +212,41 @@ def run_positive(validator: Validator) -> int:
 	failures = 0
 	known = 0
 	seen_defects = set()
-	for transaction, expected_root in TRANSACTIONS.items():
-		for path in sorted((PINT_ROOT / transaction / "example").glob("*.xml")):
-			count += 1
-			result = validator.validate(path, transaction)
-			fatal_ids = result.ids(result.fatal)
-			warning_ids = result.ids(result.warnings)
-			line = (
-				f"{transaction}/{path.name}: xsd={'ok' if result.xsd_ok else 'FAIL'} "
-				f"fatal={len(result.fatal)} warning={len(result.warnings)}"
-			)
-			if fatal_ids:
-				line += " fatal_ids=" + ",".join(fatal_ids)
-			if warning_ids:
-				line += " warning_ids=" + ",".join(warning_ids)
-			bad = not result.xsd_ok or bool(result.fatal) or result.root_name != expected_root
-			if result.root_name != expected_root:
-				line += f" root={result.root_name} expected={expected_root}"
-			excused = False
-			if bad:
-				excused, why = known_defect(transaction, path, result)
-				if excused:
-					seen_defects.add((transaction, path.name))
-					line += f" KNOWN UPSTREAM DEFECT ({why})"
-				elif why:
-					line += f" recorded defect no longer applies: {why}"
-			print(line)
-			for err in result.xsd_errors:
-				print(f"  xsd: {err}")
-			for item in result.fatal:
-				print(f"  {item.id} [{item.layer}] {item.text}")
-			if bad and not excused:
-				failures += 1
-			elif excused:
-				known += 1
+	for family, root in (("billing", PINT_ROOT), ("self-billing", SELF_BILLING_ROOT)):
+		for transaction, expected_root in TRANSACTIONS.items():
+			for path in sorted((root / transaction / "example").glob("*.xml")):
+				count += 1
+				result = validator.validate(path, transaction, root=root)
+				fatal_ids = result.ids(result.fatal)
+				warning_ids = result.ids(result.warnings)
+				line = (
+					f"{family} {transaction}/{path.name}: xsd={'ok' if result.xsd_ok else 'FAIL'} "
+					f"fatal={len(result.fatal)} warning={len(result.warnings)}"
+				)
+				if fatal_ids:
+					line += " fatal_ids=" + ",".join(fatal_ids)
+				if warning_ids:
+					line += " warning_ids=" + ",".join(warning_ids)
+				bad = not result.xsd_ok or bool(result.fatal) or result.root_name != expected_root
+				if result.root_name != expected_root:
+					line += f" root={result.root_name} expected={expected_root}"
+				excused = False
+				if bad:
+					excused, why = known_defect(transaction, path, result)
+					if excused:
+						seen_defects.add((transaction, path.name))
+						line += f" KNOWN UPSTREAM DEFECT ({why})"
+					elif why:
+						line += f" recorded defect no longer applies: {why}"
+				print(line)
+				for err in result.xsd_errors:
+					print(f"  xsd: {err}")
+				for item in result.fatal:
+					print(f"  {item.id} [{item.layer}] {item.text}")
+				if bad and not excused:
+					failures += 1
+				elif excused:
+					known += 1
 	stale = sorted(set(KNOWN_UPSTREAM_DEFECTS) - seen_defects)
 	for transaction, name in stale:
 		print(f"{transaction}/{name}: recorded as an upstream defect but did not fail that way")

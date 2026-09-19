@@ -20,7 +20,11 @@ sys.path.insert(0, str(ROOT))
 from uae_compliance.domain.canonical import DOCUMENT_TYPES, TAX_CATEGORIES
 from uae_compliance.domain.scenarios import SCENARIOS
 from uae_compliance.domain.scope import Mode
-from uae_compliance.validation.artifacts import CUSTOMIZATION_ID, PINT_VERSION
+from uae_compliance.validation.artifacts import (
+	CUSTOMIZATION_ID,
+	PINT_VERSION,
+	SELF_BILLING_CUSTOMIZATION_ID,
+)
 
 TARGET = ROOT / "docs" / "what-works.md"
 
@@ -39,7 +43,10 @@ NOT_BUILT = (
 		"Advance invoices and retention",
 		"Needs the advance, payment, balance and release documents defined together.",
 	),
-	("Self billing", "Uses a separate official package this release does not carry."),
+	(
+		"Issuing a self-billed document",
+		"The rules are held and a self-billed document can be checked. Issuing one on a supplier's behalf is its own workflow and is not built.",
+	),
 	("Receiving by callback", "Documents are collected by asking. Nothing listens for a push yet."),
 )
 
@@ -52,7 +59,10 @@ def rows() -> list[str]:
 		"list of this kind drifts away from the software, so this one is read\n"
 		"out of it and checked on every build.\n"
 	)
-	out.append(f"Rules: PINT AE Billing {PINT_VERSION}, `{CUSTOMIZATION_ID}`.\n")
+	out.append(
+		f"Rules: PINT AE Billing {PINT_VERSION}, `{CUSTOMIZATION_ID}`, and PINT AE\n"
+		f"Self-Billing {PINT_VERSION}, `{SELF_BILLING_CUSTOMIZATION_ID}`.\n"
+	)
 
 	out.append("## Documents\n")
 	out.append("| Code | Document |")
@@ -63,6 +73,12 @@ def rows() -> list[str]:
 	out.append(
 		"The type is chosen from the tax categories on the document and whether\n"
 		"the seller is registered, not from whether the source is a return.\n"
+	)
+
+	out.append(
+		"Self-billed documents, 389 and 261, are checked against their own\n"
+		"published package. This release can read and validate one. It cannot\n"
+		"issue one, which needs the self-billing workflow in P12.\n"
 	)
 
 	out.append("## Tax categories\n")
