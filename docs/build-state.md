@@ -292,19 +292,31 @@ believes everything it believed before, including that it may transmit. That
 is how a staging box sends live invoices to real customers.
 
 So the permission to send in Production does not live in the database. It
-lives in the site's configuration file, which a restore does not bring, and
-it names the site it was granted for. Copy the database anywhere and the
-copy cannot send.
+lives in the site's configuration file and it names the site it was granted
+for.
 
-The database still records which machine last sent from this site. When that
-changes, outbound work pauses and says why, because the likeliest
-explanation is that somebody restored it somewhere else. A manager lifts it
-deliberately after a genuine move.
+I first wrote that the configuration file does not travel in a backup. That
+is true of a database only restore and false of a full one: a backup taken
+with the configuration carries site_config.json, this key, the encryption
+key and the database password together. Taking one on uae.local and reading
+it back showed the key sitting in the archive. So the guard is not the key's
+absence. It is what the key says and where it is read, and the layering
+still holds, which the same session checked end to end:
 
-Checked on uae.local: a deployment that was never granted the key cannot
-send in Production; pointing the database at a different machine paused
-outbound, gave a reason and emptied the work queue; and confirming the move
-lifted it.
+- restored under another site name, Production sending is refused, because
+  the key names a site this is not;
+- restored under its own name on another machine, the machine fingerprint
+  in the database no longer matches, outbound pauses and says why, and a
+  manager lifts it deliberately after a genuine move;
+- restored under the same name on the same machine, both pass, which is
+  correct, because that is the site and not a copy of it.
+
+Also checked on uae.local: a deployment never granted the key cannot send in
+Production, and pointing the database at a different machine paused
+outbound, gave a reason and emptied the work queue.
+
+The operations guide now says all of this, including that a configuration
+backup is as sensitive as the credentials inside it.
 
 Two reports. Readiness carries the reason across in its last column, so
 somebody can work through a morning's worth without opening anything.
@@ -410,6 +422,28 @@ the key that was sent; a provider that replaces a document in place rather
 than issuing a new identifier; and the two it simply does not support, which
 the existing rule already handles.
 
+## Checking the evidence is still there
+
+`services/integrity.py` reads every kept artifact back and compares it with
+the checksum recorded when it was frozen. One submission, one file or all of
+them, and a manager can run it from the desk. After a restore it answers one
+question: is this site ready to resume.
+
+Its first real run found damage. A demo submission on this dev site records
+a reference XML with its checksum, and the bytes are not on disk. Its
+sibling canonical file is there. The freeze path writes each artifact, reads
+it straight back and refuses the freeze unless the hashes match, so both
+files existed and were readable when they were written. Something removed
+one of them afterwards and I cannot say what. It is demo data on a
+development site, not a real submission, and I have not invented an
+explanation for it.
+
+Worth a reviewer's attention for two reasons. The checker is not vacuous,
+which is the only way to know a checker of this kind works. And whatever
+removed those bytes can remove a real submission's bytes, which is the case
+the retention rules exist for. The File hooks refuse to delete or replace an
+evidence record; they do not guard the bytes underneath it.
+
 ## Still open for the maintainer
 
 - The published credit note example that fails its own schema (D008).
@@ -417,3 +451,4 @@ the existing rule already handles.
 - Spec 9.4 cites a section 4.5 that does not exist in the document.
 - Real tax templates, accounts and currency policy from a client site. Until then the mappings stay incomplete.
 - No Frappe v15 bench on this host, so that lane is unverified. version-15 and version-14 are later work.
+- Evidence bytes that went missing under a File record the app refuses to delete. Found by the integrity checker, cause unknown, demo data only.

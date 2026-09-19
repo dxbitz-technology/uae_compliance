@@ -40,7 +40,7 @@ behind it says so.
 | Case | What it is | Why not |
 | --- | --- | --- |
 | A16 | Event integrity | Nothing receives an event yet. The record exists and its shape holds the digest and the signature flag, but no provider sends one and the simulator's callbacks are not wired to a receiver. Belongs with P10. |
-| A22 | Operational recovery | Half covered. The clone and restore safeguards are tested in `tests/test_services.py`. Queue loss, a scheduler restart, a real backup and restore, and disk failure are not, and need a second site rather than a test. |
+| A22 | Operational recovery | Mostly covered, in `tests/test_services.py`. Clone and restore safeguards, queue loss, evidence read back against its recorded checksums, and what a configuration backup carries. A real restore onto a second machine is not covered and cannot be: it needs a second site. |
 | A25 | Real provider | No provider has been connected. Everything has run against the local simulator. This is P10 and it is the reason no production claim is made anywhere. |
 | A26 | Self-billing | The receiving half is covered. Self-billing uses a separate official package this release does not carry, so there is nothing to validate against. |
 

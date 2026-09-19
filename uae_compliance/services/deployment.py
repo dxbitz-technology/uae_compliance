@@ -5,13 +5,23 @@ believes everything it believed before, including that it may transmit. That
 is how a staging box sends live invoices to real customers.
 
 So the permission to send in Production does not live in the database. It
-lives in the site's own configuration file, which a database restore does
-not bring with it, and it names the site it was granted for. Copy the
-database anywhere you like and the copy cannot send.
+lives in the site's own configuration file, and it names the site it was
+granted for.
 
-The database still records which machine last sent from this site. When that
-changes underneath us, outbound work is paused and says why, because the
-likeliest explanation is that somebody restored this database somewhere else.
+That file travels further than it looks. A database only restore leaves it
+behind, but a backup taken with the configuration carries it, key and all,
+and restoring that puts the permission on the copy. So the guard is not the
+key being absent. It is what the key says, and where it is read.
+
+Restored under any other site name, the key names a site this is not, and
+Production sending is refused. Restored under its own name on another
+machine the key matches and the second guard catches it: the database
+records which machine this site last sent from, and when that changes
+underneath us outbound work is paused and says why. A manager lifts that
+deliberately after a genuine move.
+
+Neither guard covers a restore under the same name on the same machine,
+because that is not a copy. That is the site.
 """
 
 from __future__ import annotations
