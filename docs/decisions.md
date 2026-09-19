@@ -560,6 +560,15 @@ Source: https://docs.peppol.eu/poac/ae/pint-ae-sb/ resources.zip, sha256 7e6e58f
 Consequence: a self-billed invoice or credit note can now be read and checked. Issuing one on a supplier's behalf is a separate workflow and is still not built, which the published capability list says.
 Status: Verified. Both official self-billing examples pass all three layers, and the same document forced through the billing package is refused by ibr-cl-01.
 
+## D065 A configuration backup does carry the right to send
+
+Choice: keep the production send permission in the site configuration and keep both guards. Correct the description of why a restored copy cannot send.
+Reason: P07c was written on the claim that the configuration file does not travel in a backup. That is true of a database only restore and false of a full one. `BackupGenerator.copy_site_config` writes site_config.json into the backup verbatim, so a backup taken with the configuration carries this key, the encryption key and the database password together. Restoring that puts the permission on the copy.
+What actually stops a copy is therefore two things and not one. The key names the site it was granted for, so a restore under any other name is refused outright. A restore under the same name on another machine is caught by the machine fingerprint in the database, which pauses outbound work and says why until a manager confirms the move. A restore under the same name on the same machine passes both, which is correct, because that is the site.
+Source: frappe/utils/backups.py:371 `copy_site_config`; checked on uae.local by taking a backup with the key set and reading the archived configuration back.
+Consequence: no code change. The operations guide now says a configuration backup is as sensitive as the passwords inside it, and tells a deployment to check the key on a copy instead of assuming it is absent. A site test pins the fact that the configuration is copied unfiltered, so the old description cannot drift back in.
+Status: Verified. Mutation checked: filtering a secret out of the copied configuration fails the test.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |

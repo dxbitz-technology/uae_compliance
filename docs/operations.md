@@ -6,15 +6,21 @@ expensive when you do.
 ## Turning production sending on
 
 Sending real invoices needs one line in the site's own configuration file.
-It is not a field, and it is not in the database, because a database can be
-restored somewhere else and a configuration file is not.
+It is not a field and it is not in the database, so restoring a database
+somewhere else does not hand that somewhere else the right to transmit.
 
 ```bash
 bench --site your-site.com set-config uae_peppol_production_send your-site.com
 ```
 
 The value is the site name. A key granted for one site does not work on
-another, so copying the file does not carry the permission with it.
+another.
+
+Know where that file goes. A backup taken with the configuration contains
+site_config.json, so it contains this key and the site's encryption key and
+database password with it. Treat such a backup as you would the passwords
+themselves. Restoring one does put the sending permission on the copy, and
+what stops the copy sending is covered next.
 
 Without this, a company can be set to Live and still send nothing. It will
 collect, check and freeze, and the work will sit waiting.
@@ -25,8 +31,21 @@ Do these in order.
 
 1. Restore the database and the private files.
 2. Start with the workers stopped, or with outbound paused.
-3. On a copy that is not production, do not set the configuration key above.
-   Without it the copy cannot send, whatever the database says.
+3. On a copy that is not production, check the configuration key.
+
+   ```bash
+   bench --site the-copy.com show-config | grep uae_peppol_production_send
+   ```
+
+   Nothing, or another site's name, and the copy cannot send in Production.
+   Its own name, and it can, so take it off:
+
+   ```bash
+   bench --site the-copy.com set-config uae_peppol_production_send None
+   ```
+
+   Give the copy a name of its own and the key stops matching by itself.
+   Restore it under the production name and the key is live again.
 4. On the real site moving to a new machine, sign in as a manager and
    confirm the move. Until somebody does, outbound work stays paused.
 

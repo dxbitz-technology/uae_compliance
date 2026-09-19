@@ -16,8 +16,11 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from uae_compliance.development.fixtures import (
+	DUE_DATE,
+	POSTING_DATE,
 	a_company,
 	a_customer,
+	a_price_list,
 	a_seller,
 	an_address,
 	an_invoice,
@@ -99,8 +102,11 @@ class A09ScopeEnforcement(IntegrationTestCase):
 				"customer": a_customer(),
 				"currency": "AED",
 				"conversion_rate": 1,
-				"posting_date": "2026-09-19",
-				"due_date": "2026-10-19",
+				"selling_price_list": a_price_list(),
+				"price_list_currency": "AED",
+				"plc_conversion_rate": 1,
+				"posting_date": POSTING_DATE,
+				"due_date": DUE_DATE,
 				"items": [
 					{
 						"item_code": an_item(),

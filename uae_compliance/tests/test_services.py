@@ -6,12 +6,46 @@ stops a restored copy of a site from sending. Each one either writes to
 somebody's books or decides whether real invoices go out.
 """
 
+import json
+import os
+import pathlib
+import tempfile
+import types
 from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
 
 from uae_compliance.development.fixtures import a_company, a_seller, an_invoice
+
+
+def _key_names(path) -> list[str]:
+	"""The key names in a configuration file, and never the values.
+
+	A helper rather than a few lines in the test, so the parsed file lives
+	in a frame that is gone before any assertion can fail and print it.
+	"""
+	return sorted(json.loads(pathlib.Path(path).read_text()))
+
+
+def _copy_site_config(folder: str) -> str:
+	"""What a backup taken with the configuration would contain."""
+	from frappe.utils.backups import BackupGenerator
+
+	copied = os.path.join(folder, "site_config.json")
+	BackupGenerator.copy_site_config(types.SimpleNamespace(backup_path_conf=copied))
+	return copied
+
+
+def _backed_up_keys() -> list[str]:
+	with tempfile.TemporaryDirectory() as folder:
+		return _key_names(_copy_site_config(folder))
+
+
+def _backed_up_value(key: str):
+	"""One value out of the copy, for a key we put there ourselves."""
+	with tempfile.TemporaryDirectory() as folder:
+		return json.loads(pathlib.Path(_copy_site_config(folder)).read_text()).get(key)
 
 
 class A07CreatingAParty(IntegrationTestCase):
@@ -256,11 +290,49 @@ class A22StoppingARestoredCopy(IntegrationTestCase):
 		settings.save()
 
 	def test_production_sending_is_off_unless_the_deployment_granted_it(self):
-		# The permission lives in the site's configuration file, which a
-		# database restore does not bring with it.
+		# The permission lives in the site's configuration file rather than
+		# in the database, so a database restore does not hand it over.
 		allowed, reason = self.deployment.production_sending_allowed()
 		self.assertFalse(allowed)
 		self.assertTrue(reason)
+
+	def test_a_backup_of_the_configuration_does_carry_the_permission(self):
+		"""The unpleasant half of the truth, written down so it stays written.
+
+		A database only restore leaves the configuration behind. A backup
+		taken with the configuration does not: it copies site_config.json
+		verbatim, so this key travels in it, and so do the encryption key
+		and the database password. What stops a restored copy sending is
+		the site name in the key and the machine fingerprint, tested below,
+		not this key going missing. Treat such a backup as you would the
+		passwords inside it.
+
+		Nothing here holds a configuration value in a local. Frappe prints
+		every local in a traceback, so a failing assertion on the parsed
+		file would put the site's secrets in the test output.
+		"""
+		from frappe.installer import update_site_config
+
+		live = pathlib.Path(frappe.get_site_path(), "site_config.json")
+
+		# Nothing is filtered on the way in.
+		self.assertEqual(_backed_up_keys(), _key_names(live))
+		# D017: the site encryption key is written the first time something
+		# is encrypted, so a fresh site has none yet and only the database
+		# password is certain to be there. Whichever of them the site holds,
+		# the backup holds too.
+		self.assertIn("db_password", _backed_up_keys(), "the configuration backup stopped carrying secrets")
+		if "encryption_key" in _key_names(live):
+			self.assertIn("encryption_key", _backed_up_keys())
+
+		# And the key itself, set and then taken off again, because a copy
+		# of the file only says something if this is what is in it.
+		self.addCleanup(frappe.conf.pop, self.deployment.CONFIG_KEY, None)
+		self.addCleanup(update_site_config, self.deployment.CONFIG_KEY, "None")
+		update_site_config(self.deployment.CONFIG_KEY, frappe.local.site)
+
+		self.assertIn(self.deployment.CONFIG_KEY, _backed_up_keys())
+		self.assertEqual(_backed_up_value(self.deployment.CONFIG_KEY), frappe.local.site)
 
 	def test_a_key_granted_for_another_site_does_not_work_here(self):
 		frappe.conf[self.deployment.CONFIG_KEY] = "somebody-elses-site.com"
@@ -292,3 +364,151 @@ class A22StoppingARestoredCopy(IntegrationTestCase):
 		self.assertFalse(frappe.db.get_single_value("UAE Peppol Settings", "pause_outbound"))
 		allowed, _reason = self.deployment.check_environment()
 		self.assertTrue(allowed)
+
+
+class A22TheQueueIsNotTheRecord(IntegrationTestCase):
+	"""Work survives the queue losing it.
+
+	Spec 8.3. Redis is a way of getting a worker's attention, not the
+	record that work exists. Nothing here enqueues anything, so if the
+	outbox finds the work then the database is what it read.
+	"""
+
+	def setUp(self):
+		super().setUp()
+		# This is about the queue and nothing else, so the deployment is
+		# put in a known state rather than inherited from whatever ran
+		# before. A paused site hands out no work for its own reasons.
+		from uae_compliance.services import deployment
+
+		self.known = frappe.db.get_global(deployment.HOST_KEY)
+		deployment.confirm_this_machine()
+		self.addCleanup(frappe.db.set_global, deployment.HOST_KEY, self.known)
+
+	def a_submission_nobody_queued(self):
+		a_seller("Preparation")
+		invoice = an_invoice()
+		control = frappe.db.get_value("UAE Peppol Invoice", {"sales_invoice": invoice.name}, "name")
+		doc = frappe.new_doc("UAE Peppol Submission")
+		doc.control = control
+		doc.company = a_company()
+		doc.revision = 1
+		doc.document_number = invoice.name
+		doc.document_uuid = f"queueless-{invoice.name}"
+		doc.idempotency_key = f"queueless-{invoice.name}"
+		doc.canonical_hash = "a" * 64
+		doc.approved_canonical_hash = "a" * 64
+		doc.payload_hash = "b" * 64
+		doc.approved = 1
+		doc.approved_by = "Administrator"
+		doc.approved_at = frappe.utils.now_datetime()
+		doc.processing_state = "Ready"
+		doc.next_attempt_at = frappe.utils.now_datetime()
+		doc.evidence_state = "Complete"
+		doc.insert(ignore_permissions=True)
+		self.addCleanup(frappe.db.sql, "delete from `tabUAE Peppol Submission` where name=%s", doc.name)
+		return doc
+
+	def test_work_nothing_ever_queued_is_still_found(self):
+		from uae_compliance.services import outbox
+
+		doc = self.a_submission_nobody_queued()
+		self.assertIn(doc.name, outbox.due(limit=100))
+
+	def test_it_can_still_be_claimed(self):
+		from uae_compliance.services import outbox
+
+		doc = self.a_submission_nobody_queued()
+		self.assertIsNotNone(outbox.claim(doc.name))
+
+
+class A22ReadingTheEvidenceBack(IntegrationTestCase):
+	"""A manifest is worth nothing unless somebody reads the bytes back."""
+
+	def a_submission_with_evidence(self, content=b"<Invoice>kept</Invoice>"):
+		import json
+
+		from uae_compliance.domain.encoding import sha256_hex
+
+		a_seller("Preparation")
+		invoice = an_invoice()
+		control = frappe.db.get_value("UAE Peppol Invoice", {"sales_invoice": invoice.name}, "name")
+		doc = frappe.new_doc("UAE Peppol Submission")
+		doc.control = control
+		doc.company = a_company()
+		doc.revision = 1
+		doc.document_number = invoice.name
+		doc.document_uuid = f"evidence-{invoice.name}"
+		doc.idempotency_key = f"evidence-{invoice.name}"
+		doc.canonical_hash = "c" * 64
+		doc.payload_hash = sha256_hex(content)
+		doc.evidence_state = "Complete"
+		doc.insert(ignore_permissions=True)
+		self.addCleanup(frappe.db.sql, "delete from `tabUAE Peppol Submission` where name=%s", doc.name)
+
+		saved = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": f"{doc.name}-reference-xml.xml",
+				"attached_to_doctype": "UAE Peppol Submission",
+				"attached_to_name": doc.name,
+				"is_private": 1,
+				"content": content,
+			}
+		).insert(ignore_permissions=True)
+		self.addCleanup(frappe.db.sql, "delete from `tabFile` where name=%s", saved.name)
+
+		manifest = [
+			{
+				"kind": "reference-xml",
+				"file": saved.name,
+				"sha256": sha256_hex(content),
+				"bytes": len(content),
+				"source": "This app",
+			}
+		]
+		frappe.db.set_value("UAE Peppol Submission", doc.name, "evidence_manifest", json.dumps(manifest))
+		return doc, saved, manifest
+
+	def test_evidence_that_is_all_there_reads_back_clean(self):
+		from uae_compliance.services import integrity
+
+		doc, _saved, _manifest = self.a_submission_with_evidence()
+		found = integrity.check_one(doc.name)
+		self.assertEqual(found["problems"], [])
+		self.assertEqual(found["checked"], 1)
+
+	def test_bytes_that_changed_since_they_were_kept_are_reported(self):
+		import json
+
+		from uae_compliance.services import integrity
+
+		doc, _saved, manifest = self.a_submission_with_evidence()
+		# The hash in the manifest is what was recorded. Moving it stands in
+		# for the bytes moving, which the evidence guard will not allow.
+		manifest[0]["sha256"] = "d" * 64
+		frappe.db.set_value("UAE Peppol Submission", doc.name, "evidence_manifest", json.dumps(manifest))
+		found = integrity.check_one(doc.name)
+		self.assertTrue(found["problems"])
+		self.assertIn("changed", found["problems"][0])
+
+	def test_a_file_record_that_has_gone_is_reported(self):
+		import json
+
+		from uae_compliance.services import integrity
+
+		doc, _saved, manifest = self.a_submission_with_evidence()
+		manifest[0]["file"] = "no-such-file-record"
+		frappe.db.set_value("UAE Peppol Submission", doc.name, "evidence_manifest", json.dumps(manifest))
+		found = integrity.check_one(doc.name)
+		self.assertTrue(found["problems"])
+
+	def test_a_restored_site_says_whether_it_may_resume(self):
+		# Two separate questions after a restore: is what we hold intact,
+		# and was anything left in the air when the backup was taken.
+		from uae_compliance.services import integrity
+
+		found = integrity.after_restore()
+		self.assertIn("ready_to_resume", found)
+		self.assertIn("requests_with_no_answer", found)
+		self.assertIn("outcomes_not_known", found)
