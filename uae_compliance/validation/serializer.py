@@ -127,10 +127,25 @@ def _address(parent, address: Mapping):
 	_child(country, CBC, "IdentificationCode", address.get("country"))
 
 
-def _party(parent, wrapper: str, party: Mapping):
+def _party(parent, wrapper: str, party: Mapping, *, identify: bool = False):
+	"""Write one party into the document.
+
+	`identify` writes the party identification element as well as the
+	endpoint. The two are different things: the endpoint is where a document
+	is delivered, the identification is who the party is. A beneficiary and
+	a principal are named by the second, and the rules for both look for it
+	specifically, so a document without it fails however complete it looks.
+	"""
 	holder = etree.SubElement(parent, _q(CAC, wrapper))
 	node = etree.SubElement(holder, _q(CAC, "Party"))
 	_identifier(node, CBC, "EndpointID", party.get("participant"))
+	if identify:
+		# Order matters here. The schema puts identification after the
+		# endpoint and before the name.
+		identification = party.get("participant") or {}
+		if identification.get("value"):
+			wrap = etree.SubElement(node, _q(CAC, "PartyIdentification"))
+			_identifier(wrap, CBC, "ID", identification)
 	if _present(party.get("trading_name")):
 		name_node = etree.SubElement(node, _q(CAC, "PartyName"))
 		_child(name_node, CBC, "Name", party["trading_name"])
@@ -362,9 +377,13 @@ def to_xml(document: Mapping) -> bytes:
 	parties = document.get("parties") or {}
 	_party(root, "AccountingSupplierParty", parties.get("seller") or {})
 	_party(root, "AccountingCustomerParty", parties.get("buyer") or {})
-	for key, wrapper in (("principal", "PayeeParty"), ("beneficiary", "BuyerCustomerParty")):
+	# The order is the schema's, not ours. A beneficiary sits in the buyer
+	# customer element and a principal in the seller supplier element, which
+	# is where their rules look for them, and the first comes before the
+	# second.
+	for key, wrapper in (("beneficiary", "BuyerCustomerParty"), ("principal", "SellerSupplierParty")):
 		if isinstance(parties.get(key), Mapping):
-			_party(root, wrapper, parties[key])
+			_party(root, wrapper, parties[key], identify=True)
 
 	delivery = document.get("delivery") or {}
 	if delivery:

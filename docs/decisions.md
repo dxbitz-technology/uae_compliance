@@ -495,6 +495,22 @@ Reason: spec 9.1 says an undeclared capability does not exist, and all three ans
 Affected: P10, where a real adapter is written.
 Status: Proposed.
 
+## D057 The scenario table was read out of the rules, not written from scratch
+
+Choice: every requirement in `domain/scenarios.py` cites the rule that demands it, and the table was built by reading which rules key off the eight character transaction string in the pinned package.
+The mapping, from the rule patterns to the published positions: free zone is position 1 and ibr-007-ae wants a beneficiary identifier; deemed supply is 2, with ibr-191-ae wanting a payment means and ibr-127-ae a due date; margin is 3 and ibr-116-ae requires every line to be category N; summary is 4 and ibr-138-ae wants the period; continuous supply is 5 and no rule adds anything; agent billing is 6, where ibr-137-ae wants the principal, ibr-177-ae the seller's own registration and ibr-176-ae that the two differ; e-commerce is 7 and ibr-142-ae wants a delivery address; export is 8, with ibr-152-ae wanting the delivery address and ibr-135-ae the buyer's identity.
+Reason: spec 6.2 says to drive the flag patterns from the official use cases rather than ad hoc combinations. Reading the rules directly is the closest available thing, and it is checkable: every local finding carries the rule id, and on a real invoice each one fired alongside the official rule it cites.
+Consequence: the local check tells somebody which field is missing before the XML is built, where the official rules would tell them a rule id afterwards. The official rules stay the authority and still run.
+Status: Verified. Margin scheme is the one marked unsupported, because its accounting has not been settled.
+
+## D058 Two serializer gaps the scenarios found
+
+Choice: write the party identification element, and put the principal in the seller supplier element.
+Reason: the serializer wrote an endpoint for every party but never a party identification. The endpoint is where a document is delivered and the identification is who the party is. Both ibr-007-ae and ibr-137-ae look for the second, so a free zone or agent invoice failed however complete it looked. The principal was also being written as a payee, which is a different party entirely, and the rules that check it look at the seller supplier element.
+Consequence: only the beneficiary and the principal are written with an identification, because those are the two the rules ask for. The buyer identifier that ibr-135-ae mentions has no field in the canonical model yet and is met through the tax registration instead.
+Source: found by running each scenario flag against a real invoice and comparing our finding with the official one.
+Status: Verified.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |
