@@ -281,7 +281,8 @@ app_include_js = ["/assets/uae_compliance/js/party_quick_entry.js"]
 doc_events = {
 	"Sales Invoice": {
 		"on_update": "uae_compliance.services.working.on_invoice_update",
-		"on_cancel": "uae_compliance.services.working.on_invoice_cancel",
+		"before_cancel": "uae_compliance.services.cancellation.before_invoice_cancel",
+		"on_cancel": "uae_compliance.services.cancellation.on_invoice_cancel",
 		"before_submit": "uae_compliance.services.gate.before_invoice_submit",
 		"on_submit": [
 			"uae_compliance.services.freeze.on_invoice_submit",
