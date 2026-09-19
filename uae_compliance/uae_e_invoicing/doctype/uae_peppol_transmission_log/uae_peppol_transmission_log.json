@@ -6,40 +6,207 @@
  "editable_grid": 0,
  "engine": "InnoDB",
  "field_order": [
-  "attempt_id", "submission", "company", "connection", "operation",
-  "column_break_head", "state", "started_at", "finished_at", "duration_ms",
-  "section_request", "request_digest", "fencing_token", "column_break_request", "worker",
-  "section_result", "transport_status", "effect", "advice", "error_class",
-  "column_break_result", "provider_id", "provider_correlation", "retry_after_seconds",
-  "section_detail", "detail"
+  "attempt_id",
+  "submission",
+  "company",
+  "connection",
+  "operation",
+  "column_break_head",
+  "state",
+  "started_at",
+  "finished_at",
+  "duration_ms",
+  "section_request",
+  "request_digest",
+  "fencing_token",
+  "column_break_request",
+  "worker",
+  "section_result",
+  "transport_status",
+  "effect",
+  "advice",
+  "error_class",
+  "column_break_result",
+  "provider_id",
+  "provider_correlation",
+  "retry_after_seconds",
+  "section_detail",
+  "detail"
  ],
  "fields": [
-  {"fieldname": "attempt_id", "fieldtype": "Data", "label": "Attempt", "reqd": 1, "unique": 1, "read_only": 1, "in_list_view": 1, "description": "One durable attempt at one external operation. It is written before the request goes out."},
-  {"fieldname": "submission", "fieldtype": "Link", "options": "UAE Peppol Submission", "label": "Submission", "read_only": 1, "in_list_view": 1, "search_index": 1},
-  {"fieldname": "company", "fieldtype": "Link", "options": "Company", "label": "Company", "read_only": 1, "in_standard_filter": 1, "search_index": 1},
-  {"fieldname": "connection", "fieldtype": "Link", "options": "UAE Peppol ASP", "label": "Connection", "read_only": 1},
-  {"fieldname": "operation", "fieldtype": "Data", "label": "Operation", "read_only": 1, "in_list_view": 1},
-  {"fieldname": "column_break_head", "fieldtype": "Column Break"},
-  {"fieldname": "state", "fieldtype": "Select", "options": "Pending\nFinished\nAbandoned", "default": "Pending", "label": "State", "read_only": 1, "in_list_view": 1, "in_standard_filter": 1, "search_index": 1, "description": "Pending means the request went out and nothing has come back. It is never assumed to have failed."},
-  {"fieldname": "started_at", "fieldtype": "Datetime", "label": "Started", "read_only": 1, "search_index": 1},
-  {"fieldname": "finished_at", "fieldtype": "Datetime", "label": "Finished", "read_only": 1},
-  {"fieldname": "duration_ms", "fieldtype": "Int", "label": "Took (ms)", "read_only": 1},
-  {"fieldname": "section_request", "fieldtype": "Section Break", "label": "Request"},
-  {"fieldname": "request_digest", "fieldtype": "Data", "label": "Request Digest", "read_only": 1, "description": "The hash of what went out. The request itself is kept privately, not here."},
-  {"fieldname": "fencing_token", "fieldtype": "Int", "label": "Fencing Token", "read_only": 1, "description": "Which claim made this attempt, so a worker whose claim expired cannot write over a newer result."},
-  {"fieldname": "column_break_request", "fieldtype": "Column Break"},
-  {"fieldname": "worker", "fieldtype": "Data", "label": "Worker", "read_only": 1},
-  {"fieldname": "section_result", "fieldtype": "Section Break", "label": "What Came Back"},
-  {"fieldname": "transport_status", "fieldtype": "Data", "label": "Transport", "read_only": 1},
-  {"fieldname": "effect", "fieldtype": "Select", "options": "\nNone\nApplied\nUnknown", "label": "Effect On The Provider", "read_only": 1, "description": "Whether the provider took it. Unknown is a real answer and is never treated as no."},
-  {"fieldname": "advice", "fieldtype": "Data", "label": "Advice", "read_only": 1},
-  {"fieldname": "error_class", "fieldtype": "Data", "label": "Error Class", "read_only": 1},
-  {"fieldname": "column_break_result", "fieldtype": "Column Break"},
-  {"fieldname": "provider_id", "fieldtype": "Data", "label": "Provider Reference", "read_only": 1, "search_index": 1},
-  {"fieldname": "provider_correlation", "fieldtype": "Data", "label": "Correlation", "read_only": 1, "search_index": 1},
-  {"fieldname": "retry_after_seconds", "fieldtype": "Int", "label": "Retry After (s)", "read_only": 1},
-  {"fieldname": "section_detail", "fieldtype": "Section Break", "label": "Detail"},
-  {"fieldname": "detail", "fieldtype": "Long Text", "label": "Detail", "read_only": 1, "description": "Cleaned before it is kept. No headers, tokens or secrets."}
+  {
+   "fieldname": "attempt_id",
+   "fieldtype": "Data",
+   "label": "Attempt",
+   "reqd": 1,
+   "unique": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "One durable attempt at one external operation. It is written before the request goes out."
+  },
+  {
+   "fieldname": "submission",
+   "fieldtype": "Link",
+   "options": "UAE Peppol Submission",
+   "label": "Submission",
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "options": "Company",
+   "label": "Company",
+   "read_only": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "connection",
+   "fieldtype": "Link",
+   "options": "UAE Peppol ASP",
+   "label": "Connection",
+   "read_only": 1
+  },
+  {
+   "fieldname": "operation",
+   "fieldtype": "Data",
+   "label": "Operation",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "options": "Pending\nFinished\nAbandoned",
+   "default": "Pending",
+   "label": "State",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1,
+   "description": "Pending means the request went out and nothing has come back. It is never assumed to have failed."
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "finished_at",
+   "fieldtype": "Datetime",
+   "label": "Finished",
+   "read_only": 1
+  },
+  {
+   "fieldname": "duration_ms",
+   "fieldtype": "Int",
+   "label": "Took (ms)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_request",
+   "fieldtype": "Section Break",
+   "label": "Request"
+  },
+  {
+   "fieldname": "request_digest",
+   "fieldtype": "Data",
+   "label": "Request Digest",
+   "read_only": 1,
+   "description": "The hash of what went out. The request itself is kept privately, not here."
+  },
+  {
+   "fieldname": "fencing_token",
+   "fieldtype": "Int",
+   "label": "Fencing Token",
+   "read_only": 1,
+   "description": "Which claim made this attempt, so a worker whose claim expired cannot write over a newer result."
+  },
+  {
+   "fieldname": "column_break_request",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "worker",
+   "fieldtype": "Data",
+   "label": "Worker",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_result",
+   "fieldtype": "Section Break",
+   "label": "What Came Back"
+  },
+  {
+   "fieldname": "transport_status",
+   "fieldtype": "Data",
+   "label": "Transport",
+   "read_only": 1
+  },
+  {
+   "fieldname": "effect",
+   "fieldtype": "Select",
+   "options": "\nNot applied\nApplied\nUnknown",
+   "label": "Effect On The Provider",
+   "read_only": 1,
+   "description": "Whether the provider took it. Unknown is a real answer and is never treated as no."
+  },
+  {
+   "fieldname": "advice",
+   "fieldtype": "Data",
+   "label": "Advice",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_class",
+   "fieldtype": "Data",
+   "label": "Error Class",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_result",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "provider_id",
+   "fieldtype": "Data",
+   "label": "Provider Reference",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "provider_correlation",
+   "fieldtype": "Data",
+   "label": "Correlation",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "retry_after_seconds",
+   "fieldtype": "Int",
+   "label": "Retry After (s)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_detail",
+   "fieldtype": "Section Break",
+   "label": "Detail"
+  },
+  {
+   "fieldname": "detail",
+   "fieldtype": "Long Text",
+   "label": "Detail",
+   "read_only": 1,
+   "description": "Cleaned before it is kept. No headers, tokens or secrets."
+  }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
@@ -49,9 +216,32 @@
  "name": "UAE Peppol Transmission Log",
  "owner": "Administrator",
  "permissions": [
-  {"role": "UAE Peppol Manager", "read": 1, "write": 0, "create": 0, "delete": 0, "print": 1, "report": 1, "export": 1},
-  {"role": "UAE Peppol User", "read": 1, "write": 0, "create": 0, "delete": 0, "report": 1},
-  {"role": "System Manager", "read": 1, "write": 0, "create": 0, "delete": 0, "report": 1}
+  {
+   "role": "UAE Peppol Manager",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "delete": 0,
+   "print": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "UAE Peppol User",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "delete": 0,
+   "report": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "delete": 0,
+   "report": 1
+  }
  ],
  "sort_field": "creation",
  "sort_order": "DESC",
