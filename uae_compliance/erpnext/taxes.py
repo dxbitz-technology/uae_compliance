@@ -130,8 +130,20 @@ def _settle(by_key, posted, scales):
 	difference = posted - total
 	if not difference:
 		return
-	key = max(by_key, key=lambda k: (abs(by_key[k]["taxable_amount"]), k[0], str(k[1])))
-	by_key[key]["tax_amount"] += difference
+	by_key[_settlement_group(by_key)]["tax_amount"] += difference
+
+
+def _settlement_group(by_key):
+	"""Which group takes the leftover.
+
+	Never a group taxed at nothing. A zero rated or exempt supply carrying a
+	few fils of VAT is a false statement about that supply, and it is the one
+	a big zero rated line invites, because it is usually the largest group on
+	the invoice. So the leftover goes to the largest group that is taxed at
+	all, and only falls back to the largest of any kind when no group is.
+	"""
+	taxed = [key for key in by_key if key[1]] or list(by_key)
+	return max(taxed, key=lambda k: (abs(by_key[k]["taxable_amount"]), k[0], str(k[1])))
 
 
 def charge_rows(charges, invoice, scales: Scales, credit_note: bool) -> list[dict]:
@@ -162,12 +174,19 @@ def totals(invoice, charges, tax_total, scales: Scales, credit_note: bool) -> di
 	charge_total = sum((row["amount"] for row in charges), zero(scales.amount))
 	line_net = dec(invoice.net_total, scales.amount) or zero(scales.amount)
 	grand = dec(invoice.grand_total, scales.amount) or zero(scales.amount)
-	payable = dec(invoice.rounded_total, scales.amount) if not invoice.disable_rounded_total else None
+	rounded = dec(invoice.rounded_total, scales.amount) if not invoice.disable_rounded_total else None
+	rounding = dec(invoice.rounding_adjustment, scales.amount) or zero(scales.amount)
+	prepaid = dec(invoice.total_advance, scales.amount) or zero(scales.amount)
 
 	if credit_note:
+		# Every figure ERPNext posted negative turns, and that includes the
+		# rounding and the advance. Leaving the rounding behind states it the
+		# wrong way round and puts the amount due out by twice its value.
 		line_net = flip(line_net)
 		grand = flip(grand)
-		payable = flip(payable)
+		rounded = flip(rounded)
+		rounding = flip(rounding)
+		prepaid = flip(prepaid)
 
 	return {
 		"line_net": line_net,
@@ -176,9 +195,12 @@ def totals(invoice, charges, tax_total, scales: Scales, credit_note: bool) -> di
 		"tax_exclusive": line_net + charge_total,
 		"tax": tax_total,
 		"tax_inclusive": grand,
-		"prepaid": dec(invoice.total_advance, scales.amount) or zero(scales.amount),
-		"rounding": dec(invoice.rounding_adjustment, scales.amount) or zero(scales.amount),
-		"payable": payable or grand,
+		"prepaid": prepaid,
+		"rounding": rounding,
+		# ERPNext keeps the grand total whole and records the advance next to
+		# it. What is still due does not include money already collected, so
+		# the advance comes off here.
+		"payable": (grand if rounded is None else rounded) - prepaid,
 	}
 
 
