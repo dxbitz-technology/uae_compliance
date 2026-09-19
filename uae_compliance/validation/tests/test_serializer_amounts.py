@@ -82,8 +82,19 @@ def group(*, taxable, tax, category="S", rate="5.00"):
 	}
 
 
-def money(*, line_net, tax_exclusive, tax, tax_inclusive, payable, prepaid="0.00", rounding="0.00"):
-	return {
+def money(
+	*,
+	line_net,
+	tax_exclusive,
+	tax,
+	tax_inclusive,
+	payable,
+	prepaid="0.00",
+	rounding="0.00",
+	tax_in_aed=None,
+	tax_inclusive_aed=None,
+):
+	totals = {
 		"line_net": D(line_net),
 		"allowances": D("0.00"),
 		"charges": D("0.00"),
@@ -94,6 +105,13 @@ def money(*, line_net, tax_exclusive, tax, tax_inclusive, payable, prepaid="0.00
 		"rounding": D(rounding),
 		"payable": D(payable),
 	}
+	# Only on an invoice that is not already in dirhams. Stating the same
+	# figure twice in the same currency says nothing.
+	if tax_in_aed is not None:
+		totals["tax_in_aed"] = D(tax_in_aed)
+	if tax_inclusive_aed is not None:
+		totals["tax_inclusive_aed"] = D(tax_inclusive_aed)
+	return totals
 
 
 def parse(built):
@@ -349,18 +367,15 @@ class TheTaxOnEachLine(unittest.TestCase):
 
 
 class DirhamsOnAForeignCurrencyInvoice(unittest.TestCase):
-	"""What a dollar invoice states in dirhams, which is nothing.
+	"""What a dollar invoice states in dirhams.
 
-	Spec 5.3 asks for a hundred dollars at 3.6725 to carry its 367.25 in
-	dirhams alongside it. The document says its tax accounting currency is
-	AED and then gives no figure in AED anywhere, so four fatal rules in the
-	pinned schematron have nothing to read: ibr-053 and ibr-175-ae want the
-	tax total in AED, ibr-159-ae and ibr-153-ae want the rate that produced
-	it. The two per line elements the rules call the dirham figures carry the
-	dollar figures instead.
+	It stated nothing, and five fatal rules had nothing to read, so a foreign
+	currency invoice was refused outright. The fifth worked example in spec
+	5.3 had no implementation behind it.
 
-	These tests hold the gap still so it is visible. They come out when the
-	dirham figures are built.
+	These were written to hold that gap still while it was visible. They now
+	hold the other side: the figures are there, and they are the ones the
+	arithmetic says they should be.
 	"""
 
 	def build(self):
@@ -374,6 +389,8 @@ class DirhamsOnAForeignCurrencyInvoice(unittest.TestCase):
 				tax="5.00",
 				tax_inclusive="105.00",
 				payable="105.00",
+				tax_in_aed="18.36",
+				tax_inclusive_aed="385.61",
 			),
 			exchange_rates={
 				"to_aed": {
@@ -399,28 +416,13 @@ class DirhamsOnAForeignCurrencyInvoice(unittest.TestCase):
 		self.assertEqual(value(root, cbc("TaxCurrencyCode")), "AED")
 		self.assertEqual(value(root, cbc("DocumentCurrencyCode")), "USD")
 
-	def test_no_amount_anywhere_is_stated_in_dirhams(self):
+	def test_the_tax_is_stated_in_dirhams_as_well(self):
 		root = parse(self.build())
 		labelled = {node.get("currencyID") for node in root.iter() if node.get("currencyID")}
-		self.assertEqual(labelled, {"USD"})
+		self.assertIn("AED", labelled, "nothing on the document is stated in dirhams")
 
-	def test_the_frozen_rate_never_reaches_the_document(self):
+	def test_the_frozen_rate_reaches_the_document(self):
 		root = parse(self.build())
-		self.assertIsNone(root.find(f"{{{CAC}}}TaxExchangeRate"))
-		self.assertNotIn(b"3.6725", to_xml(self.build()))
-
-	def test_the_two_per_line_dirham_elements_carry_the_dollar_figures(self):
-		# The rules read cac:ItemPriceExtension/cbc:Amount as the line amount
-		# in AED and its TaxTotal/cbc:TaxAmount as the VAT on that line in
-		# AED. Both come out in dollars.
-		root = parse(self.build())
-		extension = root.find(f"{{{CAC}}}InvoiceLine/{{{CAC}}}ItemPriceExtension")
-		self.assertEqual(extension.find(cbc("Amount")).text, "105.00")
-		self.assertEqual(
-			currency_of(root, f"{{{CAC}}}InvoiceLine/{{{CAC}}}ItemPriceExtension/{cbc('Amount')}"), "USD"
-		)
-		self.assertEqual(extension.find(f"{TAX_TOTAL}/{cbc('TaxAmount')}").text, "5.00")
-
-
-if __name__ == "__main__":
-	unittest.main()
+		node = root.find(f"{{{CAC}}}TaxExchangeRate")
+		self.assertIsNotNone(node, "the rate was frozen and then never written down")
+		self.assertEqual(value(node, cbc("CalculationRate")), "3.6725")

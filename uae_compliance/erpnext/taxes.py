@@ -42,7 +42,15 @@ def split_tax_rows(invoice, resolution, source) -> tuple[dict, list]:
 	return vat, charges
 
 
-def breakdown(invoice, lines, vat_rows, attribution, scales: Scales, credit_note: bool) -> list[dict]:
+def breakdown(
+	invoice,
+	lines,
+	vat_rows,
+	attribution,
+	scales: Scales,
+	credit_note: bool,
+	company_currency: str | None = None,
+) -> list[dict]:
 	"""The tax total, grouped by every dimension the rules ask for.
 
 	Grouped by category and rate together, because two lines at the same rate
@@ -69,13 +77,13 @@ def breakdown(invoice, lines, vat_rows, attribution, scales: Scales, credit_note
 		group["taxable_amount"] += line["net_amount"]
 		group["_lines"].append(line["source_row"])
 
-	_attribute_tax(by_key, invoice, vat_rows, attribution, scales, credit_note)
+	_attribute_tax(by_key, invoice, vat_rows, attribution, scales, credit_note, company_currency)
 	for group in by_key.values():
 		group.pop("_lines", None)
 	return [by_key[key] for key in sorted(by_key, key=lambda k: (k[0], k[1]))]
 
 
-def _attribute_tax(by_key, invoice, vat_rows, attribution, scales, credit_note):
+def _attribute_tax(by_key, invoice, vat_rows, attribution, scales, credit_note, company_currency=None):
 	"""Put each posted tax amount against the group its lines belong to.
 
 	The per row table holds company currency amounts. Where the invoice is in
@@ -102,6 +110,22 @@ def _attribute_tax(by_key, invoice, vat_rows, attribution, scales, credit_note):
 			if rate != 1:
 				amount = dec(amount / rate, scales.amount)
 			by_key[key]["tax_amount"] += amount
+
+	# The per row table holds company currency amounts, which already are
+	# dirhams when the company keeps its books in them. Summed rather than
+	# converted, because a posted figure beats one we work out.
+	#
+	# Only for an invoice in another currency. Repeating the same figure in
+	# the same currency says nothing, and the money rules would then want a
+	# rate for a conversion that never happened.
+	if invoice.currency != "AED" and company_currency == "AED":
+		for group in by_key.values():
+			total = zero(scales.amount)
+			for item_row in group["_lines"]:
+				for hit in attribution.get(item_row) or []:
+					if hit["tax_row"] in vat_rows:
+						total += dec(hit["amount"], scales.amount) or zero(scales.amount)
+			group["tax_amount_aed"] = flip(total) if credit_note else total
 
 	posted = zero(scales.amount)
 	for row in invoice.get("taxes") or []:
@@ -164,7 +188,36 @@ def charge_rows(charges, invoice, scales: Scales, credit_note: bool) -> list[dic
 	return out
 
 
-def totals(invoice, charges, tax_total, scales: Scales, credit_note: bool) -> dict:
+def in_dirhams(invoice, scales: Scales, credit_note: bool, company_currency: str | None) -> dict:
+	"""The dirham figures, taken from what ERPNext posted.
+
+	Only for an invoice in another currency, because one already in dirhams
+	states them once and repeating them says nothing.
+
+	And only where the company keeps its books in dirhams, because then the
+	base amounts already are the dirham amounts and nothing has to be worked
+	out. Where the company currency is something else there is no evidenced
+	rate to dirhams, and inventing one is worse than saying so.
+	"""
+	if invoice.currency == "AED" or company_currency != "AED":
+		return {}
+
+	tax = dec(invoice.base_total_taxes_and_charges, scales.amount)
+	inclusive = dec(invoice.base_grand_total, scales.amount)
+	if credit_note:
+		tax = flip(tax)
+		inclusive = flip(inclusive)
+	return {"tax_in_aed": tax, "tax_inclusive_aed": inclusive}
+
+
+def totals(
+	invoice,
+	charges,
+	tax_total,
+	scales: Scales,
+	credit_note: bool,
+	company_currency: str | None = None,
+) -> dict:
 	"""The document totals, as ERPNext posted them.
 
 	Nothing here is worked out from the lines. The money rules check that
@@ -201,6 +254,7 @@ def totals(invoice, charges, tax_total, scales: Scales, credit_note: bool) -> di
 		# it. What is still due does not include money already collected, so
 		# the advance comes off here.
 		"payable": (grand if rounded is None else rounded) - prepaid,
+		**in_dirhams(invoice, scales, credit_note, company_currency),
 	}
 
 

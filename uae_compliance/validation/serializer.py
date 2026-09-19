@@ -27,6 +27,9 @@ CBC = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
 
 SERIALIZER_VERSION = 1
 
+# The currency the rules want everything stated in alongside its own.
+LOCAL_CURRENCY = "AED"
+
 CREDIT_NOTE_TYPES = ("381", "81")
 
 # Our words for an item, and the single letter the rules use.
@@ -298,6 +301,52 @@ def _line_tax(line: Mapping) -> Decimal:
 	return (net * rate / Decimal(100)).quantize(Decimal(1).scaleb(-max(places, 2)))
 
 
+def _exchange_rate(root, document: Mapping, currency: str):
+	"""The rate to dirhams, which an invoice in another currency must carry.
+
+	Three rules read this: one wants the rate to exist, one wants the source
+	and target currencies to be the document's and dirhams, and one wants a
+	dirham tax total alongside it.
+	"""
+	if currency == LOCAL_CURRENCY:
+		return
+	rate = ((document.get("exchange_rates") or {}).get("to_aed") or {}).get("rate")
+	if not isinstance(rate, Decimal):
+		return
+	node = etree.SubElement(root, _q(CAC, "TaxExchangeRate"))
+	_child(node, CBC, "SourceCurrencyCode", currency)
+	_child(node, CBC, "TargetCurrencyCode", LOCAL_CURRENCY)
+	_child(node, CBC, "CalculationRate", _rate_text(rate))
+
+
+def _rate_text(rate: Decimal) -> str:
+	"""A rate at no more than six decimal places, which ibr-002-ae requires.
+
+	The model holds rates wider than that on purpose, as a safety net against
+	a value arriving from floating point arithmetic. The document is where
+	the published limit applies.
+	"""
+	trimmed = rate.quantize(Decimal(1).scaleb(-6)).normalize()
+	text = canonical_decimal(trimmed)
+	return text
+
+
+def _tax_total_in_dirhams(root, document: Mapping, currency: str):
+	"""The tax again, in dirhams, for an invoice that is not in them.
+
+	A second tax total carrying nothing but the amount. It is the figure the
+	tax authority reads, so it comes from what was posted rather than from
+	multiplying the first one.
+	"""
+	if currency == LOCAL_CURRENCY:
+		return
+	amount = (document.get("totals") or {}).get("tax_in_aed")
+	if not isinstance(amount, Decimal):
+		return
+	node = etree.SubElement(root, _q(CAC, "TaxTotal"))
+	_amount(node, CBC, "TaxAmount", amount, LOCAL_CURRENCY)
+
+
 def to_xml(document: Mapping) -> bytes:
 	"""Write the canonical invoice as UBL XML.
 
@@ -374,6 +423,16 @@ def to_xml(document: Mapping) -> bytes:
 		contract = etree.SubElement(root, _q(CAC, "ContractDocumentReference"))
 		_child(contract, CBC, "ID", references["contract"])
 
+	inclusive_aed = (document.get("totals") or {}).get("tax_inclusive_aed")
+	if isinstance(inclusive_aed, Decimal):
+		# The dirham total including tax, written as words rather than as an
+		# amount. That is how the published example does it and ibr-175-ae
+		# looks for the description rather than a value.
+		aed = etree.SubElement(root, _q(CAC, "AdditionalDocumentReference"))
+		_child(aed, CBC, "ID", LOCAL_CURRENCY)
+		_child(aed, CBC, "DocumentTypeCode", "aedtotal-incl-vat")
+		_child(aed, CBC, "DocumentDescription", f"{LOCAL_CURRENCY} {canonical_decimal(inclusive_aed)}")
+
 	parties = document.get("parties") or {}
 	_party(root, "AccountingSupplierParty", parties.get("seller") or {})
 	_party(root, "AccountingCustomerParty", parties.get("buyer") or {})
@@ -422,7 +481,9 @@ def to_xml(document: Mapping) -> bytes:
 	for row in document.get("charges") or []:
 		_adjustment(root, row, currency, is_charge=True)
 
+	_exchange_rate(root, document, currency)
 	_tax_total(root, document, currency)
+	_tax_total_in_dirhams(root, document, currency)
 	_monetary_total(root, document.get("totals") or {}, currency)
 	for line in document.get("lines") or []:
 		_line(root, line, currency, is_credit_note=is_credit_note)

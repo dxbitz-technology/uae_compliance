@@ -64,14 +64,15 @@ def extract(
 	credit_note = bool(invoice.is_return)
 	supplied = _supplied(invoice.name, overrides)
 
+	company_currency = frappe.get_cached_value("Company", invoice.company, "default_currency")
 	rows = line_reader.extract(invoice, resolution, credit_note)
 	vat_rows, charge_rows = taxes.split_tax_rows(invoice, resolution, source)
 	attribution = line_reader.tax_by_row(invoice)
-	breakdown = taxes.breakdown(invoice, rows, vat_rows, attribution, scales, credit_note)
+	breakdown = taxes.breakdown(invoice, rows, vat_rows, attribution, scales, credit_note, company_currency)
 	charges = taxes.charge_rows(charge_rows, invoice, scales, credit_note)
 
 	tax_total = sum((group["tax_amount"] for group in breakdown), zero(scales.amount))
-	totals = taxes.totals(invoice, charges, tax_total, scales, credit_note)
+	totals = taxes.totals(invoice, charges, tax_total, scales, credit_note, company_currency)
 
 	awkward = taxes.discount_check(invoice, source)
 	if awkward:
@@ -108,7 +109,7 @@ def extract(
 		"payment": paid_by,
 		"delivery": resolution.delivery,
 		"scenario": supplied["scenario"],
-		"exchange_rates": _rates(invoice, scales),
+		"exchange_rates": _rates(invoice, scales, company_currency),
 	}
 	return prune(document), resolution.findings
 
@@ -297,14 +298,13 @@ def _references(invoice, supplied) -> dict:
 	return out
 
 
-def _rates(invoice, scales: Scales) -> dict:
+def _rates(invoice, scales: Scales, company_currency: str | None) -> dict:
 	"""The rate the invoice was posted at, frozen.
 
 	A rate looked up later must never change an old invoice, so the one
 	recorded here is the one on the document and its source says so.
 	"""
 	out = {}
-	company_currency = frappe.get_cached_value("Company", invoice.company, "default_currency")
 	if invoice.currency != company_currency:
 		out["to_company"] = {
 			"from_currency": invoice.currency,
