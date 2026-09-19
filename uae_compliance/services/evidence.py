@@ -19,7 +19,12 @@ import frappe
 from frappe import _
 
 SUBMISSION_DOCTYPE = "UAE Peppol Submission"
-OWNED_DOCTYPES = (SUBMISSION_DOCTYPE, "UAE Peppol Event")
+
+# Everything this app keeps bytes against. The inbound document belongs here
+# as much as a submission does: it is a supplier's own invoice, and it is
+# what a purchase invoice gets built from, so bytes somebody can swap are
+# bytes that decide what goes in the books.
+OWNED_DOCTYPES = (SUBMISSION_DOCTYPE, "UAE Peppol Event", "UAE Peppol Inbound")
 
 
 def guard_file(doc, method=None):
@@ -29,18 +34,29 @@ def guard_file(doc, method=None):
 	record of it. Bytes that can be swapped are not evidence, and a hash
 	over swappable bytes proves nothing.
 	"""
-	if doc.attached_to_doctype not in OWNED_DOCTYPES:
+	before = None if doc.is_new() else doc.get_doc_before_save()
+	was_ours = before is not None and before.attached_to_doctype in OWNED_DOCTYPES
+	is_ours = doc.attached_to_doctype in OWNED_DOCTYPES
+	if not was_ours and not is_ours:
 		return
+
+	if was_ours and not is_ours:
+		# Looking only at the value being saved let a file be pointed at
+		# some other record first, which took it out of every rule below,
+		# and then made public or deleted in a second save.
+		frappe.throw(_("E-invoicing evidence cannot be detached from its record."))
 
 	if not doc.is_private:
 		frappe.throw(_("E-invoicing evidence is private and cannot be made public."))
 
-	if doc.is_new():
+	if before is None:
 		return
 
-	before = doc.get_doc_before_save()
-	if before and before.file_url != doc.file_url:
+	if before.file_url != doc.file_url:
 		frappe.throw(_("E-invoicing evidence cannot be replaced."))
+
+	if before.attached_to_name != doc.attached_to_name:
+		frappe.throw(_("E-invoicing evidence cannot be moved to another record."))
 
 
 def guard_file_delete(doc, method=None):
