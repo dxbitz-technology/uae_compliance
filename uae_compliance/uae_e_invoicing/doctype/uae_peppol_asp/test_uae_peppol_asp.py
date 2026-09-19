@@ -73,6 +73,33 @@ class TestUAEPeppolASP(IntegrationTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			doc.save(ignore_permissions=True)
 
+	def test_the_address_cannot_change_once_it_has_carried_work(self):
+		# Repointing a used connection moves the polling and the credentials
+		# of every past submission to a different server.
+		doc = self.a_connection("Used Address")
+		frappe.db.set_value("UAE Peppol ASP", doc.name, "has_been_used", 1)
+		doc.reload()
+		doc.base_url = "https://somewhere-else.invalid"
+		with self.assertRaises(frappe.ValidationError):
+			doc.save(ignore_permissions=True)
+
+	def test_clearing_the_flag_does_not_unlock_a_connection_with_records(self):
+		# The flag is an ordinary field, so a write can clear it. The attempt
+		# records are the evidence, and they do not have a reset switch.
+		doc = self.a_connection("Used Evidence")
+		log = frappe.new_doc("UAE Peppol Transmission Log")
+		log.attempt_id = frappe.generate_hash(length=32)
+		log.connection = doc.name
+		log.operation = "http:submit"
+		log.state = "Finished"
+		log.insert(ignore_permissions=True)
+
+		frappe.db.set_value("UAE Peppol ASP", doc.name, "has_been_used", 0)
+		doc.reload()
+		doc.environment = "Production"
+		with self.assertRaises(frappe.ValidationError):
+			doc.save(ignore_permissions=True)
+
 	def test_rotating_a_credential_on_a_used_connection_is_allowed(self):
 		# Changing the secret is expected. Changing who is on the other end is not.
 		doc = self.a_connection("Used Three")

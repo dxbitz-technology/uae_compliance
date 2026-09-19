@@ -18,8 +18,10 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils.password import delete_all_passwords_for, remove_encrypted_password
 
-# Fixed once the connection has carried anything.
-SETTLED_FIELDS = ("provider_key", "environment")
+# Fixed once the connection has carried anything. The address belongs here
+# too: repointing a used connection at a different server would quietly move
+# the polling and the credentials of every past submission somewhere else.
+SETTLED_FIELDS = ("provider_key", "environment", "base_url")
 
 CREDENTIAL_DOCTYPE = "UAE Peppol ASP Credential"
 
@@ -33,7 +35,7 @@ class UAEPeppolASP(Document):
 
 	def protect_settled_fields(self):
 		"""Refuse a change that would rewrite what past submissions meant."""
-		if self.is_new() or not self.has_been_used:
+		if self.is_new() or not self.has_carried_work():
 			return
 		before = self.get_doc_before_save()
 		if not before:
@@ -47,6 +49,20 @@ class UAEPeppolASP(Document):
 					).format(_(self.meta.get_label(field))),
 					title=_("Connection in use"),
 				)
+
+	def has_carried_work(self) -> bool:
+		"""Whether anything ever went through this connection.
+
+		The flag answers cheaply, but it is an ordinary field a write can
+		clear, so the records that would make a change unsafe are asked too.
+		They are the evidence, and evidence does not have a reset switch.
+		"""
+		if self.has_been_used:
+			return True
+		for doctype in ("UAE Peppol Submission", "UAE Peppol Transmission Log", "UAE Peppol Inbound"):
+			if frappe.db.exists(doctype, {"connection": self.name}):
+				return True
+		return False
 
 	def reject_duplicate_credential_keys(self):
 		seen = set()
