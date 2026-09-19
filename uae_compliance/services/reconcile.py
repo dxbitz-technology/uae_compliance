@@ -13,6 +13,7 @@ and says why.
 from __future__ import annotations
 
 import frappe
+from frappe import _
 from frappe.utils import add_to_date, now_datetime
 
 from uae_compliance.domain.connector import AspReceipt, Effect, Operation
@@ -100,7 +101,9 @@ def ask_about(submission: str) -> bool:
 	try:
 		connection, adapter = _connection_and_adapter(submission)
 	except Exception as error:
-		frappe.db.set_value(SUBMISSION_DOCTYPE, submission, "attention_reason", str(error)[:500])
+		frappe.db.set_value(
+			SUBMISSION_DOCTYPE, submission, "attention_reason", _plainly(error, _("reach the provider"))
+		)
 		return False
 
 	details = frappe.db.get_value(
@@ -134,7 +137,9 @@ def ask_about(submission: str) -> bool:
 	try:
 		outcome = adapter.perform(call, transport)
 	except Exception as error:
-		frappe.db.set_value(SUBMISSION_DOCTYPE, submission, "attention_reason", str(error)[:500])
+		frappe.db.set_value(
+			SUBMISSION_DOCTYPE, submission, "attention_reason", _plainly(error, _("ask the provider"))
+		)
 		return False
 
 	_record_answer(submission, outcome, _provider_reference(outcome))
@@ -225,3 +230,14 @@ def _record_answer(submission: str, outcome, reference: str | None):
 		values["processing_state"] = "Awaiting outcome"
 
 	frappe.db.set_value(SUBMISSION_DOCTYPE, submission, values)
+
+
+def _plainly(error: Exception, doing: str) -> str:
+	"""A sentence somebody can read, with the technical detail kept elsewhere.
+
+	Raw exception text in a field a person reads is how a report ends up
+	showing somebody an error number and a file path. The detail still
+	matters, so it goes to the error log where it belongs.
+	"""
+	frappe.log_error(title=f"UAE e-invoicing: {doing}")
+	return _("Could not {0}. The connection or the provider is not answering.").format(doing)

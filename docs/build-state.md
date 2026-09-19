@@ -1,6 +1,6 @@
 # Build state
 
-Phase: P00 to P05 are done and merged. P06 transport is in progress; its first two packets came from the connector lane.
+Phase: P00 to P06 are done and merged, except receiving events, which needs a provider that sends them. P07 operations is in progress.
 Baseline: spec version 2.1, 18-09-2026. It adds two self-billing document codes for P12, ties scenario flags to the sixteen official use cases, and names Suntech as the first real provider in section 9.4.
 Branch: develop. Pull requests merge on a passing ci check. No review gate.
 Last verified code commit: develop at the P02 merge. 290 pure tests, 33 site tests.
@@ -263,6 +263,31 @@ a key no adapter uses.
 Worth recording: a run that died mid-flight left the submission in Sending
 with a Pending attempt, and it was not picked up again. That is the design.
 Clearing it is reconciliation's job, which is the next packet.
+
+## P07 Operations and upgrade
+
+State: In progress.
+Requirement IDs: spec 7.4 the two reports, 11.3 recovery and what to watch, 12.2 P07, acceptance A19 and A22.
+
+- P07a: the reports, the alerts and pause and resume. Done.
+- P07b: private downloads, redaction, and the hostile input and cross company checks.
+- P07c: upgrade, restore, provider change and clone safeguards.
+
+Two reports. Readiness carries the reason across in its last column, so
+somebody can work through a morning's worth without opening anything.
+Reconciliation is the one to open when you want to know whether anything has
+been forgotten, and it deliberately does not only list provider problems.
+Most of what goes wrong in a system like this is work that fell between two
+steps: an invoice submitted with nothing watching it, a submission nobody
+approved, an attempt that went out and never came back.
+
+One message a day carrying everything, rather than one per problem. A system
+that sends an alert per polling attempt teaches people to ignore its alerts,
+and then the one that mattered is ignored too.
+
+Fixed something the report exposed. A raw Python error was reaching a field
+people read. The plain sentence goes in the field now and the technical
+detail goes to the error log, which is where it belongs.
 
 ## Lane B, alongside
 

@@ -283,6 +283,9 @@ scheduler_events = {
 		# Slower, because asking a provider where something got to is not
 		# urgent and asking constantly is its own kind of rude.
 		"*/5 * * * *": ["uae_compliance.services.reconcile.reconcile_due"],
+		# One message a day carrying everything. One alert per problem
+		# teaches people to ignore the alerts.
+		"0 7 * * *": ["uae_compliance.services.alerts.daily_summary"],
 	}
 }
 

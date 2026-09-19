@@ -18,6 +18,7 @@ from __future__ import annotations
 import random
 
 import frappe
+from frappe import _
 from frappe.utils import add_to_date, now_datetime
 from frappe.utils.password import get_decrypted_password
 
@@ -56,7 +57,7 @@ def send_one(submission: str) -> bool:
 	try:
 		connection, adapter = _connection_and_adapter(submission)
 	except Exception as error:
-		outbox.release(submission, "Attention required", str(error)[:500])
+		outbox.release(submission, "Attention required", _plainly(error, _("reach the provider")))
 		frappe.db.commit()
 		return False
 
@@ -87,7 +88,7 @@ def send_one(submission: str) -> bool:
 	except Exception as error:
 		# The request may or may not have arrived. Nothing here assumes it
 		# did not, because assuming that is how the same invoice goes twice.
-		_record_unknown(submission, attempt, token, str(error)[:500])
+		_record_unknown(submission, attempt, token, _plainly(error, _("send this document")))
 		frappe.db.commit()
 		return True
 
@@ -321,3 +322,14 @@ def _schedule_retry(submission: str, retry_after: int | None) -> dict:
 		"next_attempt_at": add_to_date(now_datetime(), seconds=delay),
 		"attention_reason": None,
 	}
+
+
+def _plainly(error: Exception, doing: str) -> str:
+	"""A sentence somebody can read, with the technical detail kept elsewhere.
+
+	Raw exception text in a field a person reads is how a report ends up
+	showing somebody an error number and a file path. The detail still
+	matters, so it goes to the error log where it belongs.
+	"""
+	frappe.log_error(title=f"UAE e-invoicing: {doing}")
+	return _("Could not {0}. The connection or the provider is not answering.").format(doing)
