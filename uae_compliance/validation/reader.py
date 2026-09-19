@@ -105,3 +105,58 @@ def _as_decimal(value) -> Decimal | None:
 		return Decimal(str(value).strip())
 	except InvalidOperation:
 		return None
+
+
+def lines(data: bytes) -> list[dict]:
+	"""Every line of an incoming document, as it states them.
+
+	Their item codes are theirs. Nothing here tries to turn one into ours,
+	because that is a matching decision and it belongs where a person can
+	see it.
+	"""
+	tree = parse_bytes(data)
+	root = tree.getroot() if hasattr(tree, "getroot") else tree
+	credit_note = root.tag.endswith("CreditNote")
+	tag = f"{CAC}CreditNoteLine" if credit_note else f"{CAC}InvoiceLine"
+	quantity_tag = f"{CBC}CreditedQuantity" if credit_note else f"{CBC}InvoicedQuantity"
+
+	found = []
+	for node in root.findall(tag):
+		quantity = node.find(quantity_tag)
+		item = node.find(f"{CAC}Item")
+		price = node.find(f"{CAC}Price")
+		category = node.find(f"{CAC}Item/{CAC}ClassifiedTaxCategory")
+		found.append(
+			{
+				"id": _text(node, f"{CBC}ID"),
+				"quantity": _as_decimal(quantity.text if quantity is not None else None),
+				"uom_code": quantity.get("unitCode") if quantity is not None else None,
+				"name": _text(item, f"{CBC}Name") if item is not None else "",
+				"description": _text(item, f"{CBC}Description") if item is not None else "",
+				"their_code": _their_code(item),
+				"net_price": _number(price, f"{CBC}PriceAmount"),
+				"net_amount": _number(node, f"{CBC}LineExtensionAmount"),
+				"tax_category": _text(category, f"{CBC}ID") if category is not None else "",
+				"tax_rate": _number(category, f"{CBC}Percent") if category is not None else None,
+			}
+		)
+	return found
+
+
+def _their_code(item) -> str:
+	"""Whatever the sender calls this thing.
+
+	Their own identification first, then the standard one. Both are their
+	names for it and neither is ours.
+	"""
+	if item is None:
+		return ""
+	for path in (
+		f"{CAC}SellersItemIdentification/{CBC}ID",
+		f"{CAC}StandardItemIdentification/{CBC}ID",
+		f"{CAC}AdditionalItemIdentification/{CBC}ID",
+	):
+		found = item.find(path)
+		if found is not None and found.text:
+			return found.text.strip()
+	return ""

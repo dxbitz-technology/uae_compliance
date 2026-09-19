@@ -526,6 +526,16 @@ How a sender is matched: by tax number, or by the network address on a supplier 
 How the company is worked out: by the tax number the document was addressed to, and nothing else. This one nearly went wrong. Frappe fills a company link from the site default when nothing sets it, so the first run attributed two suppliers' invoices to whichever company happened to be the default. The field is now cleared before the record is written and written explicitly afterwards, either way.
 Status: Verified.
 
+## D061 Entering a supplier invoice is two steps, and never one
+
+Choice: say what would happen first, then make a draft only if somebody asks. Never a submitted document.
+Reason: posting somebody else's claim without anybody reading it is the thing this whole approach exists to avoid. Spec 12.2 requires no posting without configured review, and a draft that a person submits is exactly that review.
+What stops an entry, each reported separately rather than as one refusal: it has been entered already; no supplier matches the sender; the company it was addressed to is not clear; it arrived through a simulation or sandbox connection; lines match nothing of ours and no fallback item is set; a tax category and rate the mapping does not cover.
+How lines are matched: the supplier's own part number first, because somebody has already said it means this item, then an exact item code. A name is never a match. Where nothing matches, the company's binding may name one fallback item and expense account to enter it against. Leaving that blank makes unmatched lines stop the entry, which is the stricter setting and the default.
+How taxes are matched: the same mapping the selling side uses, read the other way, by company, category and rate. Nothing unmapped is posted to something plausible.
+How units are matched: the unit whose native code matches theirs, and the item's own stock unit where none does. Refusing a whole invoice over an unmapped unit helps nobody.
+Status: Verified. Checked against a published example invoice: the draft came out at net 1000, tax 50, total 1050, matching what their document said it was owed.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |
