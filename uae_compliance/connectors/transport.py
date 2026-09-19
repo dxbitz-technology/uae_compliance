@@ -28,9 +28,11 @@ from __future__ import annotations
 import hashlib
 import http.client
 import ipaddress
+import re
 import socket
 import ssl
 import time
+import traceback
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -88,6 +90,15 @@ REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 # Enough of a body to explain a failure, and not enough to become a copy of
 # the document. The full bytes are held as evidence elsewhere.
 SNIPPET_BYTES = 2000
+
+# Enough of a failure to work out what went wrong, and bounded so one bad
+# afternoon cannot fill the error log.
+MAX_DIAGNOSTIC_CHARS = 8000
+
+# A web address sitting inside some other piece of text: a Location header, a
+# Link header, a line of a response body. The query of one of those carries
+# credentials as often as a request does.
+URL_IN_TEXT = re.compile(r"https?://[^\s<>\"']+")
 
 
 class TransportError(RuntimeError):
@@ -323,16 +334,6 @@ def _is_secret_name(name: str) -> bool:
 	return name in SECRET_HEADERS or any(word in name for word in SECRET_WORDS)
 
 
-def redact_headers(headers: Mapping[str, str], secrets: Sequence[str] = ()) -> dict[str, str]:
-	safe = {}
-	for key, value in headers.items():
-		if _is_secret_name(key):
-			safe[key] = REDACTED
-		else:
-			safe[key] = mask(str(value), secrets)
-	return safe
-
-
 def redact_url(url: str, secrets: Sequence[str] = ()) -> str:
 	"""Drop any user information and mask the query values that name a secret."""
 	parts = urlsplit(url)
@@ -350,20 +351,84 @@ def redact_url(url: str, secrets: Sequence[str] = ()) -> str:
 	return mask(urlunsplit((parts.scheme, netloc, parts.path, query, "")), secrets)
 
 
+def redact_text(text: str, secrets: Sequence[str] = ()) -> str:
+	"""Clean a piece of free text before it is written down.
+
+	Every address in it goes through the same treatment a request address
+	gets. A provider that answers with `Location: .../callback?token=...`
+	was putting a credential in the log otherwise, because only the header
+	name was being looked at and `location` names nothing secret.
+	"""
+	return mask(URL_IN_TEXT.sub(lambda found: redact_url(found.group(0), secrets), text), secrets)
+
+
+def redact_headers(headers: Mapping[str, str], secrets: Sequence[str] = ()) -> dict[str, str]:
+	safe = {}
+	for key, value in headers.items():
+		if _is_secret_name(key):
+			safe[key] = REDACTED
+		else:
+			safe[key] = redact_text(str(value), secrets)
+	return safe
+
+
+def safe_traceback(error: BaseException, secrets: Sequence[str] = ()) -> str:
+	"""Where a failure happened, and nothing from inside the frames.
+
+	The framework's own error log renders every local variable of every
+	frame when it is handed a title and no message. On this path those
+	locals are the request headers, the decrypted provider credentials and
+	the whole invoice, so the text is built here and only the frames go in
+	it.
+	"""
+	text = redact_text("".join(traceback.format_exception(error)), secrets)
+	if len(text) > MAX_DIAGNOSTIC_CHARS:
+		text = text[:MAX_DIAGNOSTIC_CHARS] + "\n[the rest is cut]"
+	return text
+
+
 def _snippet(body: bytes, secrets: Sequence[str]) -> str:
-	text = body[:SNIPPET_BYTES].decode("utf-8", "replace")
-	return mask(text, secrets)
+	return redact_text(body[:SNIPPET_BYTES].decode("utf-8", "replace"), secrets)
 
 
 def _address_is_reachable(address: str, policy: Policy) -> bool:
 	if address in METADATA_ADDRESSES:
 		return False
-	ip = ipaddress.ip_address(address)
+	try:
+		ip = ipaddress.ip_address(address)
+	except ValueError:
+		# An address we cannot read is one we cannot check, so it is one we
+		# do not call.
+		return False
 	if ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved or ip.is_unspecified:
 		return policy.allow_private_addresses and ip.is_loopback
-	if ip.is_private:
+	# `is_private` alone leaves the shared address space at 100.64.0.0/10
+	# reachable, which is where carrier networks and some providers put
+	# internal services. Anything the standard library does not call global
+	# is treated the same as a private address.
+	if ip.is_private or not ip.is_global:
 		return policy.allow_private_addresses
 	return True
+
+
+def policy_for(environment: Environment, base_url: str) -> Policy:
+	"""What one provider connection is allowed to do.
+
+	Only the simulator runs on this machine. A Sandbox is somebody else's
+	server reached over the internet with real credentials, so it gets the
+	same address rules and the same certificate checks as Production.
+	Relaxing both for anything that merely was not Production put sandbox
+	credentials one man in the middle away from being read.
+	"""
+	host = (urlsplit(base_url).hostname or "").lower()
+	local = environment is Environment.SIMULATION
+	return Policy(
+		environment=environment,
+		trusted_hosts=(host,),
+		allow_plain_http=local,
+		allow_private_addresses=local,
+		verify_tls=not local,
+	)
 
 
 def _now_text() -> str:

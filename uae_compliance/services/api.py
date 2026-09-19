@@ -82,7 +82,11 @@ def get_readiness_batch(source_names: str) -> dict:
 	names = frappe.parse_json(source_names)
 	if not isinstance(names, list):
 		frappe.throw(_("Expected a list of invoices."))
-	names = names[:MAX_BATCH]
+	# Names, not whatever the caller felt like nesting. A list with a dict
+	# in it reaches the query builder as something other than a name.
+	names = [name for name in names if isinstance(name, str)][:MAX_BATCH]
+	if not names:
+		return {}
 	allowed = [
 		row.name for row in frappe.get_list("Sales Invoice", filters={"name": ["in", names]}, fields=["name"])
 	]
