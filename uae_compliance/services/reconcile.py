@@ -16,7 +16,8 @@ import frappe
 from frappe import _
 from frappe.utils import add_to_date, now_datetime
 
-from uae_compliance.domain.connector import AspReceipt, Effect, Operation
+from uae_compliance.domain.connector import AspReceipt, Disposition, Effect, Operation
+from uae_compliance.domain.recovery import lease_is_live, may_believe_it_never_arrived
 from uae_compliance.services import outbox
 from uae_compliance.services.freeze import SUBMISSION_DOCTYPE
 from uae_compliance.services.outbox import LOG_DOCTYPE
@@ -40,10 +41,22 @@ def reconcile_due(limit: int = 20) -> int:
 
 
 def _outstanding(limit: int) -> list[str]:
-	cutoff = add_to_date(now_datetime(), seconds=-60)
+	"""What is worth asking about, leaving alone anything a worker still holds.
+
+	A submission in Sending with a live claim is not outstanding. It is being
+	sent right now, and asking the provider about a document it has not been
+	given yet gets the answer "never heard of it", which would then be
+	written over the top of the real one.
+	"""
+	now = now_datetime()
+	cutoff = add_to_date(now, seconds=-60)
 	rows = frappe.get_all(
 		SUBMISSION_DOCTYPE,
 		filters={"processing_state": ["in", OUTSTANDING], "modified": ["<", cutoff]},
+		or_filters=[
+			["lease_expires_at", "is", "not set"],
+			["lease_expires_at", "<", now],
+		],
 		fields=["name"],
 		order_by="modified asc",
 		limit=limit,
@@ -51,25 +64,43 @@ def _outstanding(limit: int) -> list[str]:
 	return [row.name for row in rows]
 
 
-def recover_abandoned() -> int:
+def recover_abandoned(limit: int = 50) -> int:
 	"""Attempts that went out and never came back.
 
 	The submission is moved to Unknown and the attempt is marked abandoned.
 	Neither is treated as a failure. Something may be sitting at the provider
 	with our document in it, and the only safe next step is to ask.
+
+	An attempt whose worker still holds a live claim is left where it is. A
+	slow provider is not an abandoned attempt, and taking the claim away from
+	a worker that is about to answer puts two writers on the same row.
 	"""
 	count = 0
-	for attempt_id in outbox.abandoned():
+	now = now_datetime()
+	for attempt_id in outbox.abandoned(limit=limit):
 		submission = frappe.db.get_value(LOG_DOCTYPE, attempt_id, "submission")
+		held = (
+			frappe.db.get_value(
+				SUBMISSION_DOCTYPE, submission, ["lease_expires_at", "fencing_token"], as_dict=True
+			)
+			if submission
+			else None
+		)
+		if held and lease_is_live(held.lease_expires_at, now):
+			continue
+
 		frappe.db.set_value(
 			LOG_DOCTYPE,
 			attempt_id,
 			{"state": "Abandoned", "error_class": "No answer came back"},
 		)
-		if submission:
-			frappe.db.set_value(
-				SUBMISSION_DOCTYPE,
+		if submission and held:
+			# One fenced write, not two. A worker that claimed this in
+			# between owns it now, and recovery must not get half of its
+			# view of the world onto the row past that claim.
+			outbox.write_if_current(
 				submission,
+				held.fencing_token,
 				{
 					"processing_state": "Unknown",
 					"asp_receipt": AspReceipt.UNKNOWN.value,
@@ -271,16 +302,35 @@ def _record_answer(submission: str, outcome, reference: str | None):
 		SUBMISSION_DOCTYPE, submission, ["asp_receipt", "exchange_state", "reporting_state"], as_dict=True
 	)
 	acks = outcome.acknowledgements
+	answered = outcome.disposition is Disposition.SUCCEEDED
 
-	if current.asp_receipt == AspReceipt.RECEIVED.value and acks.asp_receipt is AspReceipt.NOT_SENT:
+	if acks.asp_receipt is AspReceipt.NOT_SENT and not may_believe_it_never_arrived(
+		current.asp_receipt, answered
+	):
+		# We asked and did not get an answer. Nothing is written, because
+		# writing Not sent here would turn an outcome nobody could settle
+		# into a document nobody sent, and then a second one goes out.
+		frappe.db.set_value(
+			SUBMISSION_DOCTYPE,
+			submission,
+			"attention_reason",
+			"The provider did not say what became of this. Still asking.",
+		)
+		return
+
+	if current.asp_receipt in (AspReceipt.RECEIVED.value, AspReceipt.UNKNOWN.value) and (
+		acks.asp_receipt is AspReceipt.NOT_SENT
+	):
 		# The provider now says it never had it, having previously said it
-		# did. Both facts are kept and somebody looks at it.
+		# did or left us unable to tell. Both facts are kept and somebody
+		# looks at it rather than the app picking one.
 		frappe.db.set_value(
 			SUBMISSION_DOCTYPE,
 			submission,
 			{
+				"asp_receipt": AspReceipt.NOT_SENT.value,
 				"processing_state": "Attention required",
-				"attention_reason": "The provider's answer contradicts what it said before.",
+				"attention_reason": "The provider says it never received this. Check before sending again.",
 			},
 		)
 		return

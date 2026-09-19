@@ -20,17 +20,17 @@ import uuid
 import frappe
 from frappe.utils import add_to_date, now_datetime
 
+from uae_compliance.domain.recovery import (
+	ABANDONED_AFTER_SECONDS,
+	CLAIMABLE,
+	LEASE_SECONDS,
+	lease_is_live,
+	may_overwrite,
+)
 from uae_compliance.services.freeze import SUBMISSION_DOCTYPE
 
 LOG_DOCTYPE = "UAE Peppol Transmission Log"
 SETTINGS = "UAE Peppol Settings"
-
-CLAIMABLE = ("Ready", "Retry scheduled")
-
-# Longer than any request is allowed to take, so a claim does not run out
-# while the request it covers is still in flight. A claim running out never
-# means the other worker stopped, only that nobody has heard from it.
-LEASE_SECONDS = 300
 
 
 def worker_name() -> str:
@@ -96,6 +96,7 @@ def claim(submission: str) -> dict | None:
 	expires = add_to_date(now, seconds=LEASE_SECONDS)
 	owner = worker_name()
 
+	claimable = ", ".join(f"'{state}'" for state in CLAIMABLE)
 	frappe.db.sql(
 		f"""
 		update `tab{SUBMISSION_DOCTYPE}`
@@ -106,12 +107,14 @@ def claim(submission: str) -> dict | None:
 			modified = %(now)s
 		where name = %(name)s
 			and approved = 1
-			and processing_state in ('Ready', 'Retry scheduled')
+			and processing_state in ({claimable})
 			and (lease_expires_at is null or lease_expires_at < %(now)s)
 		""",
 		{"owner": owner, "expires": expires, "now": now, "name": submission},
 	)
-	if not frappe.db.sql("select row_count()")[0][0]:
+	took = changed_rows()
+	frappe.clear_document_cache(SUBMISSION_DOCTYPE, submission)
+	if not took:
 		return None
 
 	held = frappe.db.get_value(
@@ -124,22 +127,69 @@ def claim(submission: str) -> dict | None:
 		# Approved content and current content have to be the same thing.
 		# They cannot normally differ, so if they do something is wrong that
 		# a person should look at rather than a worker push past.
-		release(submission, "Attention required", "What was approved is not what is here.")
+		release(
+			submission,
+			"Attention required",
+			"What was approved is not what is here.",
+			token=held.fencing_token,
+		)
 		return None
 
 	return {"token": held.fencing_token, "owner": owner, "connection": held.connection}
 
 
-def release(submission: str, state: str, reason: str | None = None):
-	"""Let go of a claim and say where the work has got to."""
-	values = {
-		"lease_owner": None,
-		"lease_expires_at": None,
-		"processing_state": state,
-	}
+def changed_rows() -> int:
+	"""How many rows the statement just before this one actually changed.
+
+	Call it immediately after the update and before anything else. The count
+	belongs to the previous statement on this connection, so a cache clear or
+	a read slipped in between would answer about that instead.
+
+	Changed, not matched. The driver does not ask for FOUND_ROWS, so an
+	update that sets a column to the value it already held counts as nothing.
+	Every conditional update in this app bumps the fencing token for that
+	reason, which cannot come out the same twice.
+	"""
+	return int(frappe.db.sql("select row_count()")[0][0] or 0)
+
+
+def write_if_current(submission: str, token: int, values: dict):
+	"""Write these values, and only while this worker still holds the claim.
+
+	The token sits in the where clause, so the check and the write are one
+	statement. Reading the token and writing afterwards leaves a gap, and the
+	whole point of a fencing token is that there is no gap for an older
+	worker's answer to land in.
+	"""
+	assignments = ", ".join(f"`{field}` = %({field})s" for field in values)
+	frappe.db.sql(
+		f"""
+		update `tab{SUBMISSION_DOCTYPE}`
+		set {assignments}, modified = %(_now)s
+		where name = %(_name)s
+			and fencing_token = %(_token)s
+		""",
+		{**values, "_now": now_datetime(), "_name": submission, "_token": token},
+	)
+	# A direct update does not do this for us, and a stale cached copy of a
+	# submission is a stale idea of whether it is still in flight.
+	frappe.clear_document_cache(SUBMISSION_DOCTYPE, submission)
+
+
+def release(submission: str, state: str, reason: str | None = None, token: int | None = None):
+	"""Let go of a claim and say where the work has got to.
+
+	With a token, only the worker that still holds the submission may say
+	where it got to. A worker whose claim ran out is describing a world that
+	has moved on, and it must not put that description on top of a newer one.
+	"""
+	values = {"lease_owner": None, "lease_expires_at": None, "processing_state": state}
 	if reason:
 		values["attention_reason"] = reason
-	frappe.db.set_value(SUBMISSION_DOCTYPE, submission, values)
+	if token is None:
+		frappe.db.set_value(SUBMISSION_DOCTYPE, submission, values)
+		return
+	write_if_current(submission, token, values)
 
 
 def start_attempt(submission: str, operation: str, token: int, request_digest: str) -> str:
@@ -178,8 +228,9 @@ def finish_attempt(attempt_id: str, token: int, **result) -> bool:
 	worker whose claim ran out may still be holding a reply, and that reply
 	is about a state the world has already moved past.
 	"""
-	current = frappe.db.get_value(SUBMISSION_DOCTYPE, _submission_of(attempt_id), "fencing_token")
-	if current is not None and token < current:
+	submission = _submission_of(attempt_id)
+	current = frappe.db.get_value(SUBMISSION_DOCTYPE, submission, "fencing_token") if submission else None
+	if not may_overwrite(token, current):
 		return False
 
 	log = frappe.get_doc(LOG_DOCTYPE, attempt_id)
@@ -201,12 +252,17 @@ def _submission_of(attempt_id: str) -> str:
 	return frappe.db.get_value(LOG_DOCTYPE, attempt_id, "submission")
 
 
-def abandoned(older_than_seconds: int = LEASE_SECONDS) -> list[str]:
+def abandoned(older_than_seconds: int = ABANDONED_AFTER_SECONDS, limit: int = 50) -> list[str]:
 	"""Attempts that went out and never came back.
 
 	These are the dangerous ones. Something may have reached the provider,
 	so they are handed to reconciliation rather than retried, and never
 	quietly marked as failed.
+
+	The cutoff is longer than a lease on purpose. A slow provider is not an
+	abandoned attempt, and an attempt whose worker still holds a live claim
+	is not one either. Bounded, because a site that has collected thousands
+	of these must not read them all at once.
 	"""
 	cutoff = add_to_date(now_datetime(), seconds=-older_than_seconds)
 	return [
@@ -215,5 +271,13 @@ def abandoned(older_than_seconds: int = LEASE_SECONDS) -> list[str]:
 			LOG_DOCTYPE,
 			filters={"state": "Pending", "started_at": ["<", cutoff]},
 			fields=["attempt_id"],
+			order_by="started_at asc",
+			limit=limit,
 		)
 	]
+
+
+def lease_held(submission: str) -> bool:
+	"""Whether a worker still has this one, so nobody else should touch it."""
+	expires = frappe.db.get_value(SUBMISSION_DOCTYPE, submission, "lease_expires_at")
+	return lease_is_live(expires, now_datetime())
