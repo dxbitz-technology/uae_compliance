@@ -85,8 +85,13 @@ def add_unique_constraints():
 	The landing dedup reads before it writes, and two collectors racing the
 	same page can both pass that read. The database is the guard that cannot
 	race. Safe to run again: the framework checks for the constraint first.
+
+	The seller identity is the same shape: the controller says which profile
+	holds it, the database makes sure only one can. Profiles still missing
+	their identity store nothing, and rows holding nothing never collide.
 	"""
 	frappe.db.add_unique("UAE Peppol Inbound", ["connection", "document_uuid"])
+	frappe.db.add_unique("UAE Peppol Seller Profile", ["participant_scheme", "participant_value"])
 
 
 def before_tests():

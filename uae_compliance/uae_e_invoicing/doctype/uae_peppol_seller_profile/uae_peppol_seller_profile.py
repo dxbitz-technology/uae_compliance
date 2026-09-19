@@ -19,9 +19,43 @@ LOOKUP_ONLY_FIELDS = ("identity_state", "identity_checked_at", "identity_valid_u
 
 class UAEPeppolSellerProfile(Document):
 	def validate(self):
+		self.normalize_identity()
 		self.reject_manual_verification()
+		self.reject_identity_used_elsewhere()
 		self.reject_company_bound_elsewhere()
 		self.require_reason_for_live()
+
+	def normalize_identity(self):
+		"""Blanks stored as nothing, so two profiles with no identity yet
+		never collide on an empty string."""
+		for field in ("participant_scheme", "participant_value", "vat_number"):
+			value = (self.get(field) or "").strip()
+			self.set(field, value or None)
+
+	def reject_identity_used_elsewhere(self):
+		"""One participant identity, one profile.
+
+		The network address is how the outside world names this seller, so
+		two profiles answering to one identity would make every match a coin
+		toss. The database enforces it too; this says which profile has it.
+		A VAT number is deliberately not unique: group members share one.
+		"""
+		if not self.participant_value:
+			return
+		filters = {
+			"participant_scheme": self.participant_scheme,
+			"participant_value": self.participant_value,
+		}
+		if not self.is_new():
+			filters["name"] = ("!=", self.name)
+		holder = frappe.db.get_value("UAE Peppol Seller Profile", filters, "name")
+		if holder:
+			frappe.throw(
+				_("The identity {0} {1} already belongs to the seller {2}.").format(
+					self.participant_scheme or "", self.participant_value, holder
+				),
+				title=_("Identity already taken"),
+			)
 
 	def reject_manual_verification(self):
 		"""Answering a question about yourself is not evidence."""

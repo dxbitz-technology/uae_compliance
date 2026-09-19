@@ -249,9 +249,15 @@ def _find_company(tax_id: str | None) -> str | None:
 	found = frappe.db.get_value("Company", {"tax_id": tax_id}, "name")
 	if found:
 		return found
-	seller = frappe.db.get_value("UAE Peppol Seller Profile", {"vat_number": tax_id}, "name")
-	if not seller:
+	# A VAT group shares one number across profiles, so more than one match
+	# says nothing about which entity the document was for. Picking one
+	# would attribute a supplier's invoice by luck.
+	sellers = frappe.get_all(
+		"UAE Peppol Seller Profile", filters={"vat_number": tax_id}, pluck="name", limit=2
+	)
+	if len(sellers) != 1:
 		return None
+	seller = sellers[0]
 
 	# A profile can cover several companies, and a tax number shared across
 	# a group tells us nothing about which of them the document was for.

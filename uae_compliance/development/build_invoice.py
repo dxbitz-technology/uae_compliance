@@ -56,7 +56,7 @@ def _company():
 			"abbr": ABBR,
 			"default_currency": "AED",
 			"country": "United Arab Emirates",
-			"tax_id": "100000000000003",
+			"tax_id": "100000000000103",
 		}
 	).insert(ignore_permissions=True)
 	return COMPANY
@@ -162,9 +162,9 @@ def _seller_profile(company, address):
 			"doctype": "UAE Peppol Seller Profile",
 			"label": "Peppol Demo Seller",
 			"participant_scheme": "0235",
-			"participant_value": "100000000000003",
+			"participant_value": "100000000000103",
 			"vat_state": "Registered",
-			"vat_number": "100000000000003",
+			"vat_number": "100000000000103",
 			# ibr-173-ae accepts only TL, EID, PAS or CD here.
 			"legal_scheme": "TL",
 			"legal_value": "1234567",
