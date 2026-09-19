@@ -18,6 +18,7 @@ to loopback, so it cannot be turned into a way of reaching anything else.
 
 from __future__ import annotations
 
+import base64
 import http.client
 import json
 import threading
@@ -365,6 +366,32 @@ class _Handler(BaseHTTPRequestHandler):
 				501,
 				{"error": "lookup_not_supported", "environment": ENVIRONMENT},
 			)
+		direction = int(_one(query, "direction") or 1)
+		if direction == 2:
+			# The inbox. Documents come back with their contents, because a
+			# list of references somebody then has to fetch one by one is not
+			# how any of these providers work.
+			after = _one(query, "cursor")
+			limit = min(int(_one(query, "limit") or 20), 100)
+			found, cursor = simulator.store.page(client, after, limit, direction=2)
+			return self._json(
+				200,
+				{
+					"results": [
+						{
+							**document.as_json(),
+							"media_type": document.media_type,
+							"payload": base64.b64encode(simulator.store.payload_of(document.id)).decode(
+								"ascii"
+							),
+						}
+						for document in found
+					],
+					"next": cursor,
+					"environment": ENVIRONMENT,
+				},
+			)
+
 		if key:
 			found = simulator.store.find_by_key(client, key)
 			results = [found] if found else []

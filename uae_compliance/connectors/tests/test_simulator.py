@@ -280,8 +280,16 @@ class WalkingThePages(SimulatorCase):
 		self.sign_in()
 
 	def test_a_cursor_walks_every_document_once(self):
+		# Documents somebody sent us, not documents we sent. The two lists
+		# are different and the simulator now keeps them apart, which is
+		# what the real provider does.
 		for index in range(5):
-			self.submit(f"SINV-{index}", key=f"key-{index}")
+			self.store.add_inbound(
+				client_id=CLIENT["client_id"],
+				number=f"PINV-{index}",
+				media_type="application/xml",
+				payload=f"<Invoice>{index}</Invoice>".encode(),
+			)
 		seen = []
 		cursor = None
 		for _ in range(10):

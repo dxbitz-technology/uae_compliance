@@ -154,10 +154,18 @@ class ReferenceXmlAdapter:
 			path = f"{path}&limit={call.page_size}"
 		response = transport.fetch(self._read(call, path, "inbound"))
 		outcome = api.status_outcome(call, response, self.descriptor)
-		cursor = api.body_of(response).get("next")
-		if cursor:
-			return replace(outcome, event_cursor=str(cursor))
-		return outcome
+		body = api.body_of(response)
+
+		# The documents come back with their contents. A list of references
+		# somebody then fetches one at a time is not how these providers work,
+		# and it would make a page of fifty invoices fifty more requests.
+		received = tuple(api.inbound_documents(body))
+		cursor = body.get("next")
+		return replace(
+			outcome,
+			artifacts=outcome.artifacts + received,
+			event_cursor=str(cursor) if cursor else outcome.event_cursor,
+		)
 
 	def _read(self, call: Call, path: str, label: str) -> Request:
 		return Request(

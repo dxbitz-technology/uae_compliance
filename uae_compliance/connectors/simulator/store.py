@@ -43,7 +43,10 @@ CREATE TABLE IF NOT EXISTS documents (
 	settled INTEGER NOT NULL DEFAULT 0,
 	settle_at REAL NOT NULL DEFAULT 0,
 	received_at REAL NOT NULL,
-	sequence INTEGER NOT NULL
+	sequence INTEGER NOT NULL,
+	-- 1 is something we sent, 2 is something that arrived for us. The real
+	-- provider splits its list the same way.
+	direction INTEGER NOT NULL DEFAULT 1
 );
 CREATE INDEX IF NOT EXISTS documents_key ON documents (client_id, idempotency_key);
 CREATE INDEX IF NOT EXISTS documents_number ON documents (number);
@@ -209,17 +212,37 @@ class Store:
 			).fetchall()
 		return [_document(row) for row in rows]
 
-	def page(self, client_id: str, after: str | None, limit: int) -> tuple[list[Document], str | None]:
+	def page(
+		self, client_id: str, after: str | None, limit: int, direction: int = 1
+	) -> tuple[list[Document], str | None]:
 		"""A page of documents in identifier order, with the cursor for the next one."""
 		with self._lock:
 			rows = self._db.execute(
-				"SELECT * FROM documents WHERE client_id = ? AND id > ? ORDER BY id LIMIT ?",
-				(client_id, after or "", limit + 1),
+				"SELECT * FROM documents WHERE client_id = ? AND direction = ? AND id > ? ORDER BY id LIMIT ?",
+				(client_id, direction, after or "", limit + 1),
 			).fetchall()
 		documents = [_document(row) for row in rows]
 		if len(documents) > limit:
 			return documents[:limit], documents[limit - 1].id
 		return documents, None
+
+	def add_inbound(self, client_id: str, number: str, media_type: str, payload: bytes) -> Document:
+		"""Put a document in somebody's inbox, as if a supplier had sent it."""
+		import hashlib
+
+		return self.add_document(
+			client_id=client_id,
+			idempotency_key=None,
+			number=number,
+			media_type=media_type,
+			digest=hashlib.sha256(payload).hexdigest(),
+			payload=payload,
+			behaviour="accept",
+			status="Completed",
+			exchange="delivered",
+			reporting="accepted",
+			direction=2,
+		)
 
 	def settle(self, identifier: str, status: str, exchange: str, reporting: str) -> Document | None:
 		with self._lock:
@@ -274,6 +297,16 @@ class Store:
 			)
 			self._db.commit()
 		return payload
+
+	def payload_of(self, identifier: str) -> bytes:
+		"""The bytes of one document. Kept out of the Document shape on purpose.
+
+		Listing documents should not drag every payload into memory with
+		them, so the contents are asked for separately when they are wanted.
+		"""
+		with self._lock:
+			row = self._db.execute("SELECT payload FROM documents WHERE id = ?", (identifier,)).fetchone()
+		return bytes(row["payload"]) if row and row["payload"] else b""
 
 	def documents(self) -> list[Document]:
 		with self._lock:

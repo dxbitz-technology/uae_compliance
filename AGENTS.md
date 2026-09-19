@@ -92,6 +92,12 @@ another company's invoices, and `get_all` would hand them over.
 The workers use `get_all` on purpose. A scheduled job has no session to
 check against and has already worked out what it is allowed to touch.
 
+## Branching
+
+Fetch immediately before branching. `git fetch origin && git checkout -B <name> origin/develop`.
+A stale remote ref makes a branch that silently lacks the last merge, and the
+first sign of it is a confusing failure somewhere unrelated.
+
 ## Ground rules
 
 Evidence before claims. Check a framework detail in the pinned source and cite the file and line rather than trusting memory. Label what you record as Verified, Proposed, or Unresolved.
