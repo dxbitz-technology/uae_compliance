@@ -30,6 +30,14 @@
   "agent_billing",
   "ecommerce",
   "export",
+  "section_break_parties",
+  "beneficiary_name",
+  "beneficiary_scheme",
+  "beneficiary_value",
+  "column_break_parties",
+  "principal_name",
+  "principal_scheme",
+  "principal_value",
   "section_break_evidence",
   "source_fingerprint",
   "master_fingerprint",
@@ -81,7 +89,10 @@
    "label": "Why",
    "read_only": 1
   },
-  {"fieldname": "column_break_state", "fieldtype": "Column Break"},
+  {
+   "fieldname": "column_break_state",
+   "fieldtype": "Column Break"
+  },
   {
    "fieldname": "readiness",
    "fieldtype": "Select",
@@ -147,15 +158,58 @@
    "label": "Reason In Words",
    "depends_on": "credit_reason_code"
   },
-  {"fieldname": "column_break_scenario", "fieldtype": "Column Break"},
-  {"fieldname": "free_zone", "fieldtype": "Check", "label": "Free Zone", "default": "0"},
-  {"fieldname": "deemed_supply", "fieldtype": "Check", "label": "Deemed Supply", "default": "0"},
-  {"fieldname": "margin_scheme", "fieldtype": "Check", "label": "Margin Scheme", "default": "0"},
-  {"fieldname": "summary", "fieldtype": "Check", "label": "Summary Invoice", "default": "0"},
-  {"fieldname": "continuous_supply", "fieldtype": "Check", "label": "Continuous Supply", "default": "0"},
-  {"fieldname": "agent_billing", "fieldtype": "Check", "label": "Billed By An Agent", "default": "0"},
-  {"fieldname": "ecommerce", "fieldtype": "Check", "label": "E-commerce", "default": "0"},
-  {"fieldname": "export", "fieldtype": "Check", "label": "Export", "default": "0"},
+  {
+   "fieldname": "column_break_scenario",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "free_zone",
+   "fieldtype": "Check",
+   "label": "Free Zone",
+   "default": "0"
+  },
+  {
+   "fieldname": "deemed_supply",
+   "fieldtype": "Check",
+   "label": "Deemed Supply",
+   "default": "0"
+  },
+  {
+   "fieldname": "margin_scheme",
+   "fieldtype": "Check",
+   "label": "Margin Scheme",
+   "default": "0"
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "Check",
+   "label": "Summary Invoice",
+   "default": "0"
+  },
+  {
+   "fieldname": "continuous_supply",
+   "fieldtype": "Check",
+   "label": "Continuous Supply",
+   "default": "0"
+  },
+  {
+   "fieldname": "agent_billing",
+   "fieldtype": "Check",
+   "label": "Billed By An Agent",
+   "default": "0"
+  },
+  {
+   "fieldname": "ecommerce",
+   "fieldtype": "Check",
+   "label": "E-commerce",
+   "default": "0"
+  },
+  {
+   "fieldname": "export",
+   "fieldtype": "Check",
+   "label": "Export",
+   "default": "0"
+  },
   {
    "fieldname": "section_break_evidence",
    "fieldtype": "Section Break",
@@ -175,7 +229,10 @@
    "read_only": 1,
    "description": "What the records it leans on looked like at the same moment."
   },
-  {"fieldname": "column_break_evidence", "fieldtype": "Column Break"},
+  {
+   "fieldname": "column_break_evidence",
+   "fieldtype": "Column Break"
+  },
   {
    "fieldname": "findings",
    "fieldtype": "Long Text",
@@ -188,6 +245,56 @@
    "fieldtype": "Data",
    "label": "Latest Submission",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_parties",
+   "fieldtype": "Section Break",
+   "label": "Other Parties",
+   "depends_on": "eval:doc.free_zone || doc.agent_billing"
+  },
+  {
+   "fieldname": "beneficiary_name",
+   "fieldtype": "Data",
+   "label": "Beneficiary",
+   "depends_on": "free_zone",
+   "description": "Who benefits from a free zone supply. The rules want the identifier, not only the name."
+  },
+  {
+   "fieldname": "beneficiary_scheme",
+   "fieldtype": "Data",
+   "label": "Beneficiary Scheme",
+   "depends_on": "free_zone",
+   "default": "0235"
+  },
+  {
+   "fieldname": "beneficiary_value",
+   "fieldtype": "Data",
+   "label": "Beneficiary Identifier",
+   "depends_on": "free_zone"
+  },
+  {
+   "fieldname": "column_break_parties",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "principal_name",
+   "fieldtype": "Data",
+   "label": "Principal",
+   "depends_on": "agent_billing",
+   "description": "The party actually being billed for, when an agent issues the invoice."
+  },
+  {
+   "fieldname": "principal_scheme",
+   "fieldtype": "Data",
+   "label": "Principal Scheme",
+   "depends_on": "agent_billing",
+   "default": "0235"
+  },
+  {
+   "fieldname": "principal_value",
+   "fieldtype": "Data",
+   "label": "Principal Identifier",
+   "depends_on": "agent_billing"
   }
  ],
  "index_web_pages_for_search": 0,
