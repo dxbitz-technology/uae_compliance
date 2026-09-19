@@ -285,7 +285,26 @@ permission for. `frappe.get_all` does not check permissions and
 were using the first. They use the second now, and the same user gets no
 rows. The workers still use `get_all` on purpose, which is written down in
 AGENTS.md so it is not tidied away later.
-- P07c: upgrade, restore, provider change and clone safeguards.
+- P07c: restore and clone safeguards. Done. Upgrade testing waits for a previous release to upgrade from.
+
+Restoring a production backup onto a test server gives you a database that
+believes everything it believed before, including that it may transmit. That
+is how a staging box sends live invoices to real customers.
+
+So the permission to send in Production does not live in the database. It
+lives in the site's configuration file, which a restore does not bring, and
+it names the site it was granted for. Copy the database anywhere and the
+copy cannot send.
+
+The database still records which machine last sent from this site. When that
+changes, outbound work pauses and says why, because the likeliest
+explanation is that somebody restored it somewhere else. A manager lifts it
+deliberately after a genuine move.
+
+Checked on uae.local: a deployment that was never granted the key cannot
+send in Production; pointing the database at a different machine paused
+outbound, gave a reason and emptied the work queue; and confirming the move
+lifted it.
 
 Two reports. Readiness carries the reason across in its last column, so
 somebody can work through a morning's worth without opening anything.
