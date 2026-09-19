@@ -153,14 +153,25 @@ def _attribute_tax(by_key, invoice, vat_rows, attribution, scales, credit_note, 
 	# Only for an invoice in another currency. Repeating the same figure in
 	# the same currency says nothing, and the money rules would then want a
 	# rate for a conversion that never happened.
-	if invoice.currency != "AED" and company_currency == "AED":
-		for group in by_key.values():
+	if invoice.currency != "AED" and company_currency == "AED" and by_key:
+		raw = {}
+		for key, group in by_key.items():
 			total = zero(scales.amount)
 			for item_row in group["_lines"]:
 				for hit in attribution.get(item_row) or []:
 					if hit["tax_row"] in vat_rows:
 						total += dec(hit["amount"], scales.amount) or zero(scales.amount)
-			group["tax_amount_aed"] = flip(total) if credit_note else total
+			raw[key] = total
+		# Settled against the posted dirham total the same way the invoice
+		# currency amounts are, so the parts state what was posted rather
+		# than what the per row distribution left over.
+		difference = _posted_vat_in_dirhams(invoice, vat_rows, scales) - sum(
+			raw.values(), zero(scales.amount)
+		)
+		if difference:
+			raw[_settlement_group(by_key)] += difference
+		for key, group in by_key.items():
+			group["tax_amount_aed"] = flip(raw[key]) if credit_note else raw[key]
 
 	posted = zero(scales.amount)
 	for row in invoice.get("taxes") or []:
@@ -251,7 +262,7 @@ def charge_rows(
 	return out
 
 
-def in_dirhams(invoice, scales: Scales, credit_note: bool, company_currency: str | None) -> dict:
+def in_dirhams(invoice, scales: Scales, credit_note: bool, company_currency: str | None, vat_rows) -> dict:
 	"""The dirham figures, taken from what ERPNext posted.
 
 	Only for an invoice in another currency, because one already in dirhams
@@ -261,16 +272,29 @@ def in_dirhams(invoice, scales: Scales, credit_note: bool, company_currency: str
 	base amounts already are the dirham amounts and nothing has to be worked
 	out. Where the company currency is something else there is no evidenced
 	rate to dirhams, and inventing one is worse than saying so.
+
+	The tax is the VAT rows alone. `base_total_taxes_and_charges` also
+	carries the charges that are not tax, and this figure is the one the tax
+	authority reads, so a freight row must never inflate it.
 	"""
 	if invoice.currency == "AED" or company_currency != "AED":
 		return {}
 
-	tax = dec(invoice.base_total_taxes_and_charges, scales.amount)
+	tax = _posted_vat_in_dirhams(invoice, vat_rows, scales)
 	inclusive = dec(invoice.base_grand_total, scales.amount)
 	if credit_note:
 		tax = flip(tax)
 		inclusive = flip(inclusive)
 	return {"tax_in_aed": tax, "tax_inclusive_aed": inclusive}
+
+
+def _posted_vat_in_dirhams(invoice, vat_rows, scales: Scales):
+	"""What ERPNext posted as VAT, in the company's dirhams, and nothing else."""
+	total = zero(scales.amount)
+	for row in invoice.get("taxes") or []:
+		if row.name in vat_rows:
+			total += dec(row.base_tax_amount_after_discount_amount, scales.amount) or zero(scales.amount)
+	return total
 
 
 def totals(
@@ -280,6 +304,7 @@ def totals(
 	scales: Scales,
 	credit_note: bool,
 	company_currency: str | None = None,
+	vat_rows=(),
 ) -> dict:
 	"""The document totals, as ERPNext posted them.
 
@@ -317,7 +342,7 @@ def totals(
 		# it. What is still due does not include money already collected, so
 		# the advance comes off here.
 		"payable": (grand if rounded is None else rounded) - prepaid,
-		**in_dirhams(invoice, scales, credit_note, company_currency),
+		**in_dirhams(invoice, scales, credit_note, company_currency, vat_rows),
 	}
 
 

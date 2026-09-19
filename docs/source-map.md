@@ -81,6 +81,7 @@ has to keep meaning what it meant when it was issued.
 | `charges` | Tax rows that are not VAT | `total_taxes_and_charges` is not necessarily VAT | BG-21 | P03b |
 | `totals.tax_exclusive` | `net_total` | Checked against the line sum, never recalculated from it | BT-109 | P03b |
 | `totals.prepaid` | `total_advance` | Frozen at issue. A payment made later never rewrites it. `outstanding_amount` is not used | BT-113 | P03b |
+| `totals.tax_in_aed` | `base_tax_amount_after_discount_amount`, VAT rows only | The figure the tax authority reads. `base_total_taxes_and_charges` also carries the charges that are not tax, so it is never used here | BT-111 | P03b |
 | `totals.rounding` | `rounding_adjustment` | Turns with the totals on a credit note, because ERPNext writes it as the rounded total less the grand total and both of those are negative | BT-114 | P03b |
 | `totals.payable` | `rounded_total`, else `grand_total`, less `total_advance` | Follows `disable_rounded_total`. ERPNext keeps the grand total whole and records the advance beside it, so the advance comes off here or the invoice asks for it twice | BT-115, ibr-co-16 | P03b |
 | `exchange_rates.to_company` | `conversion_rate` with `posting_date` | Frozen. A rate looked up later never changes an old invoice | | P03b |

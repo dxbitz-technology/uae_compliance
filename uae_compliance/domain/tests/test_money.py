@@ -14,6 +14,7 @@ from uae_compliance.domain.encoding import business_hash, canonical_bytes
 from uae_compliance.domain.findings import Severity, Stage
 from uae_compliance.domain.money import (
 	CODE_AED,
+	CODE_AED_TOTAL,
 	CODE_GROUP_MISSING,
 	CODE_GROUP_UNKNOWN,
 	CODE_LINE_NET,
@@ -328,6 +329,26 @@ class ForeignCurrency(unittest.TestCase):
 	def test_dirham_amounts_without_a_rate_are_reported(self):
 		invoice = {"tax_breakdown": [tax_row("100.00", "5.00", tax_amount_aed=D("18.36"))]}
 		self.assertIn(CODE_RATE_MISSING, codes(check_currency(invoice)))
+
+	def test_a_dirham_total_that_says_more_than_the_breakdown_is_reported(self):
+		# The classic way it goes wrong: a freight charge posted through the
+		# taxes table lands in the total but belongs to no VAT group.
+		invoice = {
+			"tax_breakdown": [tax_row("100.00", "5.00", tax_amount_aed=D("18.36"))],
+			"totals": {"tax_in_aed": D("91.81")},
+		}
+		self.assertIn(CODE_AED_TOTAL, codes(check_currency(invoice)))
+
+	def test_a_dirham_total_that_matches_the_breakdown_is_clean(self):
+		invoice = {
+			"tax_breakdown": [
+				tax_row("100.00", "5.00", tax_amount_aed=D("18.36")),
+				tax_row("50.00", "2.50", tax_amount_aed=D("9.18")),
+			],
+			"totals": {"tax_in_aed": D("27.54")},
+			"exchange_rates": {"to_aed": {"rate": D("3.6725")}},
+		}
+		self.assertNotIn(CODE_AED_TOTAL, codes(check_currency(invoice)))
 
 	def test_a_dirham_amount_that_does_not_follow_the_rate_is_reported(self):
 		invoice = {

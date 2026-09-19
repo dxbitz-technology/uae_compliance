@@ -38,7 +38,7 @@ from uae_compliance.domain.money import (
 )
 from uae_compliance.erpnext import lines as line_reader
 from uae_compliance.erpnext import taxes
-from uae_compliance.erpnext.numbers import Scales, zero
+from uae_compliance.erpnext.numbers import Scales, dec, zero
 
 D = Decimal
 
@@ -121,12 +121,17 @@ def item(name, *, qty, rate, net_rate=None, net_amount=None, discount=0, **extra
 	return Record(**fields)
 
 
-def tax(name, *, account, amount, inclusive=0, description=None):
-	"""One Sales Taxes and Charges row. The amount is in document currency."""
+def tax(name, *, account, amount, inclusive=0, description=None, base=None):
+	"""One Sales Taxes and Charges row. The amount is in document currency.
+
+	`base` is the same figure in the company's currency, which the controller
+	writes beside it. The dirham tests need it; everything else leaves it off.
+	"""
 	return Record(
 		name=name,
 		account_head=account,
 		tax_amount_after_discount_amount=amount,
+		base_tax_amount_after_discount_amount=base,
 		included_in_print_rate=inclusive,
 		description=description,
 	)
@@ -156,7 +161,7 @@ def invoice(*, items, taxes=(), details=(), **fields):
 	return Record(**values)
 
 
-def canonical(source, masters, credit_note=False):
+def canonical(source, masters, credit_note=False, company_currency=None):
 	"""The money half of the extraction, with no site around it.
 
 	This follows extract.extract step for step and leaves out everything that
@@ -168,16 +173,19 @@ def canonical(source, masters, credit_note=False):
 		rows = line_reader.extract(source, None, credit_note)
 		vat_rows, charge_rows = taxes.split_tax_rows(source, None, None)
 	attribution = line_reader.tax_by_row(source)
-	breakdown = taxes.breakdown(source, rows, vat_rows, attribution, scales, credit_note)
+	breakdown = taxes.breakdown(source, rows, vat_rows, attribution, scales, credit_note, company_currency)
 	charges = taxes.charge_rows(charge_rows, source, scales, credit_note, breakdown)
 	tax_total = sum((group["tax_amount"] for group in breakdown), zero(scales.amount))
-	return {
+	document = {
 		"lines": rows,
 		"tax_breakdown": breakdown,
 		"allowances": [],
 		"charges": charges,
-		"totals": taxes.totals(source, charges, tax_total, scales, credit_note),
+		"totals": taxes.totals(source, charges, tax_total, scales, credit_note, company_currency, vat_rows),
 	}
+	if source.currency != "AED" and company_currency == "AED":
+		document["exchange_rates"] = {"to_aed": {"rate": dec(source.conversion_rate, scales.rate)}}
+	return document
 
 
 def amounts(document, *names):
@@ -752,6 +760,102 @@ class ForeignCurrency(unittest.TestCase):
 		self.assertEqual(document["lines"][0]["net_amount"], D("100.00"))
 		self.assertEqual(document["totals"]["line_net"], D("100.00"))
 		self.assertEqual(document["totals"]["tax"], D("5.00"))
+
+
+class DirhamFigures(unittest.TestCase):
+	"""The second tax total, the one the tax authority reads.
+
+	It is the VAT alone. `base_total_taxes_and_charges` also carries the
+	charges that are not tax, and a freight row inflating the dirham VAT was
+	exactly how a wrong figure reached the payload once.
+	"""
+
+	def test_a_charge_that_is_not_tax_stays_out_of_the_dirham_tax_total(self):
+		# Freight of 20 dollars ahead of a 5 per cent row: 6.00 of VAT on a
+		# base of 120. The dirham VAT the controller posted is 22.04. The
+		# freight's own 73.45 dirhams belong to the charge, not to the tax.
+		source = invoice(
+			items=[item("r1", qty=1, rate=100.00)],
+			taxes=[
+				tax("t1", account="Freight", amount=20.00, base=73.45, description="Delivery"),
+				tax("t2", account="VAT 5%", amount=6.00, base=22.04),
+			],
+			details=[detail("r1", "t2", rate=5, amount=22.04, taxable=440.70)],
+			currency="USD",
+			conversion_rate=3.6725,
+			net_total=100.00,
+			grand_total=126.00,
+			base_grand_total=462.74,
+			disable_rounded_total=1,
+		)
+		document = canonical(source, Masters({"VAT 5%": STANDARD}), company_currency="AED")
+		self.assertEqual(document["totals"]["tax_in_aed"], D("22.04"))
+		self.assertEqual(document["totals"]["tax_inclusive_aed"], D("462.74"))
+		self.assertEqual(document["tax_breakdown"][0]["tax_amount_aed"], D("22.04"))
+		self.assertEqual(document["totals"]["charges"], D("20.00"))
+		self.assertEqual(check(document), [])
+
+	def test_the_dirham_parts_add_up_to_the_posted_dirham_total(self):
+		# The per row figures carry 18.36 and 36.73, and the row the
+		# controller posted says 55.10. The fils goes on the largest taxed
+		# group, the same way the invoice currency amounts settle, so the
+		# parts state what was posted.
+		source = invoice(
+			items=[
+				item("r1", qty=1, rate=100.00, item_tax_template="Standard"),
+				item("r2", qty=1, rate=200.00, item_tax_template="Margin"),
+			],
+			taxes=[tax("t1", account="VAT 5%", amount=15.00, base=55.10)],
+			details=[
+				detail("r1", "t1", rate=5, amount=18.36, taxable=367.25),
+				detail("r2", "t1", rate=5, amount=36.73, taxable=734.50),
+			],
+			currency="USD",
+			conversion_rate=3.6725,
+			net_total=300.00,
+			grand_total=315.00,
+			base_grand_total=1156.84,
+			disable_rounded_total=1,
+		)
+		masters = Masters(
+			{"VAT 5%": STANDARD},
+			{"Standard": STANDARD, "Margin": {"category": "N", "rate": 5}},
+		)
+		document = canonical(source, masters, company_currency="AED")
+		groups = {row["category"]: row["tax_amount_aed"] for row in document["tax_breakdown"]}
+		self.assertEqual(groups, {"N": D("36.74"), "S": D("18.36")})
+		self.assertEqual(document["totals"]["tax_in_aed"], D("55.10"))
+
+	def test_the_dirham_figures_turn_on_a_credit_note(self):
+		source = invoice(
+			items=[item("r1", qty=-1, rate=100.00)],
+			taxes=[tax("t1", account="VAT 5%", amount=-5.00, base=-18.36)],
+			details=[detail("r1", "t1", rate=5, amount=-18.36, taxable=-367.25)],
+			currency="USD",
+			conversion_rate=3.6725,
+			is_return=1,
+			net_total=-100.00,
+			grand_total=-105.00,
+			base_grand_total=-385.61,
+			disable_rounded_total=1,
+		)
+		document = canonical(source, Masters({"VAT 5%": STANDARD}), credit_note=True, company_currency="AED")
+		self.assertEqual(document["totals"]["tax_in_aed"], D("18.36"))
+		self.assertEqual(document["totals"]["tax_inclusive_aed"], D("385.61"))
+		self.assertEqual(document["tax_breakdown"][0]["tax_amount_aed"], D("18.36"))
+
+	def test_an_invoice_already_in_dirhams_states_nothing_twice(self):
+		source = invoice(
+			items=[item("r1", qty=1, rate=100.00)],
+			taxes=[tax("t1", account="VAT 5%", amount=5.00, base=5.00)],
+			details=[detail("r1", "t1", rate=5, amount=5.00, taxable=100.00)],
+			net_total=100.00,
+			grand_total=105.00,
+			rounded_total=105.00,
+		)
+		document = canonical(source, Masters({"VAT 5%": STANDARD}), company_currency="AED")
+		self.assertNotIn("tax_in_aed", document["totals"])
+		self.assertNotIn("tax_amount_aed", document["tax_breakdown"][0])
 
 
 class ChargesThatAreNotTax(unittest.TestCase):

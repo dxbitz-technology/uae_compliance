@@ -72,7 +72,7 @@ def extract(
 	charges = taxes.charge_rows(charge_rows, invoice, scales, credit_note, breakdown, source, resolution)
 
 	tax_total = sum((group["tax_amount"] for group in breakdown), zero(scales.amount))
-	totals = taxes.totals(invoice, charges, tax_total, scales, credit_note, company_currency)
+	totals = taxes.totals(invoice, charges, tax_total, scales, credit_note, company_currency, vat_rows)
 
 	awkward = taxes.discount_check(invoice, source)
 	if awkward:

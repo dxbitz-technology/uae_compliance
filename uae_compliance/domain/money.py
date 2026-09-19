@@ -28,6 +28,7 @@ CODE_GROUP_UNKNOWN = "MONEY-0005"
 CODE_LINE_NET = "MONEY-0006"
 CODE_RATE_MISSING = "MONEY-0007"
 CODE_AED = "MONEY-0008"
+CODE_AED_TOTAL = "MONEY-0009"
 
 ZERO = Decimal("0")
 
@@ -294,8 +295,29 @@ def check_lines(document: Mapping) -> list[Finding]:
 
 
 def check_currency(document: Mapping) -> list[Finding]:
-	"""Dirham figures follow a rate that says where it came from."""
+	"""Dirham figures follow a rate that says where it came from.
+
+	And the dirham total is the breakdown's own sum. The total is the figure
+	the tax authority reads, so a total that says more than the groups do is
+	saying something the invoice does not.
+	"""
 	found: list[Finding] = []
+
+	stated_total = _get(document, "totals", "tax_in_aed")
+	if isinstance(stated_total, Decimal):
+		from_groups = _sum(_get(document, "tax_breakdown", default=[]) or [], "tax_amount_aed")
+		if stated_total != from_groups:
+			found.append(
+				_finding(
+					CODE_AED_TOTAL,
+					"totals.tax_in_aed",
+					"The dirham tax total does not match the dirham tax in the breakdown.",
+					"check_source_invoice",
+					stated=stated_total,
+					from_breakdown=from_groups,
+				)
+			)
+
 	rate_row = _get(document, "exchange_rates", "to_aed")
 	rate = rate_row.get("rate") if isinstance(rate_row, Mapping) else None
 
