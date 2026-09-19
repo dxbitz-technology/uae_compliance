@@ -352,13 +352,25 @@ def status_outcome(call: Call, response, adapter: Adapter, payload: dict | None 
 def artifact_outcome(call: Call, response) -> Outcome:
 	"""Fetching evidence. A missing artifact is its own problem and not a failed document."""
 	if response.status == 200:
+		# The bytes travel with the reference. Retrieval that works but hands
+		# back nothing to keep is the same as retrieval that does not work.
+		fetched = ()
+		if call.artifact:
+			fetched = (
+				replace(
+					call.artifact,
+					media_type=response.headers.get("content-type") or call.artifact.media_type,
+					sha256=None,
+					body=response.body,
+				),
+			)
 		return Outcome(
 			operation=Operation.FETCH_ARTIFACT,
 			disposition=Disposition.SUCCEEDED,
 			effect=Effect.APPLIED,
 			advice=Advice.DO_NOT_RETRY,
 			acknowledgements=Acknowledgements(asp_receipt=AspReceipt.RECEIVED, evidence=Evidence.COMPLETE),
-			artifacts=(call.artifact,) if call.artifact else (),
+			artifacts=fetched,
 			provider_code=str(response.status),
 			diagnostic_ref=response.diagnostic_ref,
 		)
