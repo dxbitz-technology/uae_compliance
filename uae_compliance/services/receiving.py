@@ -50,7 +50,7 @@ def collect(connection_name: str, limit_pages: int = 5) -> int:
 
 	connection, adapter = _connection_and_adapter_for(asp, Operation.FETCH_INBOUND)
 	recorder = FrappeRecorder(None, None, asp.name)
-	transport = Transport(_policy_for(connection), recorder)
+	transport = Transport(_policy_for(connection, adapter), recorder)
 
 	cursor = asp.inbound_cursor
 	stored = 0

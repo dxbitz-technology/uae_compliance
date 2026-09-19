@@ -365,14 +365,17 @@ class AgainstAProviderThatPromisesNothing(AdapterCase):
 
 
 class WhatTheInstallationHas(unittest.TestCase):
-	def test_both_adapters_are_installed(self):
+	def test_the_shipped_adapters_are_installed(self):
 		registry = installed()
-		self.assertEqual(registry.keys(), ("reference_xml", "simulated_json"))
+		self.assertEqual(registry.keys(), ("reference_xml", "simulated_json", "suntech"))
 
-	def test_neither_of_them_serves_production(self):
+	def test_the_test_adapters_never_serve_production(self):
 		registry = installed()
-		for key in registry.keys():
+		for key in ("reference_xml", "simulated_json"):
 			self.assertEqual(registry.declaration(key).environments, (Environment.SIMULATION,))
+
+	def test_the_real_one_never_serves_the_simulator(self):
+		self.assertNotIn(Environment.SIMULATION, installed().declaration("suntech").environments)
 
 	def test_the_xml_one_can_settle_an_ambiguous_send(self):
 		self.assertTrue(installed().declaration("reference_xml").can_resolve_an_ambiguous_send())

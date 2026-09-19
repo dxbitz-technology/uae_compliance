@@ -212,6 +212,12 @@ class Adapter:
 	supports_artifacts: bool = False
 	pagination: str | None = None
 	scenarios: tuple[str, ...] = ()
+	# Hosts beyond the connection's own that this provider's flow genuinely
+	# uses, such as the presigned storage URLs its API hands back. A suffix
+	# entry starts with a dot. The transport still applies every address
+	# check; this only widens the name allowlist, and only for adapters that
+	# declare it.
+	extra_trusted_hosts: tuple[str, ...] = ()
 
 	def __post_init__(self):
 		if not self.provider_key:

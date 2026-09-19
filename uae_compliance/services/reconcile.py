@@ -138,7 +138,10 @@ def ask_about(submission: str) -> bool:
 		return False
 
 	details = frappe.db.get_value(
-		SUBMISSION_DOCTYPE, submission, ["company", "provider_id", "idempotency_key"], as_dict=True
+		SUBMISSION_DOCTYPE,
+		submission,
+		["company", "provider_id", "idempotency_key", "document_number"],
+		as_dict=True,
 	)
 
 	operation = _how_to_ask(adapter, details.provider_id)
@@ -156,11 +159,18 @@ def ask_about(submission: str) -> bool:
 	from uae_compliance.services.recorder import FrappeRecorder
 
 	recorder = FrappeRecorder(submission, details.company, connection.connection_id)
-	transport = Transport(_policy_for(connection), recorder)
+	transport = Transport(_policy_for(connection, adapter), recorder)
+	provider_ids = {}
+	if details.provider_id:
+		provider_ids["document_id"] = details.provider_id
+	if details.document_number:
+		# Our own document number. It is what a provider without a dedicated
+		# ambiguity endpoint can actually search for.
+		provider_ids["invoice_number"] = details.document_number
 	call = connectors.Call(
 		operation=operation,
 		connection=connection,
-		provider_ids={"document_id": details.provider_id} if details.provider_id else {},
+		provider_ids=provider_ids,
 		idempotency_key=details.idempotency_key,
 		correlation=submission,
 	)

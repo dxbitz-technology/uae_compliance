@@ -258,14 +258,17 @@ class AdapterRegistry:
 def built_in_adapters() -> tuple[ProviderAdapter, ...]:
 	"""The adapters shipped with this app, listed here and nowhere else.
 
-	They are imported inside this function, because an adapter imports the call
-	shapes above. Both of these are test adapters and both declare Simulation
-	only, so installing them adds nothing a Production connection can use.
+	They are imported inside this function, because an adapter imports the
+	call shapes above. The two test adapters declare Simulation only, so they
+	add nothing a real connection can use. Suntech is the first real one and
+	declares Sandbox and Production, and nothing else, so it can never be
+	pointed at the simulator by mistake.
 	"""
 	from uae_compliance.connectors.adapters.reference_xml import ReferenceXmlAdapter
 	from uae_compliance.connectors.adapters.simulated_json import SimulatedJsonAdapter
+	from uae_compliance.connectors.adapters.suntech import SuntechAdapter
 
-	return (ReferenceXmlAdapter(), SimulatedJsonAdapter())
+	return (ReferenceXmlAdapter(), SimulatedJsonAdapter(), SuntechAdapter())
 
 
 def installed() -> AdapterRegistry:

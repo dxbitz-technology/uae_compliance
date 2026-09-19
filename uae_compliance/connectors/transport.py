@@ -411,7 +411,7 @@ def _address_is_reachable(address: str, policy: Policy) -> bool:
 	return True
 
 
-def policy_for(environment: Environment, base_url: str) -> Policy:
+def policy_for(environment: Environment, base_url: str, extra_hosts: tuple[str, ...] = ()) -> Policy:
 	"""What one provider connection is allowed to do.
 
 	Only the simulator runs on this machine. A Sandbox is somebody else's
@@ -419,12 +419,17 @@ def policy_for(environment: Environment, base_url: str) -> Policy:
 	same address rules and the same certificate checks as Production.
 	Relaxing both for anything that merely was not Production put sandbox
 	credentials one man in the middle away from being read.
+
+	`extra_hosts` are the adapter's own declaration: hosts its provider's
+	flow genuinely uses beyond the base one, such as presigned storage URLs
+	the API hands back. They come from installed adapter code, never from
+	configuration, and every address check still applies to them.
 	"""
 	host = (urlsplit(base_url).hostname or "").lower()
 	local = environment is Environment.SIMULATION
 	return Policy(
 		environment=environment,
-		trusted_hosts=(host,),
+		trusted_hosts=(host, *extra_hosts),
 		allow_plain_http=local,
 		allow_private_addresses=local,
 		verify_tls=not local,

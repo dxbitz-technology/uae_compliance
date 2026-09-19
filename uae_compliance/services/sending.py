@@ -95,7 +95,7 @@ def send_one(submission: str) -> bool:
 		SUBMISSION_DOCTYPE, submission, ["company", "idempotency_key"], as_dict=True
 	)
 	recorder = FrappeRecorder(submission, details.company, connection.connection_id, token)
-	transport = Transport(_policy_for(connection), recorder)
+	transport = Transport(_policy_for(connection, adapter), recorder)
 
 	call = connectors.Call(
 		operation=Operation.SUBMIT,
@@ -181,13 +181,16 @@ def _connection_and_adapter(submission: str):
 	return connection, adapter
 
 
-def _policy_for(connection) -> Policy:
+def _policy_for(connection, adapter=None) -> Policy:
 	"""The transport policy this connection runs under.
 
 	The rule itself lives with the transport, because that is what enforces
-	it and a second copy here would be a second thing to keep right.
+	it and a second copy here would be a second thing to keep right. The
+	adapter's declared extra hosts ride along, because they are part of the
+	provider's own flow and come from installed code, not configuration.
 	"""
-	return policy_for(connection.environment, connection.base_url)
+	extra = adapter.descriptor.extra_trusted_hosts if adapter is not None else ()
+	return policy_for(connection.environment, connection.base_url, extra)
 
 
 def _business_request(submission: str) -> connectors.BusinessRequest:
