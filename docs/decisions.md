@@ -476,6 +476,25 @@ Reason: ibr-001-ae tests the value against exactly that list. VD is the volume d
 Consequence: extraction cannot supply a reason, because ERPNext has no field holding one. A credit note is reported as needing a reason until the working record in P04 carries it. The field there is a list, not free text.
 Status: Verified.
 
+## D055 The adapter contract hands back an artifact reference, not the file
+
+Choice: leave provider evidence uncollected for now, and record the evidence state the provider itself reports rather than inventing one.
+Reason: `fetch_artifact` returns an `ArtifactRef` and the outcome has nowhere to put the bytes, so the retrieval works and the file cannot be kept. Adding half of it would leave code that looks like it stores evidence and does not. Spec 10.2 wants each manifest entry to carry the file, its hash, its size and where it came from, none of which can be filled in from a reference.
+Consequence: a document can reach Delivered and Accepted and still not be Complete, because the route needs its evidence. That is the correct answer today and it is visible rather than hidden.
+Affected: the contract in `domain/connector.py` needs a field for returned bytes, which is a change to something P01 settled and so needs its own packet.
+Status: Proposed. Worth doing before P09, since acceptance case A17 covers missing evidence.
+
+## D056 Three things the first provider needs that the contract cannot say
+
+Choice: record these now rather than reshaping the contract for a provider we have not integrated yet.
+The three, from reading the Suntech reference against the declaration:
+- Searchable, but not by the key that was sent. The contract has one flag for whether a lost response can be settled. Suntech has list filters and a cursor and no ambiguity endpoint, so it has to declare that it cannot search, and every unknown outcome waits for a person. Safe, and stricter than it needs to be.
+- Replacement in place. Their resubmit replaces a document under the same provider reference rather than issuing a new one. That maps to the correction path, but nothing in the declaration can say the provider replaces rather than reissues, which changes how a revision is matched up afterwards.
+- Not supported at all. Participant lookup and withdrawal are simply undeclared, which the existing capability rule already handles correctly.
+Reason: spec 9.1 says an undeclared capability does not exist, and all three answers are safe under that rule. The cost is being stricter than necessary, which is the right way round.
+Affected: P10, where a real adapter is written.
+Status: Proposed.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |

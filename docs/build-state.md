@@ -216,7 +216,27 @@ Requirement IDs: spec 8.3 the durable worker boundary, 8.4 the retry rules, 9.1 
 
 - P06a: the audited transport and the result contract. Done, in the connector lane.
 - P06b: the simulator and the two test adapters. Done, in the connector lane.
-- P06c: sending, retries, events and reconciliation. Sending and retries done.
+- P06c: sending and retries. Done.
+- P06d: reconciliation and the event record. Reconciliation done, events recorded but not yet received.
+
+Reconciliation does two jobs. It asks a provider where a document has got
+to, and it deals with attempts that went out and never came back. The second
+is the one that matters: an attempt whose claim ran out is not evidence that
+the worker stopped or that the provider did not take the document. It is
+evidence that we stopped hearing. So nothing retries one. It asks, and where
+it cannot ask it holds the work and says why.
+
+Checked against the simulator. Asking moved delivery from Pending to
+Delivered and reporting to Accepted, and the document still did not become
+Complete, because the route also needs its evidence and the provider says
+that is still pending. An attempt left hanging for half an hour was marked
+abandoned and its submission moved to Unknown, not to failed, and nothing
+sent anything again.
+
+The evidence gap is real and recorded as D055. The contract hands back a
+reference to a provider's file and has nowhere to put the bytes, so the file
+cannot be kept. That needs a change to something P01 settled, so it has its
+own packet rather than being half done here.
 
 The order in the sender is the whole point. Claim the work, write down that
 an attempt is starting, commit. Only then make the request, holding no
