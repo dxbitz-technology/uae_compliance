@@ -44,11 +44,43 @@ FROZEN_FIELDS = (
 # A state nothing may leave, because the work is finished or was replaced.
 SETTLED_STATES = ("Complete", "Superseded")
 
+# Moved only by the services, which claim, approve, stop, correct and settle
+# through their own guarded paths. The form marks these read only, but the
+# framework does not enforce that on a save, so a generic write could take a
+# submission through a transition those paths exist to police: approving it
+# without its checks, or putting an Unknown outcome back in the queue before
+# anybody reconciled it.
+OPERATIONAL_FIELDS = (
+	"processing_state",
+	"approved",
+	"approved_by",
+	"approved_at",
+	"approved_canonical_hash",
+	"approval_kind",
+	"next_attempt_at",
+	"attempts",
+	"lease_owner",
+	"lease_expires_at",
+	"fencing_token",
+	"attention_reason",
+	"asp_receipt",
+	"exchange_state",
+	"reporting_state",
+	"evidence_state",
+	"evidence_manifest",
+	"provider_id",
+	"provider_correlation",
+	"predecessor",
+	"route_reason",
+	"route_checked_at",
+)
+
 
 class UAEPeppolSubmission(Document):
 	def validate(self):
 		self.keep_frozen_content_frozen()
 		self.guard_approval()
+		self.keep_operational_state_with_the_services()
 
 	def keep_frozen_content_frozen(self):
 		if self.is_new():
@@ -76,6 +108,27 @@ class UAEPeppolSubmission(Document):
 			frappe.throw(_("The content changed after it was approved. It needs approving again."))
 		if not self.approved_by or not self.approved_at:
 			frappe.throw(_("An approval has to say who gave it and when."))
+
+	def keep_operational_state_with_the_services(self):
+		"""Where the work has got to is the services' answer, not a field edit.
+
+		They mark their own saves. Everything else, the desk form and the
+		generic API included, is refused rather than quietly obeyed, because
+		the transitions carry the safety rules: an approval names its checks
+		and an Unknown outcome is reconciled before it can be sent again.
+		"""
+		if self.is_new() or self.flags.from_service:
+			return
+		before = self.get_doc_before_save()
+		if not before:
+			return
+		for field in OPERATIONAL_FIELDS:
+			if self.get(field) != before.get(field):
+				frappe.throw(
+					_("{0} is moved by the app itself, not by editing this record.").format(
+						_(self.meta.get_label(field))
+					)
+				)
 
 	def sendable(self) -> bool:
 		"""Whether a worker may pick this up.

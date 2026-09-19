@@ -76,6 +76,8 @@ def _record(doc, kind: str, user: str) -> dict:
 	doc.approval_kind = kind
 	doc.processing_state = "Ready"
 	doc.next_attempt_at = now_datetime()
+	# This save is the guarded path the controller reserves these fields for.
+	doc.flags.from_service = True
 	doc.save(ignore_permissions=True)
 	return {"approved": True, "kind": kind, "state": doc.processing_state}
 
@@ -103,5 +105,7 @@ def hold(submission: str, reason: str) -> dict:
 	doc.processing_state = "Stopped"
 	doc.attention_reason = reason
 	doc.next_attempt_at = None
+	# This save is the guarded path the controller reserves these fields for.
+	doc.flags.from_service = True
 	doc.save(ignore_permissions=True)
 	return {"state": doc.processing_state}

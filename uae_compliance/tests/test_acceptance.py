@@ -210,6 +210,28 @@ class A12ApprovalAndImmutability(IntegrationTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			doc.save(ignore_permissions=True)
 
+	def test_the_state_cannot_be_moved_by_editing_the_record(self):
+		# The form marks it read only, but the framework does not enforce that
+		# on a save, so the controller has to. An Unknown outcome put back in
+		# the queue by hand skips the reconciliation the state exists to force.
+		doc = self.a_submission()
+		doc.processing_state = "Ready"
+		with self.assertRaises(frappe.ValidationError):
+			doc.save(ignore_permissions=True)
+
+	def test_an_approval_cannot_be_written_on_by_hand(self):
+		# Every approval field filled in convincingly, including the hash the
+		# approval guard checks. Only the approval service may write these,
+		# because it is what checks the state, the evidence and the route.
+		doc = self.a_submission()
+		doc.approved = 1
+		doc.approved_by = "Administrator"
+		doc.approved_at = frappe.utils.now_datetime()
+		doc.approved_canonical_hash = doc.canonical_hash
+		doc.approval_kind = "Person"
+		with self.assertRaises(frappe.ValidationError):
+			doc.save(ignore_permissions=True)
+
 	def test_approving_without_the_bytes_stored_is_refused(self):
 		from uae_compliance.services import approval
 
