@@ -1,744 +1,826 @@
 {
-  "canonical_version": null,
-  "files": {
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/Aligned-TaxCategoryCodes.gc": "09cbd1130d6f62538ab8bb31e47166e75fedf79d5bbfe5f54ef9643345f88c6d",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/Aligned-TaxExemptionCodes.gc": "81e8a327083bfe95cd753bb5e2fbe5429858d4cad036aa3e2f8d2a1005c264e8",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/CreditReason.gc": "0638589a9aff5f1cb5fcb5472d52402ac1c70364d84fe5410ffff2bdcd26a020",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/FreqBilling.gc": "5b448e9e049119196dd1ef2c8dd60dd347357130c54b047ff1168f13afb3230b",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/GoodsType.gc": "3921d490c2681ea86fe210685d55fbb2c4c550564dc31c8c6d6b3c0d71224e52",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ICD.gc": "725a2c6b3276e3651a3fcfdc8640ce2577230eea1242ce52ee5b53a657caf527",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ISO3166.gc": "03e3a0b4d25bd7e39072b462ac87a5c648c9031f08c05932d142c6f1bd95bd34",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ISO4217.gc": "b38ec3244ffc9d85571a762a9dfc06f8c877c87d4d61c1939792fc5a1d7193a9",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ItemType.gc": "85dfecdd860c096b88f1f3b9c4998f2c425ea0db560092810c87ecaa2cc51329",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/MimeCode.gc": "98bfc9af324312235ee0235dd39f7eb38e0ace943af2736a5458387f8eeaa0a4",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL1001-cn.gc": "daaff8f0ffd4db41083d5b5c5d23c5da041fbf94576d4095db3e23edbf37f3fd",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL1153.gc": "157057276b3de6b60008c3a43d85767d12f62a475e0bf5e6dfdc57d01faf1f84",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL4461.gc": "ad459cae5d541ce057e6745186e0602c54d51b85b9990f41d9fccc4aeddd940f",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL5189.gc": "e18eac1beb970d0f224711e236f9c4639efc75f8889bec390330df24ea4059c6",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL7143.gc": "bbb18ce8908c82370caef1f321eecff4f3a5d009522b47c3be5336104cb4e24a",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL7161.gc": "fc4320ff08586a171a252a538a5f67601b088642511c42ed4b59ac4938f4fc6c",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNECERec20.gc": "07d4d8f8b327307bddd269d21574698d77873946209188da85d46c5e9cc28c2e",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/eas.gc": "b973e03c27ecb72ef5d2cee3aee1f6f89ac01268174d7c14720bd8fc13db8bdd",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/transactiontype.gc": "23861e6a609fe7a5be3d557b1a5e05c656e90015c9c4e5ce3a0732de5106eaf2",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Disclosed agent billing tax credit note.xml": "2cab1b170b670a19b41997e44d616b8f04ed5c107dbc99ffb2651103dbb01ffd",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Standard tax credit Note.xml": "cbfdeacf83a17bf611d47b8ce29d9619eccafc19bad4757c7af4e01e38c82a17",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Volume-discount-credit-note.xml": "2da27c48b45605aba947fc09e6f7314ed4caebf6b247b1dedf6961c4979f8e1e",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-UBL-validation-preprocessed.sch": "c073dd645db0401a3276cfa31f381750d35f7fde8381b19b92b8bceee236f534",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-UBL-validation-preprocessed.xslt": "b6557c207f1cccaebf32b67ae0d50b309192751b58ddd22fa5af90c6d45f7d16",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-jurisdiction-aligned-rules.sch": "d0e767f246fa8e90749060a51fea5a22e03659ae83ec66aff9cfd3b932168a3e",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-jurisdiction-aligned-rules.xslt": "da931f161362fe26bb9f5a1e519cd44758e5cba977584800b806c09bcf1b807b",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/Aligned-TaxCategoryCodes.gc": "09cbd1130d6f62538ab8bb31e47166e75fedf79d5bbfe5f54ef9643345f88c6d",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/Aligned-TaxExemptionCodes.gc": "81e8a327083bfe95cd753bb5e2fbe5429858d4cad036aa3e2f8d2a1005c264e8",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/FreqBilling.gc": "5b448e9e049119196dd1ef2c8dd60dd347357130c54b047ff1168f13afb3230b",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/GoodsType.gc": "3921d490c2681ea86fe210685d55fbb2c4c550564dc31c8c6d6b3c0d71224e52",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ICD.gc": "725a2c6b3276e3651a3fcfdc8640ce2577230eea1242ce52ee5b53a657caf527",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ISO3166.gc": "03e3a0b4d25bd7e39072b462ac87a5c648c9031f08c05932d142c6f1bd95bd34",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ISO4217.gc": "b38ec3244ffc9d85571a762a9dfc06f8c877c87d4d61c1939792fc5a1d7193a9",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ItemType.gc": "85dfecdd860c096b88f1f3b9c4998f2c425ea0db560092810c87ecaa2cc51329",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/MimeCode.gc": "98bfc9af324312235ee0235dd39f7eb38e0ace943af2736a5458387f8eeaa0a4",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL1001-inv.gc": "e7edd811714391fd0f2a558ea2c38f0df4f88898e43880c3a1958e704daa68d6",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL1153.gc": "157057276b3de6b60008c3a43d85767d12f62a475e0bf5e6dfdc57d01faf1f84",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL4461.gc": "ad459cae5d541ce057e6745186e0602c54d51b85b9990f41d9fccc4aeddd940f",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL5189.gc": "e18eac1beb970d0f224711e236f9c4639efc75f8889bec390330df24ea4059c6",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL7143.gc": "bbb18ce8908c82370caef1f321eecff4f3a5d009522b47c3be5336104cb4e24a",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL7161.gc": "fc4320ff08586a171a252a538a5f67601b088642511c42ed4b59ac4938f4fc6c",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNECERec20.gc": "07d4d8f8b327307bddd269d21574698d77873946209188da85d46c5e9cc28c2e",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/eas.gc": "b973e03c27ecb72ef5d2cee3aee1f6f89ac01268174d7c14720bd8fc13db8bdd",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/transactiontype.gc": "23861e6a609fe7a5be3d557b1a5e05c656e90015c9c4e5ce3a0732de5106eaf2",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Buyer-PAS-identifier.xml": "1e335448bdef21d1890e6d428aa12b66288d425c7699009f49da3b61adf5a587",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Commercial invoice.xml": "c9231834d9113c36b2de575d9ca28afb2eabe340230b02b6bcc9e521c77b1c7a",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Continuous.supplies.xml": "8d49a4afdab47151e3ea58bb8972b7525e490b1b8b031d05ecd84268d8350412",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Deemed.supply.-.predefined.endpoint.xml": "ca672c9a9dbbad402e0fea38075edea612cecf42c43c150cd2b344fd652bfee9",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Disclosed.agent.billing.xml": "41b5a956988fde1e1d9850e245dbbf5f64458be642fcc860c11826065069086b",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-AE-category.xml": "09fc0ab12627b1d7145ac85d7cfa4fb95f7128b988ab6174e6da40a5ff3f551c",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-E-category.xml": "95642dcf67501b19b6d935e980a64fe0cbea7feec08dd430d006564224c03b5f",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-O-category.xml": "330265af30c1b2770f1dcb2e1884ba663ed852e24bcf9e588b16aa51f36c927b",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-Z-category.xml": "c8169130c934244b1e6bd1e535bbc3236c14f10e039ee773eec0a79d3124a5ad",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-AE-category.xml": "033badbbaf312113ea5f0a3d4caaa63145a84da94e98c8db4a13345133b432a2",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-E-category.xml": "a67e272b990ac9065048aabd8e8f551f5e11cf5a3d4961926d6569d358ac839d",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-O-category.xml": "a369e5bc59e35fcbb5102bab022af8ba89746378579b8cdbc16a135b7152a619",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-Z-category.xml": "39dd969605a03c911a90bbe2da638c4a68d4250fb2b89e18b19b321d174adcca",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Exports.-.predefined.endpoint.xml": "6414615bf143e1d63a97f725215be78dd704a2777324fc397b51cbf597400e23",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Exports.xml": "1ff14a0c5184452f815efeb22992f761c12bf8d1a1c05c3a6af3de5c1c490d60",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Margin scheme.xml": "731188b6b676fc09b24605eec06caf5f2c21efcfa4e1393d796fcd466e1ebaf3",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Seller-PAS-identifier.xml": "57674a5059b9cf09d03b258be967fcae3b18c36f1e7452cfff5436a7175f6492",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Seller-TIN-identifier.xml": "a4020cc088636c5437f32fa4afe969ef6bffcd912f5eeb8f5e6656b9ca75ea07",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard invoice Mandatory fields.xml": "b2de2b711a08f753c00f302d4b730b2b3b86e1852561623a4fd003576342c651",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard tax invoice.xml": "e585cfa7267d74f825619d31d427adb0096a01a3b4b3a03fc61caa376ad8f582",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard.invoice.-.Extensive.xml": "1e44829036d618c969cd62d808d87b96d22f0f6a19cca35999de6f6e9850c05a",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard.tax.invoice.-.predefined.endpoint.xml": "a6f4aae738636b5c2b402a37df330a87848de97d9aa3d05115ae994c4ee466b6",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Summary tax invoice.xml": "79f699a8f1045fb696990b7a317dca07a2d0abcaba7d8222afc76d3e4c60604c",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Supply involving free trade zone.xml": "0af67683eabd235266b5a8139174f31f0681ed8454f35f7dda1df95f31db87b2",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Supply through e-commerce.xml": "561ea0a3498afc0103c71617fdedecc83b52ade14ef27d28856569dccbeedcda",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Supply under Reverse charge mechanism.xml": "f2e749671c7f1c28f9999388c545c815ec72c19771e951b92945da200794dc26",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Zero rated supplies.xml": "652749ac0e790aed9ca544d0ba1b08da9542fbd23e416baf85e1bcb1b43cc5bb",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-UBL-validation-preprocessed.sch": "c073dd645db0401a3276cfa31f381750d35f7fde8381b19b92b8bceee236f534",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-UBL-validation-preprocessed.xslt": "b6557c207f1cccaebf32b67ae0d50b309192751b58ddd22fa5af90c6d45f7d16",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-jurisdiction-aligned-rules.sch": "d0e767f246fa8e90749060a51fea5a22e03659ae83ec66aff9cfd3b932168a3e",
-    "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-jurisdiction-aligned-rules.xslt": "da931f161362fe26bb9f5a1e519cd44758e5cba977584800b806c09bcf1b807b",
-    "uae_compliance/standards/ubl/2.1/xsd/common/CCTS_CCT_SchemaModule-2.1.xsd": "dd546e4809df86b6445589f69f0d6c9df162840ae386574ddfc1da7638103e15",
-    "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonAggregateComponents-2.1.xsd": "939172ad8dd057cd403e7f763f6532184dd5ed4b9de24c42ebb35db4792ba613",
-    "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonBasicComponents-2.1.xsd": "bd4ad043ee1d9da1c7f8018dabf739cfafdfb59143d0d16b9ef769e6b7c408a7",
-    "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonExtensionComponents-2.1.xsd": "ad7a4e490978adfbcfc5ec0bb20941cf11ac960ccf0c4de8791a7c731a8dbe87",
-    "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonSignatureComponents-2.1.xsd": "3db472305f029bba5c1ae157bfd0178f715c3f9b94bd8e6c557dbce5e88da874",
-    "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CoreComponentParameters-2.1.xsd": "8be3379dbdcbcc7802fafdd16bac72c48fff1c0bb364213a31a17911dd06100b",
-    "uae_compliance/standards/ubl/2.1/xsd/common/UBL-ExtensionContentDataType-2.1.xsd": "fcee77a11870208e6377ea6311b9f2a050bca24bdad8606ea02d71e9f9e72f8d",
-    "uae_compliance/standards/ubl/2.1/xsd/common/UBL-QualifiedDataTypes-2.1.xsd": "7dcb156e610239c97ae70940cf4653b88e48c3595bf5f56a2204a32e2893e6cf",
-    "uae_compliance/standards/ubl/2.1/xsd/common/UBL-SignatureAggregateComponents-2.1.xsd": "17bb6b62d709b4fd81449a37655af36aa6a1276ad4fdb1b2e249a5ed4b7c2172",
-    "uae_compliance/standards/ubl/2.1/xsd/common/UBL-SignatureBasicComponents-2.1.xsd": "cef924d7ba3d1d8ade14469325cde1364f8c174e46f0198ec02da8e9e748a489",
-    "uae_compliance/standards/ubl/2.1/xsd/common/UBL-UnqualifiedDataTypes-2.1.xsd": "09052d406b4293e2a5f9c2bfee6df10ad4d8d5f0b36e24a6349d7f7936d89eb6",
-    "uae_compliance/standards/ubl/2.1/xsd/common/UBL-XAdESv132-2.1.xsd": "a4f726bcf8cc3f7d9ffa4dab99e005535a8e8b60dced1e5d94578d2e05afa96e",
-    "uae_compliance/standards/ubl/2.1/xsd/common/UBL-XAdESv141-2.1.xsd": "1fa4625e9cefcb7a9abb5ac1b64315547450031eece8a55bd584e4ba4b79dbc1",
-    "uae_compliance/standards/ubl/2.1/xsd/common/UBL-xmldsig-core-schema-2.1.xsd": "101909c9f06456d61ddcc4fb982f1d40dc357b439f393b1a2eb46e42acd60809",
-    "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-CreditNote-2.1.xsd": "a54651b1225052f811bf2ba01346f13f2454e7cc3e0be290c91dd680dc7b7b1a",
-    "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-Invoice-2.1.xsd": "40fae8cb436f3a9506d7acce65ba162caef3b0bed4d5cbc0992b2153ded4edf4"
+ "canonical_version": null,
+ "files": {
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/Aligned-TaxCategoryCodes.gc": "09cbd1130d6f62538ab8bb31e47166e75fedf79d5bbfe5f54ef9643345f88c6d",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/Aligned-TaxExemptionCodes.gc": "81e8a327083bfe95cd753bb5e2fbe5429858d4cad036aa3e2f8d2a1005c264e8",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/CreditReason.gc": "0638589a9aff5f1cb5fcb5472d52402ac1c70364d84fe5410ffff2bdcd26a020",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/FreqBilling.gc": "5b448e9e049119196dd1ef2c8dd60dd347357130c54b047ff1168f13afb3230b",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/GoodsType.gc": "3921d490c2681ea86fe210685d55fbb2c4c550564dc31c8c6d6b3c0d71224e52",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ICD.gc": "725a2c6b3276e3651a3fcfdc8640ce2577230eea1242ce52ee5b53a657caf527",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ISO3166.gc": "03e3a0b4d25bd7e39072b462ac87a5c648c9031f08c05932d142c6f1bd95bd34",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ISO4217.gc": "b38ec3244ffc9d85571a762a9dfc06f8c877c87d4d61c1939792fc5a1d7193a9",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ItemType.gc": "85dfecdd860c096b88f1f3b9c4998f2c425ea0db560092810c87ecaa2cc51329",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/MimeCode.gc": "98bfc9af324312235ee0235dd39f7eb38e0ace943af2736a5458387f8eeaa0a4",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL1001-cn.gc": "daaff8f0ffd4db41083d5b5c5d23c5da041fbf94576d4095db3e23edbf37f3fd",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL1153.gc": "157057276b3de6b60008c3a43d85767d12f62a475e0bf5e6dfdc57d01faf1f84",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL4461.gc": "ad459cae5d541ce057e6745186e0602c54d51b85b9990f41d9fccc4aeddd940f",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL5189.gc": "e18eac1beb970d0f224711e236f9c4639efc75f8889bec390330df24ea4059c6",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL7143.gc": "bbb18ce8908c82370caef1f321eecff4f3a5d009522b47c3be5336104cb4e24a",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL7161.gc": "fc4320ff08586a171a252a538a5f67601b088642511c42ed4b59ac4938f4fc6c",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNECERec20.gc": "07d4d8f8b327307bddd269d21574698d77873946209188da85d46c5e9cc28c2e",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/eas.gc": "b973e03c27ecb72ef5d2cee3aee1f6f89ac01268174d7c14720bd8fc13db8bdd",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/transactiontype.gc": "23861e6a609fe7a5be3d557b1a5e05c656e90015c9c4e5ce3a0732de5106eaf2",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Disclosed agent billing tax credit note.xml": "2cab1b170b670a19b41997e44d616b8f04ed5c107dbc99ffb2651103dbb01ffd",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Standard tax credit Note.xml": "cbfdeacf83a17bf611d47b8ce29d9619eccafc19bad4757c7af4e01e38c82a17",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Volume-discount-credit-note.xml": "2da27c48b45605aba947fc09e6f7314ed4caebf6b247b1dedf6961c4979f8e1e",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-UBL-validation-preprocessed.sch": "c073dd645db0401a3276cfa31f381750d35f7fde8381b19b92b8bceee236f534",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-UBL-validation-preprocessed.xslt": "b6557c207f1cccaebf32b67ae0d50b309192751b58ddd22fa5af90c6d45f7d16",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-jurisdiction-aligned-rules.sch": "d0e767f246fa8e90749060a51fea5a22e03659ae83ec66aff9cfd3b932168a3e",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-jurisdiction-aligned-rules.xslt": "da931f161362fe26bb9f5a1e519cd44758e5cba977584800b806c09bcf1b807b",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/Aligned-TaxCategoryCodes.gc": "09cbd1130d6f62538ab8bb31e47166e75fedf79d5bbfe5f54ef9643345f88c6d",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/Aligned-TaxExemptionCodes.gc": "81e8a327083bfe95cd753bb5e2fbe5429858d4cad036aa3e2f8d2a1005c264e8",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/FreqBilling.gc": "5b448e9e049119196dd1ef2c8dd60dd347357130c54b047ff1168f13afb3230b",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/GoodsType.gc": "3921d490c2681ea86fe210685d55fbb2c4c550564dc31c8c6d6b3c0d71224e52",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ICD.gc": "725a2c6b3276e3651a3fcfdc8640ce2577230eea1242ce52ee5b53a657caf527",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ISO3166.gc": "03e3a0b4d25bd7e39072b462ac87a5c648c9031f08c05932d142c6f1bd95bd34",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ISO4217.gc": "b38ec3244ffc9d85571a762a9dfc06f8c877c87d4d61c1939792fc5a1d7193a9",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ItemType.gc": "85dfecdd860c096b88f1f3b9c4998f2c425ea0db560092810c87ecaa2cc51329",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/MimeCode.gc": "98bfc9af324312235ee0235dd39f7eb38e0ace943af2736a5458387f8eeaa0a4",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL1001-inv.gc": "e7edd811714391fd0f2a558ea2c38f0df4f88898e43880c3a1958e704daa68d6",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL1153.gc": "157057276b3de6b60008c3a43d85767d12f62a475e0bf5e6dfdc57d01faf1f84",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL4461.gc": "ad459cae5d541ce057e6745186e0602c54d51b85b9990f41d9fccc4aeddd940f",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL5189.gc": "e18eac1beb970d0f224711e236f9c4639efc75f8889bec390330df24ea4059c6",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL7143.gc": "bbb18ce8908c82370caef1f321eecff4f3a5d009522b47c3be5336104cb4e24a",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL7161.gc": "fc4320ff08586a171a252a538a5f67601b088642511c42ed4b59ac4938f4fc6c",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNECERec20.gc": "07d4d8f8b327307bddd269d21574698d77873946209188da85d46c5e9cc28c2e",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/eas.gc": "b973e03c27ecb72ef5d2cee3aee1f6f89ac01268174d7c14720bd8fc13db8bdd",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/transactiontype.gc": "23861e6a609fe7a5be3d557b1a5e05c656e90015c9c4e5ce3a0732de5106eaf2",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Buyer-PAS-identifier.xml": "1e335448bdef21d1890e6d428aa12b66288d425c7699009f49da3b61adf5a587",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Commercial invoice.xml": "c9231834d9113c36b2de575d9ca28afb2eabe340230b02b6bcc9e521c77b1c7a",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Continuous.supplies.xml": "8d49a4afdab47151e3ea58bb8972b7525e490b1b8b031d05ecd84268d8350412",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Deemed.supply.-.predefined.endpoint.xml": "ca672c9a9dbbad402e0fea38075edea612cecf42c43c150cd2b344fd652bfee9",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Disclosed.agent.billing.xml": "41b5a956988fde1e1d9850e245dbbf5f64458be642fcc860c11826065069086b",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-AE-category.xml": "09fc0ab12627b1d7145ac85d7cfa4fb95f7128b988ab6174e6da40a5ff3f551c",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-E-category.xml": "95642dcf67501b19b6d935e980a64fe0cbea7feec08dd430d006564224c03b5f",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-O-category.xml": "330265af30c1b2770f1dcb2e1884ba663ed852e24bcf9e588b16aa51f36c927b",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-Z-category.xml": "c8169130c934244b1e6bd1e535bbc3236c14f10e039ee773eec0a79d3124a5ad",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-AE-category.xml": "033badbbaf312113ea5f0a3d4caaa63145a84da94e98c8db4a13345133b432a2",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-E-category.xml": "a67e272b990ac9065048aabd8e8f551f5e11cf5a3d4961926d6569d358ac839d",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-O-category.xml": "a369e5bc59e35fcbb5102bab022af8ba89746378579b8cdbc16a135b7152a619",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-Z-category.xml": "39dd969605a03c911a90bbe2da638c4a68d4250fb2b89e18b19b321d174adcca",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Exports.-.predefined.endpoint.xml": "6414615bf143e1d63a97f725215be78dd704a2777324fc397b51cbf597400e23",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Exports.xml": "1ff14a0c5184452f815efeb22992f761c12bf8d1a1c05c3a6af3de5c1c490d60",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Margin scheme.xml": "731188b6b676fc09b24605eec06caf5f2c21efcfa4e1393d796fcd466e1ebaf3",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Seller-PAS-identifier.xml": "57674a5059b9cf09d03b258be967fcae3b18c36f1e7452cfff5436a7175f6492",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Seller-TIN-identifier.xml": "a4020cc088636c5437f32fa4afe969ef6bffcd912f5eeb8f5e6656b9ca75ea07",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard invoice Mandatory fields.xml": "b2de2b711a08f753c00f302d4b730b2b3b86e1852561623a4fd003576342c651",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard tax invoice.xml": "e585cfa7267d74f825619d31d427adb0096a01a3b4b3a03fc61caa376ad8f582",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard.invoice.-.Extensive.xml": "1e44829036d618c969cd62d808d87b96d22f0f6a19cca35999de6f6e9850c05a",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard.tax.invoice.-.predefined.endpoint.xml": "a6f4aae738636b5c2b402a37df330a87848de97d9aa3d05115ae994c4ee466b6",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Summary tax invoice.xml": "79f699a8f1045fb696990b7a317dca07a2d0abcaba7d8222afc76d3e4c60604c",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Supply involving free trade zone.xml": "0af67683eabd235266b5a8139174f31f0681ed8454f35f7dda1df95f31db87b2",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Supply through e-commerce.xml": "561ea0a3498afc0103c71617fdedecc83b52ade14ef27d28856569dccbeedcda",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Supply under Reverse charge mechanism.xml": "f2e749671c7f1c28f9999388c545c815ec72c19771e951b92945da200794dc26",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Zero rated supplies.xml": "652749ac0e790aed9ca544d0ba1b08da9542fbd23e416baf85e1bcb1b43cc5bb",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-UBL-validation-preprocessed.sch": "c073dd645db0401a3276cfa31f381750d35f7fde8381b19b92b8bceee236f534",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-UBL-validation-preprocessed.xslt": "b6557c207f1cccaebf32b67ae0d50b309192751b58ddd22fa5af90c6d45f7d16",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-jurisdiction-aligned-rules.sch": "d0e767f246fa8e90749060a51fea5a22e03659ae83ec66aff9cfd3b932168a3e",
+  "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-jurisdiction-aligned-rules.xslt": "da931f161362fe26bb9f5a1e519cd44758e5cba977584800b806c09bcf1b807b",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/Aligned-TaxCategoryCodes.gc": "09cbd1130d6f62538ab8bb31e47166e75fedf79d5bbfe5f54ef9643345f88c6d",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/Aligned-TaxExemptionCodes.gc": "81e8a327083bfe95cd753bb5e2fbe5429858d4cad036aa3e2f8d2a1005c264e8",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/CreditReason.gc": "0638589a9aff5f1cb5fcb5472d52402ac1c70364d84fe5410ffff2bdcd26a020",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/FreqBilling.gc": "5b448e9e049119196dd1ef2c8dd60dd347357130c54b047ff1168f13afb3230b",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/GoodsType.gc": "3921d490c2681ea86fe210685d55fbb2c4c550564dc31c8c6d6b3c0d71224e52",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/ICD.gc": "725a2c6b3276e3651a3fcfdc8640ce2577230eea1242ce52ee5b53a657caf527",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/ISO3166.gc": "03e3a0b4d25bd7e39072b462ac87a5c648c9031f08c05932d142c6f1bd95bd34",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/ISO4217.gc": "b38ec3244ffc9d85571a762a9dfc06f8c877c87d4d61c1939792fc5a1d7193a9",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/ItemType.gc": "85dfecdd860c096b88f1f3b9c4998f2c425ea0db560092810c87ecaa2cc51329",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/MimeCode.gc": "98bfc9af324312235ee0235dd39f7eb38e0ace943af2736a5458387f8eeaa0a4",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/UNCL1001-cn.gc": "90fca61a5a67ecdff9105172232126033497fe5fc71c4d23a8dd7fa603cae253",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/UNCL1153.gc": "157057276b3de6b60008c3a43d85767d12f62a475e0bf5e6dfdc57d01faf1f84",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/UNCL4461.gc": "ad459cae5d541ce057e6745186e0602c54d51b85b9990f41d9fccc4aeddd940f",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/UNCL5189.gc": "e18eac1beb970d0f224711e236f9c4639efc75f8889bec390330df24ea4059c6",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/UNCL7143.gc": "bbb18ce8908c82370caef1f321eecff4f3a5d009522b47c3be5336104cb4e24a",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/UNCL7161.gc": "fc4320ff08586a171a252a538a5f67601b088642511c42ed4b59ac4938f4fc6c",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/UNECERec20.gc": "07d4d8f8b327307bddd269d21574698d77873946209188da85d46c5e9cc28c2e",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/eas.gc": "b973e03c27ecb72ef5d2cee3aee1f6f89ac01268174d7c14720bd8fc13db8bdd",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/codelist/transactiontype.gc": "23861e6a609fe7a5be3d557b1a5e05c656e90015c9c4e5ce3a0732de5106eaf2",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/example/Self billing tax credit note.xml": "3b2c5cfd5740223cbbe309a5658bd1576014f21a9903b9e7f9905aeb18774142",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/schematron/PINT-UBL-validation-preprocessed.sch": "5dd815399dfd0c22bd548d27228be061c6ca460b88b63344339f82ea758663fc",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/schematron/PINT-UBL-validation-preprocessed.xslt": "e238b45bafe65038b846a9d8173054ab315ae0a709dc65f17b5de9d38303f037",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/schematron/PINT-jurisdiction-aligned-rules.sch": "d0e767f246fa8e90749060a51fea5a22e03659ae83ec66aff9cfd3b932168a3e",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-creditnote/schematron/PINT-jurisdiction-aligned-rules.xslt": "da931f161362fe26bb9f5a1e519cd44758e5cba977584800b806c09bcf1b807b",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/Aligned-TaxCategoryCodes.gc": "09cbd1130d6f62538ab8bb31e47166e75fedf79d5bbfe5f54ef9643345f88c6d",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/Aligned-TaxExemptionCodes.gc": "81e8a327083bfe95cd753bb5e2fbe5429858d4cad036aa3e2f8d2a1005c264e8",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/FreqBilling.gc": "5b448e9e049119196dd1ef2c8dd60dd347357130c54b047ff1168f13afb3230b",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/GoodsType.gc": "3921d490c2681ea86fe210685d55fbb2c4c550564dc31c8c6d6b3c0d71224e52",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/ICD.gc": "725a2c6b3276e3651a3fcfdc8640ce2577230eea1242ce52ee5b53a657caf527",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/ISO3166.gc": "03e3a0b4d25bd7e39072b462ac87a5c648c9031f08c05932d142c6f1bd95bd34",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/ISO4217.gc": "b38ec3244ffc9d85571a762a9dfc06f8c877c87d4d61c1939792fc5a1d7193a9",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/ItemType.gc": "85dfecdd860c096b88f1f3b9c4998f2c425ea0db560092810c87ecaa2cc51329",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/MimeCode.gc": "98bfc9af324312235ee0235dd39f7eb38e0ace943af2736a5458387f8eeaa0a4",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/UNCL1001-inv.gc": "3a086b80b5ccddf370f757e8cfcb87091c9b1611fa9f29aa9dacc0d5bd9e5cd6",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/UNCL1153.gc": "157057276b3de6b60008c3a43d85767d12f62a475e0bf5e6dfdc57d01faf1f84",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/UNCL4461.gc": "ad459cae5d541ce057e6745186e0602c54d51b85b9990f41d9fccc4aeddd940f",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/UNCL5189.gc": "e18eac1beb970d0f224711e236f9c4639efc75f8889bec390330df24ea4059c6",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/UNCL7143.gc": "bbb18ce8908c82370caef1f321eecff4f3a5d009522b47c3be5336104cb4e24a",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/UNCL7161.gc": "fc4320ff08586a171a252a538a5f67601b088642511c42ed4b59ac4938f4fc6c",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/UNECERec20.gc": "07d4d8f8b327307bddd269d21574698d77873946209188da85d46c5e9cc28c2e",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/eas.gc": "b973e03c27ecb72ef5d2cee3aee1f6f89ac01268174d7c14720bd8fc13db8bdd",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/codelist/transactiontype.gc": "23861e6a609fe7a5be3d557b1a5e05c656e90015c9c4e5ce3a0732de5106eaf2",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/example/Self Billing.xml": "c4eb75ebaf957f4b09be5a2ba44a29f350a2f55f90fc24f43309b704e62d4e0e",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/schematron/PINT-UBL-validation-preprocessed.sch": "5dd815399dfd0c22bd548d27228be061c6ca460b88b63344339f82ea758663fc",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/schematron/PINT-UBL-validation-preprocessed.xslt": "e238b45bafe65038b846a9d8173054ab315ae0a709dc65f17b5de9d38303f037",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/schematron/PINT-jurisdiction-aligned-rules.sch": "d0e767f246fa8e90749060a51fea5a22e03659ae83ec66aff9cfd3b932168a3e",
+  "uae_compliance/standards/pint_ae_sb/1.0.4/trn-invoice/schematron/PINT-jurisdiction-aligned-rules.xslt": "da931f161362fe26bb9f5a1e519cd44758e5cba977584800b806c09bcf1b807b",
+  "uae_compliance/standards/ubl/2.1/xsd/common/CCTS_CCT_SchemaModule-2.1.xsd": "dd546e4809df86b6445589f69f0d6c9df162840ae386574ddfc1da7638103e15",
+  "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonAggregateComponents-2.1.xsd": "939172ad8dd057cd403e7f763f6532184dd5ed4b9de24c42ebb35db4792ba613",
+  "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonBasicComponents-2.1.xsd": "bd4ad043ee1d9da1c7f8018dabf739cfafdfb59143d0d16b9ef769e6b7c408a7",
+  "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonExtensionComponents-2.1.xsd": "ad7a4e490978adfbcfc5ec0bb20941cf11ac960ccf0c4de8791a7c731a8dbe87",
+  "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonSignatureComponents-2.1.xsd": "3db472305f029bba5c1ae157bfd0178f715c3f9b94bd8e6c557dbce5e88da874",
+  "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CoreComponentParameters-2.1.xsd": "8be3379dbdcbcc7802fafdd16bac72c48fff1c0bb364213a31a17911dd06100b",
+  "uae_compliance/standards/ubl/2.1/xsd/common/UBL-ExtensionContentDataType-2.1.xsd": "fcee77a11870208e6377ea6311b9f2a050bca24bdad8606ea02d71e9f9e72f8d",
+  "uae_compliance/standards/ubl/2.1/xsd/common/UBL-QualifiedDataTypes-2.1.xsd": "7dcb156e610239c97ae70940cf4653b88e48c3595bf5f56a2204a32e2893e6cf",
+  "uae_compliance/standards/ubl/2.1/xsd/common/UBL-SignatureAggregateComponents-2.1.xsd": "17bb6b62d709b4fd81449a37655af36aa6a1276ad4fdb1b2e249a5ed4b7c2172",
+  "uae_compliance/standards/ubl/2.1/xsd/common/UBL-SignatureBasicComponents-2.1.xsd": "cef924d7ba3d1d8ade14469325cde1364f8c174e46f0198ec02da8e9e748a489",
+  "uae_compliance/standards/ubl/2.1/xsd/common/UBL-UnqualifiedDataTypes-2.1.xsd": "09052d406b4293e2a5f9c2bfee6df10ad4d8d5f0b36e24a6349d7f7936d89eb6",
+  "uae_compliance/standards/ubl/2.1/xsd/common/UBL-XAdESv132-2.1.xsd": "a4f726bcf8cc3f7d9ffa4dab99e005535a8e8b60dced1e5d94578d2e05afa96e",
+  "uae_compliance/standards/ubl/2.1/xsd/common/UBL-XAdESv141-2.1.xsd": "1fa4625e9cefcb7a9abb5ac1b64315547450031eece8a55bd584e4ba4b79dbc1",
+  "uae_compliance/standards/ubl/2.1/xsd/common/UBL-xmldsig-core-schema-2.1.xsd": "101909c9f06456d61ddcc4fb982f1d40dc357b439f393b1a2eb46e42acd60809",
+  "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-CreditNote-2.1.xsd": "a54651b1225052f811bf2ba01346f13f2454e7cc3e0be290c91dd680dc7b7b1a",
+  "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-Invoice-2.1.xsd": "40fae8cb436f3a9506d7acce65ba162caef3b0bed4d5cbc0992b2153ded4edf4"
+ },
+ "generated_on": "2026-09-19",
+ "mof_guidelines": {
+  "date": "2026-06-01",
+  "downloaded_on": "2026-09-16",
+  "pages": 51,
+  "sha256": "f84f452ae1fe9db6cf7af9bb894e5652c72f08fff44018208f9e9874f5b061bf",
+  "size": 1908568,
+  "title": "UAE Electronic Invoicing Guidelines",
+  "url": "https://mof.gov.ae/wp-content/uploads/2026/06/UAE-Electronic-Invoicing-Guidelines_V-1.1-01June2026.pdf",
+  "vendored": false,
+  "version": "1.1"
+ },
+ "notes": {
+  "canonical_version": "defined in P01",
+  "files": "every vendored artifact under uae_compliance/standards except Markdown notices; verify with scripts/standards/check_lock.py",
+  "serializer_version": "defined in P01"
+ },
+ "pint_ae": {
+  "customization_id": "urn:peppol:pint:billing-1@ae-1",
+  "effective_applicability": {
+   "note": "Mandate dates and applicability per taxpayer group are not established in P00. Owner: maintainer. Consequence: no applicability claim. Affected phase: P02.",
+   "status": "Unresolved"
   },
-  "generated_on": "2026-09-16",
-  "mof_guidelines": {
-    "date": "2026-06-01",
-    "downloaded_on": "2026-09-16",
-    "pages": 51,
-    "sha256": "f84f452ae1fe9db6cf7af9bb894e5652c72f08fff44018208f9e9874f5b061bf",
-    "size": 1908568,
-    "title": "UAE Electronic Invoicing Guidelines",
-    "url": "https://mof.gov.ae/wp-content/uploads/2026/06/UAE-Electronic-Invoicing-Guidelines_V-1.1-01June2026.pdf",
-    "vendored": false,
-    "version": "1.1"
+  "family": "billing",
+  "license": "see uae_compliance/standards/NOTICES.md",
+  "not_vendored": [
+   {
+    "file": "common/docs/bis.pdf",
+    "sha256": "16d043ed4827aebe25e3499d49d3fceeb4c46cdc8542a46cc230c3931beb02b1",
+    "size": 1269827
+   },
+   {
+    "file": "common/docs/compliance.pdf",
+    "sha256": "03769afb140165a827ecd537d82b7d6552ff586bb2257f42b5fae7f0c8ef65b1",
+    "size": 79529
+   },
+   {
+    "file": "common/docs/specialized-release-notes.pdf",
+    "sha256": "c69789bfe7cc1e1a5f33826090e35b8e2f9be3c7e3ed19f335d02dd42d8e98f7",
+    "size": 384642
+   }
+  ],
+  "profile_id": "urn:peppol:bis:billing",
+  "publication_date": "2026-07-29",
+  "publication_url": "https://docs.peppol.eu/poac/ae/pint-ae/",
+  "resources_url": "https://docs.peppol.eu/poac/ae/pint-ae/resources.zip",
+  "resources_zip": {
+   "artifact_dated": "2026-07-29",
+   "downloaded_on": "2026-09-16",
+   "sha256": "1e8b0bd595c672ac9d6fc886ddd0eb8027cb39a1d26bebdcb1ada37b7eee491f",
+   "size": 1019347
   },
-  "notes": {
-    "canonical_version": "defined in P01",
-    "files": "every vendored artifact under uae_compliance/standards except Markdown notices; verify with scripts/standards/check_lock.py",
-    "serializer_version": "defined in P01"
-  },
-  "pint_ae": {
-    "customization_id": "urn:peppol:pint:billing-1@ae-1",
-    "effective_applicability": {
-      "note": "Mandate dates and applicability per taxpayer group are not established in P00. Owner: maintainer. Consequence: no applicability claim. Affected phase: P02.",
-      "status": "Unresolved"
-    },
-    "family": "billing",
-    "license": "see uae_compliance/standards/NOTICES.md",
-    "not_vendored": [
-      {
-        "file": "common/docs/bis.pdf",
-        "sha256": "16d043ed4827aebe25e3499d49d3fceeb4c46cdc8542a46cc230c3931beb02b1",
-        "size": 1269827
-      },
-      {
-        "file": "common/docs/compliance.pdf",
-        "sha256": "03769afb140165a827ecd537d82b7d6552ff586bb2257f42b5fae7f0c8ef65b1",
-        "size": 79529
-      },
-      {
-        "file": "common/docs/specialized-release-notes.pdf",
-        "sha256": "c69789bfe7cc1e1a5f33826090e35b8e2f9be3c7e3ed19f335d02dd42d8e98f7",
-        "size": 384642
-      }
+  "specification": "PINT AE Billing",
+  "transactions": {
+   "trn-creditnote": {
+    "code_lists": [
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/Aligned-TaxCategoryCodes.gc",
+      "list_version": "D.16B",
+      "rows": 6,
+      "sha256": "09cbd1130d6f62538ab8bb31e47166e75fedf79d5bbfe5f54ef9643345f88c6d",
+      "short_name": "AE VAT category codes"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/Aligned-TaxExemptionCodes.gc",
+      "list_version": "2022",
+      "rows": 4,
+      "sha256": "81e8a327083bfe95cd753bb5e2fbe5429858d4cad036aa3e2f8d2a1005c264e8",
+      "short_name": "Reasons for exemption from tax"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/CreditReason.gc",
+      "list_version": "1",
+      "rows": 6,
+      "sha256": "0638589a9aff5f1cb5fcb5472d52402ac1c70364d84fe5410ffff2bdcd26a020",
+      "short_name": "Reasons for credit note"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/FreqBilling.gc",
+      "list_version": "1",
+      "rows": 10,
+      "sha256": "5b448e9e049119196dd1ef2c8dd60dd347357130c54b047ff1168f13afb3230b",
+      "short_name": "Frequency of billing codes"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/GoodsType.gc",
+      "list_version": "1",
+      "rows": 5,
+      "sha256": "3921d490c2681ea86fe210685d55fbb2c4c550564dc31c8c6d6b3c0d71224e52",
+      "short_name": "Type of goods or services subject to RCM"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ICD.gc",
+      "list_version": "20210630",
+      "rows": 243,
+      "sha256": "725a2c6b3276e3651a3fcfdc8640ce2577230eea1242ce52ee5b53a657caf527",
+      "short_name": "ISO 6523 ICD list"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ISO3166.gc",
+      "list_version": "2013",
+      "rows": 251,
+      "sha256": "03e3a0b4d25bd7e39072b462ac87a5c648c9031f08c05932d142c6f1bd95bd34",
+      "short_name": "Country codes"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ISO4217.gc",
+      "list_version": "2015",
+      "rows": 177,
+      "sha256": "b38ec3244ffc9d85571a762a9dfc06f8c877c87d4d61c1939792fc5a1d7193a9",
+      "short_name": "Currency codes"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ItemType.gc",
+      "list_version": "1",
+      "rows": 3,
+      "sha256": "85dfecdd860c096b88f1f3b9c4998f2c425ea0db560092810c87ecaa2cc51329",
+      "short_name": "Item type"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/MimeCode.gc",
+      "list_version": "20210921",
+      "rows": 7,
+      "sha256": "98bfc9af324312235ee0235dd39f7eb38e0ace943af2736a5458387f8eeaa0a4",
+      "short_name": "Media Types"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL1001-cn.gc",
+      "list_version": "D.17A",
+      "rows": 2,
+      "sha256": "daaff8f0ffd4db41083d5b5c5d23c5da041fbf94576d4095db3e23edbf37f3fd",
+      "short_name": "Document name code"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL1153.gc",
+      "list_version": "D.16B",
+      "rows": 818,
+      "sha256": "157057276b3de6b60008c3a43d85767d12f62a475e0bf5e6dfdc57d01faf1f84",
+      "short_name": "Invoiced object identifier scheme"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL4461.gc",
+      "list_version": "D.16B",
+      "rows": 9,
+      "sha256": "ad459cae5d541ce057e6745186e0602c54d51b85b9990f41d9fccc4aeddd940f",
+      "short_name": "Payment means codes used in AE"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL5189.gc",
+      "list_version": "D.16B",
+      "rows": 19,
+      "sha256": "e18eac1beb970d0f224711e236f9c4639efc75f8889bec390330df24ea4059c6",
+      "short_name": "Allowance or charge identification code"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL7143.gc",
+      "list_version": "D.19A",
+      "rows": 185,
+      "sha256": "bbb18ce8908c82370caef1f321eecff4f3a5d009522b47c3be5336104cb4e24a",
+      "short_name": "Item type identification code"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL7161.gc",
+      "list_version": "D.16B",
+      "rows": 178,
+      "sha256": "fc4320ff08586a171a252a538a5f67601b088642511c42ed4b59ac4938f4fc6c",
+      "short_name": "Charge reason code"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNECERec20.gc",
+      "list_version": "11e",
+      "rows": 2162,
+      "sha256": "07d4d8f8b327307bddd269d21574698d77873946209188da85d46c5e9cc28c2e",
+      "short_name": "Recommendation 20, including Recommendation 21 codes - prefixed with X (UN/ECE)"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/eas.gc",
+      "list_version": "2020-11",
+      "rows": 90,
+      "sha256": "b973e03c27ecb72ef5d2cee3aee1f6f89ac01268174d7c14720bd8fc13db8bdd",
+      "short_name": "Electronic Address Scheme (EAS)"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/transactiontype.gc",
+      "list_version": "1",
+      "rows": 8,
+      "sha256": "23861e6a609fe7a5be3d557b1a5e05c656e90015c9c4e5ce3a0732de5106eaf2",
+      "short_name": "Transaction type"
+     }
     ],
-    "profile_id": "urn:peppol:bis:billing",
-    "publication_date": "2026-07-29",
-    "publication_url": "https://docs.peppol.eu/poac/ae/pint-ae/",
-    "resources_url": "https://docs.peppol.eu/poac/ae/pint-ae/resources.zip",
-    "resources_zip": {
-      "artifact_dated": "2026-07-29",
-      "downloaded_on": "2026-09-16",
-      "sha256": "1e8b0bd595c672ac9d6fc886ddd0eb8027cb39a1d26bebdcb1ada37b7eee491f",
-      "size": 1019347
-    },
-    "specification": "PINT AE Billing",
-    "transactions": {
-      "trn-creditnote": {
-        "code_lists": [
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/Aligned-TaxCategoryCodes.gc",
-            "list_version": "D.16B",
-            "rows": 6,
-            "sha256": "09cbd1130d6f62538ab8bb31e47166e75fedf79d5bbfe5f54ef9643345f88c6d",
-            "short_name": "AE VAT category codes"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/Aligned-TaxExemptionCodes.gc",
-            "list_version": "2022",
-            "rows": 4,
-            "sha256": "81e8a327083bfe95cd753bb5e2fbe5429858d4cad036aa3e2f8d2a1005c264e8",
-            "short_name": "Reasons for exemption from tax"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/CreditReason.gc",
-            "list_version": "1",
-            "rows": 6,
-            "sha256": "0638589a9aff5f1cb5fcb5472d52402ac1c70364d84fe5410ffff2bdcd26a020",
-            "short_name": "Reasons for credit note"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/FreqBilling.gc",
-            "list_version": "1",
-            "rows": 10,
-            "sha256": "5b448e9e049119196dd1ef2c8dd60dd347357130c54b047ff1168f13afb3230b",
-            "short_name": "Frequency of billing codes"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/GoodsType.gc",
-            "list_version": "1",
-            "rows": 5,
-            "sha256": "3921d490c2681ea86fe210685d55fbb2c4c550564dc31c8c6d6b3c0d71224e52",
-            "short_name": "Type of goods or services subject to RCM"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ICD.gc",
-            "list_version": "20210630",
-            "rows": 243,
-            "sha256": "725a2c6b3276e3651a3fcfdc8640ce2577230eea1242ce52ee5b53a657caf527",
-            "short_name": "ISO 6523 ICD list"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ISO3166.gc",
-            "list_version": "2013",
-            "rows": 251,
-            "sha256": "03e3a0b4d25bd7e39072b462ac87a5c648c9031f08c05932d142c6f1bd95bd34",
-            "short_name": "Country codes"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ISO4217.gc",
-            "list_version": "2015",
-            "rows": 177,
-            "sha256": "b38ec3244ffc9d85571a762a9dfc06f8c877c87d4d61c1939792fc5a1d7193a9",
-            "short_name": "Currency codes"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/ItemType.gc",
-            "list_version": "1",
-            "rows": 3,
-            "sha256": "85dfecdd860c096b88f1f3b9c4998f2c425ea0db560092810c87ecaa2cc51329",
-            "short_name": "Item type"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/MimeCode.gc",
-            "list_version": "20210921",
-            "rows": 7,
-            "sha256": "98bfc9af324312235ee0235dd39f7eb38e0ace943af2736a5458387f8eeaa0a4",
-            "short_name": "Media Types"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL1001-cn.gc",
-            "list_version": "D.17A",
-            "rows": 2,
-            "sha256": "daaff8f0ffd4db41083d5b5c5d23c5da041fbf94576d4095db3e23edbf37f3fd",
-            "short_name": "Document name code"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL1153.gc",
-            "list_version": "D.16B",
-            "rows": 818,
-            "sha256": "157057276b3de6b60008c3a43d85767d12f62a475e0bf5e6dfdc57d01faf1f84",
-            "short_name": "Invoiced object identifier scheme"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL4461.gc",
-            "list_version": "D.16B",
-            "rows": 9,
-            "sha256": "ad459cae5d541ce057e6745186e0602c54d51b85b9990f41d9fccc4aeddd940f",
-            "short_name": "Payment means codes used in AE"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL5189.gc",
-            "list_version": "D.16B",
-            "rows": 19,
-            "sha256": "e18eac1beb970d0f224711e236f9c4639efc75f8889bec390330df24ea4059c6",
-            "short_name": "Allowance or charge identification code"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL7143.gc",
-            "list_version": "D.19A",
-            "rows": 185,
-            "sha256": "bbb18ce8908c82370caef1f321eecff4f3a5d009522b47c3be5336104cb4e24a",
-            "short_name": "Item type identification code"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNCL7161.gc",
-            "list_version": "D.16B",
-            "rows": 178,
-            "sha256": "fc4320ff08586a171a252a538a5f67601b088642511c42ed4b59ac4938f4fc6c",
-            "short_name": "Charge reason code"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/UNECERec20.gc",
-            "list_version": "11e",
-            "rows": 2162,
-            "sha256": "07d4d8f8b327307bddd269d21574698d77873946209188da85d46c5e9cc28c2e",
-            "short_name": "Recommendation 20, including Recommendation 21 codes - prefixed with X (UN/ECE)"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/eas.gc",
-            "list_version": "2020-11",
-            "rows": 90,
-            "sha256": "b973e03c27ecb72ef5d2cee3aee1f6f89ac01268174d7c14720bd8fc13db8bdd",
-            "short_name": "Electronic Address Scheme (EAS)"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/codelist/transactiontype.gc",
-            "list_version": "1",
-            "rows": 8,
-            "sha256": "23861e6a609fe7a5be3d557b1a5e05c656e90015c9c4e5ce3a0732de5106eaf2",
-            "short_name": "Transaction type"
-          }
-        ],
-        "examples": [
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Disclosed agent billing tax credit note.xml",
-            "sha256": "2cab1b170b670a19b41997e44d616b8f04ed5c107dbc99ffb2651103dbb01ffd"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Standard tax credit Note.xml",
-            "sha256": "cbfdeacf83a17bf611d47b8ce29d9619eccafc19bad4757c7af4e01e38c82a17"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Volume-discount-credit-note.xml",
-            "sha256": "2da27c48b45605aba947fc09e6f7314ed4caebf6b247b1dedf6961c4979f8e1e"
-          }
-        ],
-        "root_element": "CreditNote",
-        "schematron": [
-          {
-            "compiled": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-UBL-validation-preprocessed.xslt",
-            "compiled_sha256": "b6557c207f1cccaebf32b67ae0d50b309192751b58ddd22fa5af90c6d45f7d16",
-            "layer": "shared PINT",
-            "query_binding": "xslt2",
-            "source": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-UBL-validation-preprocessed.sch",
-            "source_sha256": "c073dd645db0401a3276cfa31f381750d35f7fde8381b19b92b8bceee236f534",
-            "xslt_version": "2.0"
-          },
-          {
-            "compiled": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-jurisdiction-aligned-rules.xslt",
-            "compiled_sha256": "da931f161362fe26bb9f5a1e519cd44758e5cba977584800b806c09bcf1b807b",
-            "layer": "AE aligned",
-            "query_binding": "xslt2",
-            "source": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-jurisdiction-aligned-rules.sch",
-            "source_sha256": "d0e767f246fa8e90749060a51fea5a22e03659ae83ec66aff9cfd3b932168a3e",
-            "xslt_version": "2.0"
-          }
-        ],
-        "xsd": "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-CreditNote-2.1.xsd"
-      },
-      "trn-invoice": {
-        "code_lists": [
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/Aligned-TaxCategoryCodes.gc",
-            "list_version": "D.16B",
-            "rows": 6,
-            "sha256": "09cbd1130d6f62538ab8bb31e47166e75fedf79d5bbfe5f54ef9643345f88c6d",
-            "short_name": "AE VAT category codes"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/Aligned-TaxExemptionCodes.gc",
-            "list_version": "2022",
-            "rows": 4,
-            "sha256": "81e8a327083bfe95cd753bb5e2fbe5429858d4cad036aa3e2f8d2a1005c264e8",
-            "short_name": "Reasons for exemption from tax"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/FreqBilling.gc",
-            "list_version": "1",
-            "rows": 10,
-            "sha256": "5b448e9e049119196dd1ef2c8dd60dd347357130c54b047ff1168f13afb3230b",
-            "short_name": "Frequency of billing codes"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/GoodsType.gc",
-            "list_version": "1",
-            "rows": 5,
-            "sha256": "3921d490c2681ea86fe210685d55fbb2c4c550564dc31c8c6d6b3c0d71224e52",
-            "short_name": "Type of goods or services subject to RCM"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ICD.gc",
-            "list_version": "20210630",
-            "rows": 243,
-            "sha256": "725a2c6b3276e3651a3fcfdc8640ce2577230eea1242ce52ee5b53a657caf527",
-            "short_name": "ISO 6523 ICD list"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ISO3166.gc",
-            "list_version": "2013",
-            "rows": 251,
-            "sha256": "03e3a0b4d25bd7e39072b462ac87a5c648c9031f08c05932d142c6f1bd95bd34",
-            "short_name": "Country codes"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ISO4217.gc",
-            "list_version": "2015",
-            "rows": 177,
-            "sha256": "b38ec3244ffc9d85571a762a9dfc06f8c877c87d4d61c1939792fc5a1d7193a9",
-            "short_name": "Currency codes"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ItemType.gc",
-            "list_version": "1",
-            "rows": 3,
-            "sha256": "85dfecdd860c096b88f1f3b9c4998f2c425ea0db560092810c87ecaa2cc51329",
-            "short_name": "Item type"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/MimeCode.gc",
-            "list_version": "20210921",
-            "rows": 7,
-            "sha256": "98bfc9af324312235ee0235dd39f7eb38e0ace943af2736a5458387f8eeaa0a4",
-            "short_name": "Media Types"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL1001-inv.gc",
-            "list_version": "D.17A",
-            "rows": 2,
-            "sha256": "e7edd811714391fd0f2a558ea2c38f0df4f88898e43880c3a1958e704daa68d6",
-            "short_name": "Document name code"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL1153.gc",
-            "list_version": "D.16B",
-            "rows": 818,
-            "sha256": "157057276b3de6b60008c3a43d85767d12f62a475e0bf5e6dfdc57d01faf1f84",
-            "short_name": "Invoiced object identifier scheme"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL4461.gc",
-            "list_version": "D.16B",
-            "rows": 9,
-            "sha256": "ad459cae5d541ce057e6745186e0602c54d51b85b9990f41d9fccc4aeddd940f",
-            "short_name": "Payment means codes used in AE"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL5189.gc",
-            "list_version": "D.16B",
-            "rows": 19,
-            "sha256": "e18eac1beb970d0f224711e236f9c4639efc75f8889bec390330df24ea4059c6",
-            "short_name": "Allowance or charge identification code"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL7143.gc",
-            "list_version": "D.19A",
-            "rows": 185,
-            "sha256": "bbb18ce8908c82370caef1f321eecff4f3a5d009522b47c3be5336104cb4e24a",
-            "short_name": "Item type identification code"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL7161.gc",
-            "list_version": "D.16B",
-            "rows": 178,
-            "sha256": "fc4320ff08586a171a252a538a5f67601b088642511c42ed4b59ac4938f4fc6c",
-            "short_name": "Charge reason code"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNECERec20.gc",
-            "list_version": "11e",
-            "rows": 2162,
-            "sha256": "07d4d8f8b327307bddd269d21574698d77873946209188da85d46c5e9cc28c2e",
-            "short_name": "Recommendation 20, including Recommendation 21 codes - prefixed with X (UN/ECE)"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/eas.gc",
-            "list_version": "2020-11",
-            "rows": 90,
-            "sha256": "b973e03c27ecb72ef5d2cee3aee1f6f89ac01268174d7c14720bd8fc13db8bdd",
-            "short_name": "Electronic Address Scheme (EAS)"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/transactiontype.gc",
-            "list_version": "1",
-            "rows": 8,
-            "sha256": "23861e6a609fe7a5be3d557b1a5e05c656e90015c9c4e5ce3a0732de5106eaf2",
-            "short_name": "Transaction type"
-          }
-        ],
-        "examples": [
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Buyer-PAS-identifier.xml",
-            "sha256": "1e335448bdef21d1890e6d428aa12b66288d425c7699009f49da3b61adf5a587"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Commercial invoice.xml",
-            "sha256": "c9231834d9113c36b2de575d9ca28afb2eabe340230b02b6bcc9e521c77b1c7a"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Continuous.supplies.xml",
-            "sha256": "8d49a4afdab47151e3ea58bb8972b7525e490b1b8b031d05ecd84268d8350412"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Deemed.supply.-.predefined.endpoint.xml",
-            "sha256": "ca672c9a9dbbad402e0fea38075edea612cecf42c43c150cd2b344fd652bfee9"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Disclosed.agent.billing.xml",
-            "sha256": "41b5a956988fde1e1d9850e245dbbf5f64458be642fcc860c11826065069086b"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-AE-category.xml",
-            "sha256": "09fc0ab12627b1d7145ac85d7cfa4fb95f7128b988ab6174e6da40a5ff3f551c"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-E-category.xml",
-            "sha256": "95642dcf67501b19b6d935e980a64fe0cbea7feec08dd430d006564224c03b5f"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-O-category.xml",
-            "sha256": "330265af30c1b2770f1dcb2e1884ba663ed852e24bcf9e588b16aa51f36c927b"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-Z-category.xml",
-            "sha256": "c8169130c934244b1e6bd1e535bbc3236c14f10e039ee773eec0a79d3124a5ad"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-AE-category.xml",
-            "sha256": "033badbbaf312113ea5f0a3d4caaa63145a84da94e98c8db4a13345133b432a2"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-E-category.xml",
-            "sha256": "a67e272b990ac9065048aabd8e8f551f5e11cf5a3d4961926d6569d358ac839d"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-O-category.xml",
-            "sha256": "a369e5bc59e35fcbb5102bab022af8ba89746378579b8cdbc16a135b7152a619"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-Z-category.xml",
-            "sha256": "39dd969605a03c911a90bbe2da638c4a68d4250fb2b89e18b19b321d174adcca"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Exports.-.predefined.endpoint.xml",
-            "sha256": "6414615bf143e1d63a97f725215be78dd704a2777324fc397b51cbf597400e23"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Exports.xml",
-            "sha256": "1ff14a0c5184452f815efeb22992f761c12bf8d1a1c05c3a6af3de5c1c490d60"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Margin scheme.xml",
-            "sha256": "731188b6b676fc09b24605eec06caf5f2c21efcfa4e1393d796fcd466e1ebaf3"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Seller-PAS-identifier.xml",
-            "sha256": "57674a5059b9cf09d03b258be967fcae3b18c36f1e7452cfff5436a7175f6492"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Seller-TIN-identifier.xml",
-            "sha256": "a4020cc088636c5437f32fa4afe969ef6bffcd912f5eeb8f5e6656b9ca75ea07"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard invoice Mandatory fields.xml",
-            "sha256": "b2de2b711a08f753c00f302d4b730b2b3b86e1852561623a4fd003576342c651"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard tax invoice.xml",
-            "sha256": "e585cfa7267d74f825619d31d427adb0096a01a3b4b3a03fc61caa376ad8f582"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard.invoice.-.Extensive.xml",
-            "sha256": "1e44829036d618c969cd62d808d87b96d22f0f6a19cca35999de6f6e9850c05a"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard.tax.invoice.-.predefined.endpoint.xml",
-            "sha256": "a6f4aae738636b5c2b402a37df330a87848de97d9aa3d05115ae994c4ee466b6"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Summary tax invoice.xml",
-            "sha256": "79f699a8f1045fb696990b7a317dca07a2d0abcaba7d8222afc76d3e4c60604c"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Supply involving free trade zone.xml",
-            "sha256": "0af67683eabd235266b5a8139174f31f0681ed8454f35f7dda1df95f31db87b2"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Supply through e-commerce.xml",
-            "sha256": "561ea0a3498afc0103c71617fdedecc83b52ade14ef27d28856569dccbeedcda"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Supply under Reverse charge mechanism.xml",
-            "sha256": "f2e749671c7f1c28f9999388c545c815ec72c19771e951b92945da200794dc26"
-          },
-          {
-            "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Zero rated supplies.xml",
-            "sha256": "652749ac0e790aed9ca544d0ba1b08da9542fbd23e416baf85e1bcb1b43cc5bb"
-          }
-        ],
-        "root_element": "Invoice",
-        "schematron": [
-          {
-            "compiled": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-UBL-validation-preprocessed.xslt",
-            "compiled_sha256": "b6557c207f1cccaebf32b67ae0d50b309192751b58ddd22fa5af90c6d45f7d16",
-            "layer": "shared PINT",
-            "query_binding": "xslt2",
-            "source": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-UBL-validation-preprocessed.sch",
-            "source_sha256": "c073dd645db0401a3276cfa31f381750d35f7fde8381b19b92b8bceee236f534",
-            "xslt_version": "2.0"
-          },
-          {
-            "compiled": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-jurisdiction-aligned-rules.xslt",
-            "compiled_sha256": "da931f161362fe26bb9f5a1e519cd44758e5cba977584800b806c09bcf1b807b",
-            "layer": "AE aligned",
-            "query_binding": "xslt2",
-            "source": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-jurisdiction-aligned-rules.sch",
-            "source_sha256": "d0e767f246fa8e90749060a51fea5a22e03659ae83ec66aff9cfd3b932168a3e",
-            "xslt_version": "2.0"
-          }
-        ],
-        "xsd": "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-Invoice-2.1.xsd"
-      }
-    },
-    "vendored_root": "uae_compliance/standards/pint_ae/1.0.4",
-    "version": "1.0.4"
-  },
-  "runtime": {
-    "lxml": {
-      "libxml2": "2.14.6",
-      "libxslt": "1.1.43",
-      "license": "BSD-3-Clause",
-      "role": "hardened XML parsing and UBL 2.1 XSD validation",
-      "version": "6.1.1"
-    },
-    "python": "3.14.5",
-    "saxonche": {
-      "edition": "SaxonC-HE 13.0",
-      "license": "MPL-2.0",
-      "license_url": "https://www.saxonica.com/license/terms.xml",
-      "platform": "macosx_11_0_arm64",
-      "role": "XSLT 2.0 execution of the compiled Schematron",
-      "version": "13.0.0",
-      "wheel": "saxonche-13.0.0-cp314-cp314-macosx_11_0_arm64.whl"
-    },
-    "unsuitable_engines": [
-      "libxslt (XSLT 1.0)",
-      "xsltproc (XSLT 1.0)"
+    "examples": [
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Disclosed agent billing tax credit note.xml",
+      "sha256": "2cab1b170b670a19b41997e44d616b8f04ed5c107dbc99ffb2651103dbb01ffd"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Standard tax credit Note.xml",
+      "sha256": "cbfdeacf83a17bf611d47b8ce29d9619eccafc19bad4757c7af4e01e38c82a17"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Volume-discount-credit-note.xml",
+      "sha256": "2da27c48b45605aba947fc09e6f7314ed4caebf6b247b1dedf6961c4979f8e1e"
+     }
     ],
-    "xslt_engine_requirement": "2.0"
-  },
-  "schema_version": 1,
-  "serializer_version": null,
-  "ubl": {
-    "downloaded_on": "2026-09-16",
-    "sha256": "60b80d76394a8a2add90723ecb8e0e2e9d826775de9749df37a72d60703f86ed",
-    "size": 57926016,
-    "vendored_root": "uae_compliance/standards/ubl/2.1/xsd",
-    "version": "2.1",
-    "xsd_files": [
-      "uae_compliance/standards/ubl/2.1/xsd/common/CCTS_CCT_SchemaModule-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonAggregateComponents-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonBasicComponents-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonExtensionComponents-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonSignatureComponents-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CoreComponentParameters-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/common/UBL-ExtensionContentDataType-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/common/UBL-QualifiedDataTypes-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/common/UBL-SignatureAggregateComponents-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/common/UBL-SignatureBasicComponents-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/common/UBL-UnqualifiedDataTypes-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/common/UBL-XAdESv132-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/common/UBL-XAdESv141-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/common/UBL-xmldsig-core-schema-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-CreditNote-2.1.xsd",
-      "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-Invoice-2.1.xsd"
+    "root_element": "CreditNote",
+    "schematron": [
+     {
+      "compiled": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-UBL-validation-preprocessed.xslt",
+      "compiled_sha256": "b6557c207f1cccaebf32b67ae0d50b309192751b58ddd22fa5af90c6d45f7d16",
+      "layer": "shared PINT",
+      "query_binding": "xslt2",
+      "source": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-UBL-validation-preprocessed.sch",
+      "source_sha256": "c073dd645db0401a3276cfa31f381750d35f7fde8381b19b92b8bceee236f534",
+      "xslt_version": "2.0"
+     },
+     {
+      "compiled": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-jurisdiction-aligned-rules.xslt",
+      "compiled_sha256": "da931f161362fe26bb9f5a1e519cd44758e5cba977584800b806c09bcf1b807b",
+      "layer": "AE aligned",
+      "query_binding": "xslt2",
+      "source": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/schematron/PINT-jurisdiction-aligned-rules.sch",
+      "source_sha256": "d0e767f246fa8e90749060a51fea5a22e03659ae83ec66aff9cfd3b932168a3e",
+      "xslt_version": "2.0"
+     }
     ],
-    "zip_url": "https://docs.oasis-open.org/ubl/os-UBL-2.1/UBL-2.1.zip"
-  },
-  "validation_evidence": {
-    "determinism": {
-      "cold_seconds": 0.1,
-      "example": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard.invoice.-.Extensive.xml",
-      "failed_assert_lists": "identical",
-      "mutation_f_failed_assert_lists": "identical",
-      "note": "cold includes XSD load and XSLT compile; development host data point, not a capacity claim",
-      "svrl_text": "identical",
-      "warm_seconds": 0.006
-    },
-    "negative_cases": [
-      {
-        "expected": "ibr-002",
-        "fired": [
-          "ibr-002"
-        ],
-        "mutation": "a remove root cbc:ID",
-        "result": "PASS",
-        "xsd": "FAIL"
-      },
-      {
-        "expected": "ibr-132-ae",
-        "fired": [
-          "ibr-132-ae"
-        ],
-        "mutation": "b seller VAT CompanyID 14 digits",
-        "result": "PASS",
-        "xsd": "ok"
-      },
-      {
-        "expected": "ibr-139-ae",
-        "fired": [
-          "aligned-ibrp-s-08",
-          "ibr-139-ae"
-        ],
-        "mutation": "c ClassifiedTaxCategory/cbc:ID = M",
-        "result": "PASS",
-        "xsd": "ok"
-      },
-      {
-        "expected": "ibr-cl-01",
-        "fired": [
-          "ibr-cl-01"
-        ],
-        "mutation": "d InvoiceTypeCode = 999",
-        "result": "PASS",
-        "xsd": "ok"
-      },
-      {
-        "expected": "ibr-001",
-        "fired": [
-          "aligned-ibrp-001-ae",
-          "ibr-001"
-        ],
-        "mutation": "e remove cbc:CustomizationID",
-        "result": "PASS",
-        "xsd": "ok"
-      },
-      {
-        "expected": "ibr-co-15",
-        "fired": [
-          "ibr-co-15",
-          "ibr-co-16"
-        ],
-        "mutation": "f TaxInclusiveAmount + 0.01",
-        "result": "PASS",
-        "xsd": "ok"
-      },
-      {
-        "expected": "ibr-cl-04",
-        "fired": [
-          "ibr-126",
-          "ibr-159-ae",
-          "ibr-175-ae",
-          "ibr-cl-04",
-          "ibr-co-15"
-        ],
-        "mutation": "g DocumentCurrencyCode = ZZZ",
-        "result": "PASS",
-        "xsd": "ok"
-      }
+    "xsd": "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-CreditNote-2.1.xsd"
+   },
+   "trn-invoice": {
+    "code_lists": [
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/Aligned-TaxCategoryCodes.gc",
+      "list_version": "D.16B",
+      "rows": 6,
+      "sha256": "09cbd1130d6f62538ab8bb31e47166e75fedf79d5bbfe5f54ef9643345f88c6d",
+      "short_name": "AE VAT category codes"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/Aligned-TaxExemptionCodes.gc",
+      "list_version": "2022",
+      "rows": 4,
+      "sha256": "81e8a327083bfe95cd753bb5e2fbe5429858d4cad036aa3e2f8d2a1005c264e8",
+      "short_name": "Reasons for exemption from tax"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/FreqBilling.gc",
+      "list_version": "1",
+      "rows": 10,
+      "sha256": "5b448e9e049119196dd1ef2c8dd60dd347357130c54b047ff1168f13afb3230b",
+      "short_name": "Frequency of billing codes"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/GoodsType.gc",
+      "list_version": "1",
+      "rows": 5,
+      "sha256": "3921d490c2681ea86fe210685d55fbb2c4c550564dc31c8c6d6b3c0d71224e52",
+      "short_name": "Type of goods or services subject to RCM"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ICD.gc",
+      "list_version": "20210630",
+      "rows": 243,
+      "sha256": "725a2c6b3276e3651a3fcfdc8640ce2577230eea1242ce52ee5b53a657caf527",
+      "short_name": "ISO 6523 ICD list"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ISO3166.gc",
+      "list_version": "2013",
+      "rows": 251,
+      "sha256": "03e3a0b4d25bd7e39072b462ac87a5c648c9031f08c05932d142c6f1bd95bd34",
+      "short_name": "Country codes"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ISO4217.gc",
+      "list_version": "2015",
+      "rows": 177,
+      "sha256": "b38ec3244ffc9d85571a762a9dfc06f8c877c87d4d61c1939792fc5a1d7193a9",
+      "short_name": "Currency codes"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/ItemType.gc",
+      "list_version": "1",
+      "rows": 3,
+      "sha256": "85dfecdd860c096b88f1f3b9c4998f2c425ea0db560092810c87ecaa2cc51329",
+      "short_name": "Item type"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/MimeCode.gc",
+      "list_version": "20210921",
+      "rows": 7,
+      "sha256": "98bfc9af324312235ee0235dd39f7eb38e0ace943af2736a5458387f8eeaa0a4",
+      "short_name": "Media Types"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL1001-inv.gc",
+      "list_version": "D.17A",
+      "rows": 2,
+      "sha256": "e7edd811714391fd0f2a558ea2c38f0df4f88898e43880c3a1958e704daa68d6",
+      "short_name": "Document name code"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL1153.gc",
+      "list_version": "D.16B",
+      "rows": 818,
+      "sha256": "157057276b3de6b60008c3a43d85767d12f62a475e0bf5e6dfdc57d01faf1f84",
+      "short_name": "Invoiced object identifier scheme"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL4461.gc",
+      "list_version": "D.16B",
+      "rows": 9,
+      "sha256": "ad459cae5d541ce057e6745186e0602c54d51b85b9990f41d9fccc4aeddd940f",
+      "short_name": "Payment means codes used in AE"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL5189.gc",
+      "list_version": "D.16B",
+      "rows": 19,
+      "sha256": "e18eac1beb970d0f224711e236f9c4639efc75f8889bec390330df24ea4059c6",
+      "short_name": "Allowance or charge identification code"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL7143.gc",
+      "list_version": "D.19A",
+      "rows": 185,
+      "sha256": "bbb18ce8908c82370caef1f321eecff4f3a5d009522b47c3be5336104cb4e24a",
+      "short_name": "Item type identification code"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNCL7161.gc",
+      "list_version": "D.16B",
+      "rows": 178,
+      "sha256": "fc4320ff08586a171a252a538a5f67601b088642511c42ed4b59ac4938f4fc6c",
+      "short_name": "Charge reason code"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/UNECERec20.gc",
+      "list_version": "11e",
+      "rows": 2162,
+      "sha256": "07d4d8f8b327307bddd269d21574698d77873946209188da85d46c5e9cc28c2e",
+      "short_name": "Recommendation 20, including Recommendation 21 codes - prefixed with X (UN/ECE)"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/eas.gc",
+      "list_version": "2020-11",
+      "rows": 90,
+      "sha256": "b973e03c27ecb72ef5d2cee3aee1f6f89ac01268174d7c14720bd8fc13db8bdd",
+      "short_name": "Electronic Address Scheme (EAS)"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/codelist/transactiontype.gc",
+      "list_version": "1",
+      "rows": 8,
+      "sha256": "23861e6a609fe7a5be3d557b1a5e05c656e90015c9c4e5ce3a0732de5106eaf2",
+      "short_name": "Transaction type"
+     }
     ],
-    "positive_examples": {
-      "count": 30,
-      "failed": 0,
-      "known_defects": [
-        {
-          "check": "xsd",
-          "detail": "line 185: cac:OrderLineReference is not expected after cac:DiscrepancyResponse. UBL 2.1 CreditNoteLineType (UBL-CommonAggregateComponents-2.1.xsd from line 9409) orders OrderLineReference before DiscrepancyResponse. Both Schematron layers report zero failed asserts for this file.",
-          "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Volume-discount-credit-note.xml",
-          "sha256": "2da27c48b45605aba947fc09e6f7314ed4caebf6b247b1dedf6961c4979f8e1e",
-          "status": "Recorded upstream defect, decision D008. The artifact is unchanged and the check is unchanged. validate_examples.py excuses this one file only while its sha256 and schema error match the record, and fails the run if the file changes, starts passing, or fails a Schematron rule. Owner maintainer: report upstream or confirm against a later release. Affected phase P01."
-        }
-      ],
-      "known_upstream_defects": 1,
-      "passed": 29,
-      "schematron_fatal_total": 0,
-      "schematron_warning_total": 0
-    },
-    "produced_by": "scripts/standards/validate_examples.py",
-    "run_on": "2026-09-16",
-    "runtime": "python 3.14.5, lxml 6.1.1, saxonche 13.0.0 (SaxonC-HE 13.0)"
-  }
+    "examples": [
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Buyer-PAS-identifier.xml",
+      "sha256": "1e335448bdef21d1890e6d428aa12b66288d425c7699009f49da3b61adf5a587"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Commercial invoice.xml",
+      "sha256": "c9231834d9113c36b2de575d9ca28afb2eabe340230b02b6bcc9e521c77b1c7a"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Continuous.supplies.xml",
+      "sha256": "8d49a4afdab47151e3ea58bb8972b7525e490b1b8b031d05ecd84268d8350412"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Deemed.supply.-.predefined.endpoint.xml",
+      "sha256": "ca672c9a9dbbad402e0fea38075edea612cecf42c43c150cd2b344fd652bfee9"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Disclosed.agent.billing.xml",
+      "sha256": "41b5a956988fde1e1d9850e245dbbf5f64458be642fcc860c11826065069086b"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-AE-category.xml",
+      "sha256": "09fc0ab12627b1d7145ac85d7cfa4fb95f7128b988ab6174e6da40a5ff3f551c"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-E-category.xml",
+      "sha256": "95642dcf67501b19b6d935e980a64fe0cbea7feec08dd430d006564224c03b5f"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-O-category.xml",
+      "sha256": "330265af30c1b2770f1dcb2e1884ba663ed852e24bcf9e588b16aa51f36c927b"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-allowance-Z-category.xml",
+      "sha256": "c8169130c934244b1e6bd1e535bbc3236c14f10e039ee773eec0a79d3124a5ad"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-AE-category.xml",
+      "sha256": "033badbbaf312113ea5f0a3d4caaa63145a84da94e98c8db4a13345133b432a2"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-E-category.xml",
+      "sha256": "a67e272b990ac9065048aabd8e8f551f5e11cf5a3d4961926d6569d358ac839d"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-O-category.xml",
+      "sha256": "a369e5bc59e35fcbb5102bab022af8ba89746378579b8cdbc16a135b7152a619"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Doc-level-charge-Z-category.xml",
+      "sha256": "39dd969605a03c911a90bbe2da638c4a68d4250fb2b89e18b19b321d174adcca"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Exports.-.predefined.endpoint.xml",
+      "sha256": "6414615bf143e1d63a97f725215be78dd704a2777324fc397b51cbf597400e23"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Exports.xml",
+      "sha256": "1ff14a0c5184452f815efeb22992f761c12bf8d1a1c05c3a6af3de5c1c490d60"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Margin scheme.xml",
+      "sha256": "731188b6b676fc09b24605eec06caf5f2c21efcfa4e1393d796fcd466e1ebaf3"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Seller-PAS-identifier.xml",
+      "sha256": "57674a5059b9cf09d03b258be967fcae3b18c36f1e7452cfff5436a7175f6492"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Seller-TIN-identifier.xml",
+      "sha256": "a4020cc088636c5437f32fa4afe969ef6bffcd912f5eeb8f5e6656b9ca75ea07"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard invoice Mandatory fields.xml",
+      "sha256": "b2de2b711a08f753c00f302d4b730b2b3b86e1852561623a4fd003576342c651"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard tax invoice.xml",
+      "sha256": "e585cfa7267d74f825619d31d427adb0096a01a3b4b3a03fc61caa376ad8f582"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard.invoice.-.Extensive.xml",
+      "sha256": "1e44829036d618c969cd62d808d87b96d22f0f6a19cca35999de6f6e9850c05a"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard.tax.invoice.-.predefined.endpoint.xml",
+      "sha256": "a6f4aae738636b5c2b402a37df330a87848de97d9aa3d05115ae994c4ee466b6"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Summary tax invoice.xml",
+      "sha256": "79f699a8f1045fb696990b7a317dca07a2d0abcaba7d8222afc76d3e4c60604c"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Supply involving free trade zone.xml",
+      "sha256": "0af67683eabd235266b5a8139174f31f0681ed8454f35f7dda1df95f31db87b2"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Supply through e-commerce.xml",
+      "sha256": "561ea0a3498afc0103c71617fdedecc83b52ade14ef27d28856569dccbeedcda"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Supply under Reverse charge mechanism.xml",
+      "sha256": "f2e749671c7f1c28f9999388c545c815ec72c19771e951b92945da200794dc26"
+     },
+     {
+      "file": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Zero rated supplies.xml",
+      "sha256": "652749ac0e790aed9ca544d0ba1b08da9542fbd23e416baf85e1bcb1b43cc5bb"
+     }
+    ],
+    "root_element": "Invoice",
+    "schematron": [
+     {
+      "compiled": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-UBL-validation-preprocessed.xslt",
+      "compiled_sha256": "b6557c207f1cccaebf32b67ae0d50b309192751b58ddd22fa5af90c6d45f7d16",
+      "layer": "shared PINT",
+      "query_binding": "xslt2",
+      "source": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-UBL-validation-preprocessed.sch",
+      "source_sha256": "c073dd645db0401a3276cfa31f381750d35f7fde8381b19b92b8bceee236f534",
+      "xslt_version": "2.0"
+     },
+     {
+      "compiled": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-jurisdiction-aligned-rules.xslt",
+      "compiled_sha256": "da931f161362fe26bb9f5a1e519cd44758e5cba977584800b806c09bcf1b807b",
+      "layer": "AE aligned",
+      "query_binding": "xslt2",
+      "source": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/schematron/PINT-jurisdiction-aligned-rules.sch",
+      "source_sha256": "d0e767f246fa8e90749060a51fea5a22e03659ae83ec66aff9cfd3b932168a3e",
+      "xslt_version": "2.0"
+     }
+    ],
+    "xsd": "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-Invoice-2.1.xsd"
+   }
+  },
+  "vendored_root": "uae_compliance/standards/pint_ae/1.0.4",
+  "version": "1.0.4"
+ },
+ "pint_ae_sb": {
+  "customization_id": "urn:peppol:pint:selfbilling-1@ae-1",
+  "document_types": {
+   "261": "Self-billed credit note",
+   "389": "Self-billing invoice"
+  },
+  "effective_applicability": {
+   "note": "Mandate dates and applicability per taxpayer group are not established in P00. Owner: maintainer. Consequence: no applicability claim. Affected phase: P02.",
+   "status": "Unresolved"
+  },
+  "family": "selfbilling",
+  "license": "see uae_compliance/standards/NOTICES.md",
+  "notes": "A separate published specification with its own rules. The billing package refuses 389 and 261 through ibr-cl-01, so a self-billed document is checked against this package or not at all. Which one answers is decided by the customization the document states.",
+  "profile_id": "urn:peppol:bis:selfbilling",
+  "publication_url": "https://docs.peppol.eu/poac/ae/pint-ae-sb/",
+  "resources_url": "https://docs.peppol.eu/poac/ae/pint-ae-sb/resources.zip",
+  "resources_zip": {
+   "downloaded_on": "2026-09-19",
+   "sha256": "7e6e58f120132dd2d2a6acf21b4a9318f0d07f2685c30ff282fae0e2a6613d15",
+   "size": 784521
+  },
+  "specification": "PINT AE Self-Billing",
+  "transactions": {
+   "trn-creditnote": {
+    "root_element": "CreditNote",
+    "xsd": "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-CreditNote-2.1.xsd"
+   },
+   "trn-invoice": {
+    "root_element": "Invoice",
+    "xsd": "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-Invoice-2.1.xsd"
+   }
+  },
+  "vendored_root": "uae_compliance/standards/pint_ae_sb/1.0.4",
+  "version": "1.0.4"
+ },
+ "runtime": {
+  "lxml": {
+   "libxml2": "2.14.6",
+   "libxslt": "1.1.43",
+   "license": "BSD-3-Clause",
+   "role": "hardened XML parsing and UBL 2.1 XSD validation",
+   "version": "6.1.1"
+  },
+  "python": "3.14.5",
+  "saxonche": {
+   "edition": "SaxonC-HE 13.0",
+   "license": "MPL-2.0",
+   "license_url": "https://www.saxonica.com/license/terms.xml",
+   "platform": "macosx_11_0_arm64",
+   "role": "XSLT 2.0 execution of the compiled Schematron",
+   "version": "13.0.0",
+   "wheel": "saxonche-13.0.0-cp314-cp314-macosx_11_0_arm64.whl"
+  },
+  "unsuitable_engines": [
+   "libxslt (XSLT 1.0)",
+   "xsltproc (XSLT 1.0)"
+  ],
+  "xslt_engine_requirement": "2.0"
+ },
+ "schema_version": 1,
+ "serializer_version": null,
+ "ubl": {
+  "downloaded_on": "2026-09-16",
+  "sha256": "60b80d76394a8a2add90723ecb8e0e2e9d826775de9749df37a72d60703f86ed",
+  "size": 57926016,
+  "vendored_root": "uae_compliance/standards/ubl/2.1/xsd",
+  "version": "2.1",
+  "xsd_files": [
+   "uae_compliance/standards/ubl/2.1/xsd/common/CCTS_CCT_SchemaModule-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonAggregateComponents-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonBasicComponents-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonExtensionComponents-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CommonSignatureComponents-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/common/UBL-CoreComponentParameters-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/common/UBL-ExtensionContentDataType-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/common/UBL-QualifiedDataTypes-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/common/UBL-SignatureAggregateComponents-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/common/UBL-SignatureBasicComponents-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/common/UBL-UnqualifiedDataTypes-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/common/UBL-XAdESv132-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/common/UBL-XAdESv141-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/common/UBL-xmldsig-core-schema-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-CreditNote-2.1.xsd",
+   "uae_compliance/standards/ubl/2.1/xsd/maindoc/UBL-Invoice-2.1.xsd"
+  ],
+  "zip_url": "https://docs.oasis-open.org/ubl/os-UBL-2.1/UBL-2.1.zip"
+ },
+ "validation_evidence": {
+  "determinism": {
+   "cold_seconds": 0.1,
+   "example": "uae_compliance/standards/pint_ae/1.0.4/trn-invoice/example/Standard.invoice.-.Extensive.xml",
+   "failed_assert_lists": "identical",
+   "mutation_f_failed_assert_lists": "identical",
+   "note": "cold includes XSD load and XSLT compile; development host data point, not a capacity claim",
+   "svrl_text": "identical",
+   "warm_seconds": 0.006
+  },
+  "negative_cases": [
+   {
+    "expected": "ibr-002",
+    "fired": [
+     "ibr-002"
+    ],
+    "mutation": "a remove root cbc:ID",
+    "result": "PASS",
+    "xsd": "FAIL"
+   },
+   {
+    "expected": "ibr-132-ae",
+    "fired": [
+     "ibr-132-ae"
+    ],
+    "mutation": "b seller VAT CompanyID 14 digits",
+    "result": "PASS",
+    "xsd": "ok"
+   },
+   {
+    "expected": "ibr-139-ae",
+    "fired": [
+     "aligned-ibrp-s-08",
+     "ibr-139-ae"
+    ],
+    "mutation": "c ClassifiedTaxCategory/cbc:ID = M",
+    "result": "PASS",
+    "xsd": "ok"
+   },
+   {
+    "expected": "ibr-cl-01",
+    "fired": [
+     "ibr-cl-01"
+    ],
+    "mutation": "d InvoiceTypeCode = 999",
+    "result": "PASS",
+    "xsd": "ok"
+   },
+   {
+    "expected": "ibr-001",
+    "fired": [
+     "aligned-ibrp-001-ae",
+     "ibr-001"
+    ],
+    "mutation": "e remove cbc:CustomizationID",
+    "result": "PASS",
+    "xsd": "ok"
+   },
+   {
+    "expected": "ibr-co-15",
+    "fired": [
+     "ibr-co-15",
+     "ibr-co-16"
+    ],
+    "mutation": "f TaxInclusiveAmount + 0.01",
+    "result": "PASS",
+    "xsd": "ok"
+   },
+   {
+    "expected": "ibr-cl-04",
+    "fired": [
+     "ibr-126",
+     "ibr-159-ae",
+     "ibr-175-ae",
+     "ibr-cl-04",
+     "ibr-co-15"
+    ],
+    "mutation": "g DocumentCurrencyCode = ZZZ",
+    "result": "PASS",
+    "xsd": "ok"
+   }
+  ],
+  "positive_examples": {
+   "count": 30,
+   "failed": 0,
+   "known_defects": [
+    {
+     "check": "xsd",
+     "detail": "line 185: cac:OrderLineReference is not expected after cac:DiscrepancyResponse. UBL 2.1 CreditNoteLineType (UBL-CommonAggregateComponents-2.1.xsd from line 9409) orders OrderLineReference before DiscrepancyResponse. Both Schematron layers report zero failed asserts for this file.",
+     "file": "uae_compliance/standards/pint_ae/1.0.4/trn-creditnote/example/Volume-discount-credit-note.xml",
+     "sha256": "2da27c48b45605aba947fc09e6f7314ed4caebf6b247b1dedf6961c4979f8e1e",
+     "status": "Recorded upstream defect, decision D008. The artifact is unchanged and the check is unchanged. validate_examples.py excuses this one file only while its sha256 and schema error match the record, and fails the run if the file changes, starts passing, or fails a Schematron rule. Owner maintainer: report upstream or confirm against a later release. Affected phase P01."
+    }
+   ],
+   "known_upstream_defects": 1,
+   "passed": 29,
+   "schematron_fatal_total": 0,
+   "schematron_warning_total": 0
+  },
+  "produced_by": "scripts/standards/validate_examples.py",
+  "run_on": "2026-09-16",
+  "runtime": "python 3.14.5, lxml 6.1.1, saxonche 13.0.0 (SaxonC-HE 13.0)"
+ }
 }

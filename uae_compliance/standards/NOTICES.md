@@ -22,6 +22,20 @@ Terms: the code lists, Schematron files, and example documents carry no license 
 
 That statement covers the BIS document. Terms for redistribution of the technical artifacts are not stated in the downloaded artifacts; see `docs/decisions.md`.
 
+## PINT AE Self-Billing 1.0.4
+
+Directory: `pint_ae_sb/1.0.4/trn-invoice` and `pint_ae_sb/1.0.4/trn-creditnote` (code lists in genericode, Schematron rules with compiled XSLT, and example documents).
+
+Publisher as stated in the artifacts: the same as PINT AE Billing above. This is a separate published specification with the same data model and its own rules, covering the self-billing invoice and the self-billed credit note.
+
+Source URL: https://docs.peppol.eu/poac/ae/pint-ae-sb/
+
+Download: `resources.zip`, sha256 `7e6e58f120132dd2d2a6acf21b4a9318f0d07f2685c30ff282fae0e2a6613d15`, downloaded 19-09-2026.
+
+Files kept unchanged: all 47 files under `trn-invoice` and `trn-creditnote` match the archive byte for byte. The three PDF documents in the archive are not kept in this repository, as with the billing package.
+
+Terms: the same as the billing package. The artifacts carry no license or copyright text of their own and the copyright notice in the BIS document applies.
+
 ## OASIS UBL 2.1 XSD
 
 Directory: `ubl/2.1/xsd/maindoc` and `ubl/2.1/xsd/common`.

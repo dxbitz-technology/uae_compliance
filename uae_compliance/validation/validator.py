@@ -16,10 +16,12 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from uae_compliance.domain.findings import Finding, Severity, Stage, StageOutcome, StageState
-from uae_compliance.validation import safe_xml
+from uae_compliance.validation import artifacts, safe_xml
 from uae_compliance.validation.artifacts import ArtifactsUnavailable, Compiled, shared
 
 CODE_NOT_XML = "XML-0001"
+# A document that names a specification this release does not hold.
+CODE_NO_RULES = "XML-0004"
 CODE_SCHEMA = "XML-0002"
 CODE_RULE = "XML-0003"
 
@@ -92,9 +94,32 @@ def validate(data: bytes, *, compiled: Compiled | None = None) -> Report:
 		)
 
 	root_name = safe_xml.root_name(tree)
+	# The document says which specification it follows and is checked
+	# against that one. Billing and self-billing hold different rules and
+	# each refuses the other's document types.
+	try:
+		family = artifacts.family_for(_customization_of(tree))
+	except ArtifactsUnavailable as exc:
+		reason = str(exc)
+		findings.append(_finding(CODE_NO_RULES, f"This document cannot be checked. {reason}"))
+		return Report(
+			findings=tuple(findings),
+			stages=tuple(
+				StageOutcome(stage, StageState.UNAVAILABLE, reason=reason)
+				for stage in (Stage.XSD, Stage.SCHEMATRON_SHARED, Stage.SCHEMATRON_AE)
+			),
+		)
+
 	stages.append(_run_schema(tree, root_name, compiled, findings))
-	stages.extend(_run_rules(tree, root_name, compiled, findings))
+	stages.extend(_run_rules(tree, root_name, compiled, findings, family))
 	return Report(findings=tuple(findings), stages=tuple(stages))
+
+
+def _customization_of(tree) -> str | None:
+	"""What the document says it follows, if it says anything."""
+	root = tree.getroot() if hasattr(tree, "getroot") else tree
+	node = root.find("{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}CustomizationID")
+	return node.text if node is not None and node.text else None
 
 
 def _run_schema(tree, root_name: str, compiled: Compiled, findings: list[Finding]) -> StageOutcome:
@@ -109,9 +134,11 @@ def _run_schema(tree, root_name: str, compiled: Compiled, findings: list[Finding
 	return StageOutcome(Stage.XSD, StageState.FAILED)
 
 
-def _run_rules(tree, root_name: str, compiled: Compiled, findings: list[Finding]) -> Sequence[StageOutcome]:
+def _run_rules(
+	tree, root_name: str, compiled: Compiled, findings: list[Finding], family: str
+) -> Sequence[StageOutcome]:
 	try:
-		layers = compiled.rule_layers(root_name)
+		layers = compiled.rule_layers(root_name, family)
 		# The engine reads what the hardened parse produced, never the file.
 		document = compiled.parse(safe_xml.reserialize(tree))
 	except ArtifactsUnavailable as exc:

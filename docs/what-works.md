@@ -4,7 +4,8 @@ Generated from the code by `scripts/capabilities.py`. A hand written
 list of this kind drifts away from the software, so this one is read
 out of it and checked on every build.
 
-Rules: PINT AE Billing 1.0.4, `urn:peppol:pint:billing-1@ae-1`.
+Rules: PINT AE Billing 1.0.4, `urn:peppol:pint:billing-1@ae-1`, and PINT AE
+Self-Billing 1.0.4, `urn:peppol:pint:selfbilling-1@ae-1`.
 
 ## Documents
 
@@ -17,6 +18,10 @@ Rules: PINT AE Billing 1.0.4, `urn:peppol:pint:billing-1@ae-1`.
 
 The type is chosen from the tax categories on the document and whether
 the seller is registered, not from whether the source is a return.
+
+Self-billed documents, 389 and 261, are checked against their own
+published package. This release can read and validate one. It cannot
+issue one, which needs the self-billing workflow in P12.
 
 ## Tax categories
 
@@ -43,7 +48,7 @@ Margin scheme is off because: Every line has to carry tax category N and the mar
 | --- | --- |
 | Domestic reverse charge | The accounting has not been settled. |
 | Advance invoices and retention | Needs the advance, payment, balance and release documents defined together. |
-| Self billing | Uses a separate official package this release does not carry. |
+| Issuing a self-billed document | The rules are held and a self-billed document can be checked. Issuing one on a supplier's behalf is its own workflow and is not built. |
 | Receiving by callback | Documents are collected by asking. Nothing listens for a push yet. |
 
 An unsupported case is refused in Live rather than approximated. There
