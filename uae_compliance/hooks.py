@@ -280,6 +280,9 @@ app_include_js = ["/assets/uae_compliance/js/party_quick_entry.js"]
 scheduler_events = {
 	"cron": {
 		"* * * * *": ["uae_compliance.services.sending.send_due"],
+		# Slower, because asking a provider where something got to is not
+		# urgent and asking constantly is its own kind of rude.
+		"*/5 * * * *": ["uae_compliance.services.reconcile.reconcile_due"],
 	}
 }
 

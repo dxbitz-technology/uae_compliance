@@ -1,0 +1,52 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-09-19 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "connection", "environment", "event_key", "event_kind",
+  "column_break_head", "processing_state", "received_at", "provider_time", "sequence",
+  "section_body", "payload_digest", "payload_file", "column_break_body", "signature_method", "signature_verified",
+  "section_link", "submission", "company", "correlation", "column_break_link", "processing_error"
+ ],
+ "fields": [
+  {"fieldname": "connection", "fieldtype": "Link", "options": "UAE Peppol ASP", "label": "Connection", "reqd": 1, "read_only": 1, "in_list_view": 1, "search_index": 1},
+  {"fieldname": "environment", "fieldtype": "Data", "label": "Environment", "read_only": 1, "description": "An event from one environment can never move a document in another."},
+  {"fieldname": "event_key", "fieldtype": "Data", "label": "Event Key", "reqd": 1, "read_only": 1, "in_list_view": 1, "description": "The provider's own identifier, or a documented stand in where it gives none."},
+  {"fieldname": "event_kind", "fieldtype": "Data", "label": "Kind", "read_only": 1, "in_list_view": 1},
+  {"fieldname": "column_break_head", "fieldtype": "Column Break"},
+  {"fieldname": "processing_state", "fieldtype": "Select", "options": "Received\nProcessed\nUnmatched\nIgnored\nFailed", "default": "Received", "label": "Processing", "read_only": 1, "in_list_view": 1, "in_standard_filter": 1, "search_index": 1},
+  {"fieldname": "received_at", "fieldtype": "Datetime", "label": "Received", "read_only": 1, "search_index": 1},
+  {"fieldname": "provider_time", "fieldtype": "Datetime", "label": "Provider Said", "read_only": 1, "description": "When the provider says it happened. The order things arrive in is not the order they happened in."},
+  {"fieldname": "sequence", "fieldtype": "Int", "label": "Sequence", "read_only": 1, "description": "The provider's own ordering, where it gives one. A lower one never overwrites a higher."},
+  {"fieldname": "section_body", "fieldtype": "Section Break", "label": "What Arrived"},
+  {"fieldname": "payload_digest", "fieldtype": "Data", "label": "Payload Digest", "read_only": 1, "search_index": 1, "description": "The same key arriving with a different body is an integrity problem, not a duplicate."},
+  {"fieldname": "payload_file", "fieldtype": "Data", "label": "Payload", "read_only": 1, "description": "Kept privately. The body is never put in general log text."},
+  {"fieldname": "column_break_body", "fieldtype": "Column Break"},
+  {"fieldname": "signature_method", "fieldtype": "Data", "label": "Signature Method", "read_only": 1},
+  {"fieldname": "signature_verified", "fieldtype": "Check", "label": "Signature Checked", "default": "0", "read_only": 1, "description": "Nothing moves a document until this is true. A secret address is not authentication."},
+  {"fieldname": "section_link", "fieldtype": "Section Break", "label": "What It Is About"},
+  {"fieldname": "submission", "fieldtype": "Link", "options": "UAE Peppol Submission", "label": "Submission", "read_only": 1, "search_index": 1},
+  {"fieldname": "company", "fieldtype": "Link", "options": "Company", "label": "Company", "read_only": 1, "in_standard_filter": 1},
+  {"fieldname": "correlation", "fieldtype": "Data", "label": "Correlation", "read_only": 1, "search_index": 1},
+  {"fieldname": "column_break_link", "fieldtype": "Column Break"},
+  {"fieldname": "processing_error", "fieldtype": "Small Text", "label": "Could Not Be Processed Because", "read_only": 1}
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "UAE e-Invoicing",
+ "name": "UAE Peppol Event",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "UAE Peppol Manager", "read": 1, "write": 0, "create": 0, "delete": 0, "print": 1, "report": 1, "export": 1},
+  {"role": "System Manager", "read": 1, "write": 0, "create": 0, "delete": 0, "report": 1}
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
