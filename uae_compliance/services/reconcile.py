@@ -143,8 +143,82 @@ def ask_about(submission: str) -> bool:
 		return False
 
 	_record_answer(submission, outcome, _provider_reference(outcome))
+	if outcome.artifacts:
+		collect(submission, outcome.artifacts, adapter, connection, transport)
 	_settle_if_done(submission)
 	return True
+
+
+def collect(submission: str, artifacts, adapter, connection, transport) -> int:
+	"""Fetch and keep the evidence the provider is holding.
+
+	A missing artifact is never a reason to send the invoice again. It is
+	asked for again, and where it cannot be had the evidence says so rather
+	than the document being resent to produce one.
+	"""
+	import json
+
+	from uae_compliance.connectors import registry as connectors
+	from uae_compliance.domain.encoding import sha256_hex
+
+	if not adapter.descriptor.supports(Operation.FETCH_ARTIFACT):
+		frappe.db.set_value(SUBMISSION_DOCTYPE, submission, "evidence_state", "Unavailable")
+		return 0
+
+	manifest = json.loads(frappe.db.get_value(SUBMISSION_DOCTYPE, submission, "evidence_manifest") or "[]")
+	held = {entry.get("provider_ref") for entry in manifest}
+	added = 0
+
+	for artifact in artifacts:
+		if artifact.identifier in held:
+			continue
+		call = connectors.Call(
+			operation=Operation.FETCH_ARTIFACT,
+			connection=connection,
+			artifact=artifact,
+			correlation=submission,
+		)
+		try:
+			result = adapter.perform(call, transport)
+		except Exception:
+			frappe.db.set_value(SUBMISSION_DOCTYPE, submission, "evidence_state", "Unavailable")
+			return added
+
+		fetched = next((item for item in result.artifacts if item.fetched), None)
+		if fetched is None:
+			frappe.db.set_value(SUBMISSION_DOCTYPE, submission, "evidence_state", "Unavailable")
+			continue
+
+		saved = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": f"{submission}-{fetched.kind}",
+				"attached_to_doctype": SUBMISSION_DOCTYPE,
+				"attached_to_name": submission,
+				"is_private": 1,
+				"content": fetched.body,
+			}
+		).insert(ignore_permissions=True)
+		manifest.append(
+			{
+				"kind": fetched.kind,
+				"file": saved.name,
+				"sha256": sha256_hex(fetched.body),
+				"bytes": len(fetched.body),
+				"mime": fetched.media_type,
+				"source": "The provider",
+				"provider_ref": fetched.identifier,
+			}
+		)
+		added += 1
+
+	if added:
+		frappe.db.set_value(
+			SUBMISSION_DOCTYPE,
+			submission,
+			{"evidence_manifest": frappe.as_json(manifest), "evidence_state": "Complete"},
+		)
+	return added
 
 
 def _settle_if_done(submission: str):

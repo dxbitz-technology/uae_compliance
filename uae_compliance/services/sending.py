@@ -34,6 +34,10 @@ CREDENTIAL_DOCTYPE = "UAE Peppol ASP Credential"
 SETTINGS = "UAE Peppol Settings"
 
 
+class MissingBytes(Exception):
+	"""What was approved cannot be found, so nothing may be sent."""
+
+
 def send_due(limit: int = 20) -> int:
 	"""Scheduler entry. Take what is due and try each one."""
 	sent = 0
@@ -69,7 +73,16 @@ def send_one(submission: str) -> bool:
 		frappe.db.commit()
 		return False
 
-	request = _business_request(submission)
+	try:
+		request = _business_request(submission)
+	except (MissingBytes, ValueError) as error:
+		# Nothing has gone out and nothing will. Approving something whose
+		# bytes are gone is not the same as sending it, so this stops rather
+		# than trying.
+		outbox.release(submission, "Attention required", str(error))
+		frappe.db.commit()
+		return False
+
 	attempt = outbox.start_attempt(submission, Operation.SUBMIT.value, token, request.digest)
 
 	# Committed before the request. If this process dies in the next line,
@@ -167,9 +180,16 @@ def _business_request(submission: str) -> connectors.BusinessRequest:
 	manifest = json.loads(row.evidence_manifest or "[]")
 	entry = next((item for item in manifest if item["kind"] == "reference-xml"), None)
 	if not entry:
-		raise ValueError("The document to send was never stored.")
+		raise MissingBytes("The document to send was never stored.")
 
-	content = frappe.get_doc("File", entry["file"]).get_content()
+	# A record of a file is not a file. Checking rather than assuming,
+	# because the alternative is a worker falling over on a missing path and
+	# the invoice quietly never going anywhere.
+	try:
+		content = frappe.get_doc("File", entry["file"]).get_content()
+	except FileNotFoundError as error:
+		raise MissingBytes("The stored document is recorded but its file is gone.") from error
+
 	if isinstance(content, str):
 		content = content.encode("utf-8")
 	return connectors.BusinessRequest(media_type="application/xml", body=content, digest=row.payload_hash)

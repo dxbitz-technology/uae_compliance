@@ -482,7 +482,7 @@ Choice: leave provider evidence uncollected for now, and record the evidence sta
 Reason: `fetch_artifact` returns an `ArtifactRef` and the outcome has nowhere to put the bytes, so the retrieval works and the file cannot be kept. Adding half of it would leave code that looks like it stores evidence and does not. Spec 10.2 wants each manifest entry to carry the file, its hash, its size and where it came from, none of which can be filled in from a reference.
 Consequence: a document can reach Delivered and Accepted and still not be Complete, because the route needs its evidence. That is the correct answer today and it is visible rather than hidden.
 Affected: the contract in `domain/connector.py` needs a field for returned bytes, which is a change to something P01 settled and so needs its own packet.
-Status: Proposed. Worth doing before P09, since acceptance case A17 covers missing evidence.
+Status: Closed. The artifact reference now carries the bytes once something has actually been fetched, and works its own hash out from them rather than trusting one. A document sent through the simulator reaches Complete with the provider's receipt kept alongside our own canonical and XML. The same change is what lets a supplier's invoice be read in, which is why it was worth doing before receiving rather than after.
 
 ## D056 Three things the first provider needs that the contract cannot say
 

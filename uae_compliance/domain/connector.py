@@ -17,6 +17,7 @@ is in service of that one.
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -236,16 +237,40 @@ class Adapter:
 
 @dataclass(frozen=True)
 class ArtifactRef:
-	"""A file the provider holds or returned, by reference rather than by value."""
+	"""A file the provider holds or returned.
+
+	It starts as a reference, because listing what exists and fetching it are
+	different operations and the first should not drag the files across. Once
+	something has actually been fetched, `body` carries the bytes and the
+	hash is worked out from them rather than trusted.
+
+	Without this, retrieval could succeed and the file still could not be
+	kept, which is how a submission ends up holding a hash for bytes nobody
+	has.
+	"""
 
 	kind: str
 	identifier: str
 	media_type: str | None = None
 	sha256: str | None = None
+	body: bytes | None = None
 
 	def __post_init__(self):
 		if not self.kind or not self.identifier:
 			raise ContractError("an artifact needs a kind and an identifier")
+		if self.body is None:
+			return
+		if not isinstance(self.body, bytes):
+			raise ContractError(f"{self.kind}: a fetched artifact is bytes")
+		actual = hashlib.sha256(self.body).hexdigest()
+		if not self.sha256:
+			object.__setattr__(self, "sha256", actual)
+		elif self.sha256 != actual:
+			raise ContractError(f"{self.kind}: the bytes do not match the hash they arrived with")
+
+	@property
+	def fetched(self) -> bool:
+		return self.body is not None
 
 
 @dataclass(frozen=True)
