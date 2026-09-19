@@ -92,6 +92,9 @@ def add_unique_constraints():
 	"""
 	frappe.db.add_unique("UAE Peppol Inbound", ["connection", "document_uuid"])
 	frappe.db.add_unique("UAE Peppol Seller Profile", ["participant_scheme", "participant_value"])
+	# Nothing writes an event yet. The constraint goes in ahead of the
+	# receiver, so whoever wires one cannot forget the dedup rule.
+	frappe.db.add_unique("UAE Peppol Event", ["connection", "event_key"])
 
 
 def before_tests():

@@ -1,5 +1,12 @@
 """Something a provider told us, kept exactly as it arrived.
 
+Nothing writes one of these yet. Status comes back by asking the provider
+and arrived documents come back by reading its inbox, so there is no
+receiver for a pushed event anywhere in the app. The record and its rules
+are reserved for the real provider phase, where webhooks arrive; acceptance
+case A16 stays Not run until then. If that phase never wires one, this
+record goes with it.
+
 The body is evidence and never changes. What may change is our note of
 whether we have managed to do anything with it yet.
 
