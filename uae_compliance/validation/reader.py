@@ -14,10 +14,16 @@ from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation
 
-from uae_compliance.validation.safe_xml import parse_bytes
+from uae_compliance.validation.safe_xml import UnsafeDocument, parse_bytes
 
 CBC = "{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}"
 CAC = "{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}"
+
+# Far more lines than any real invoice carries. The size limit alone leaves
+# room for tens of thousands of them, and each line becomes a lookup and a
+# row in a draft, so the document decides how much work we do unless this
+# says otherwise.
+MAX_LINES = 1000
 
 
 def summarise(data: bytes) -> dict:
@@ -120,8 +126,12 @@ def lines(data: bytes) -> list[dict]:
 	tag = f"{CAC}CreditNoteLine" if credit_note else f"{CAC}InvoiceLine"
 	quantity_tag = f"{CBC}CreditedQuantity" if credit_note else f"{CBC}InvoicedQuantity"
 
+	nodes = root.findall(tag)
+	if len(nodes) > MAX_LINES:
+		raise UnsafeDocument(f"{len(nodes)} lines is more than the {MAX_LINES} line limit")
+
 	found = []
-	for node in root.findall(tag):
+	for node in nodes:
 		quantity = node.find(quantity_tag)
 		item = node.find(f"{CAC}Item")
 		price = node.find(f"{CAC}Price")

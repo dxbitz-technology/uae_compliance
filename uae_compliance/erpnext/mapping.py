@@ -34,7 +34,7 @@ def uom_code(uom: str | None, out, source: SourceRef, row_id: str | None) -> str
 	"""
 	if not uom:
 		return None
-	code = frappe.db.get_value("UOM", uom, "common_code")
+	code = out.remember(("uom", uom), lambda: frappe.db.get_value("UOM", uom, "common_code"))
 	out.seen("UOM", uom)
 	if not code:
 		out.note(
@@ -64,8 +64,11 @@ def item_facts(item_code: str | None, item_group: str | None, out) -> dict:
 	if not item_code:
 		return facts
 
-	values = frappe.db.get_value(
-		"Item", item_code, ["customs_tariff_number", ITEM_TYPE_FIELD, "modified"], as_dict=True
+	values = out.remember(
+		("item", item_code),
+		lambda: frappe.db.get_value(
+			"Item", item_code, ["customs_tariff_number", ITEM_TYPE_FIELD, "modified"], as_dict=True
+		),
 	)
 	if not values:
 		return facts
@@ -82,7 +85,10 @@ def _group_item_type(item_group: str | None, out) -> str | None:
 	"""The item group's suggestion, used only when the item is silent."""
 	if not item_group:
 		return None
-	value = frappe.db.get_value("Item Group", item_group, ITEM_TYPE_FIELD)
+	value = out.remember(
+		("item group", item_group),
+		lambda: frappe.db.get_value("Item Group", item_group, ITEM_TYPE_FIELD),
+	)
 	out.seen("Item Group", item_group)
 	return value or None
 
@@ -104,11 +110,14 @@ def tax_category(
 	"""
 	where = SourceRef(doctype=source.doctype, name=source.name, row_id=row_id)
 
-	for filters in _candidate_filters(company, account_head, item_tax_template):
-		matches = frappe.get_all(
-			TAX_CATEGORY_DOCTYPE,
-			filters=filters,
-			fields=["name", "category", "rate", "reason_code", "reason", "modified"],
+	for index, filters in enumerate(_candidate_filters(company, account_head, item_tax_template)):
+		matches = out.remember(
+			("tax", company, account_head, item_tax_template, index),
+			lambda filters=filters: frappe.get_all(
+				TAX_CATEGORY_DOCTYPE,
+				filters=filters,
+				fields=["name", "category", "rate", "reason_code", "reason", "modified"],
+			),
 		)
 		if not matches:
 			continue

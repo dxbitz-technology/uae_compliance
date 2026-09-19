@@ -51,17 +51,43 @@ class Resolution:
 	delivery: dict = field(default_factory=dict)
 	findings: list[Finding] = field(default_factory=list)
 	revisions: dict[str, str] = field(default_factory=dict)
+	# What has already been asked during this one extraction. An invoice
+	# with five hundred lines of the same item should ask about that item
+	# once, not five hundred times.
+	looked_up: dict = field(default_factory=dict)
 
 	def note(self, finding: Finding):
 		self.findings.append(finding)
 
+	def remember(self, key, build):
+		"""Answer from what we already asked, or ask once and keep it.
+
+		Only for master data, which cannot change while one extraction runs.
+		Findings are deliberately not cached: the same missing unit on three
+		lines is three things to fix, each pointing at its own row.
+		"""
+		if key not in self.looked_up:
+			self.looked_up[key] = build()
+		return self.looked_up[key]
+
 	def seen(self, doctype: str, name: str | None, modified=None):
-		"""Record that this document was read, and when it last changed."""
+		"""Record that this document was read, and when it last changed.
+
+		Asking twice about the same record is one query too many. On an
+		invoice with a thousand lines of the same item that was a thousand
+		queries for one answer.
+		"""
 		if not name:
 			return
+		key = f"{doctype}:{name}"
+		if key in self.revisions:
+			return
 		if modified is None:
-			modified = frappe.db.get_value(doctype, name, "modified")
-		self.revisions[f"{doctype}:{name}"] = str(modified or "")
+			modified = self.remember(
+				("modified", doctype, name),
+				lambda: frappe.db.get_value(doctype, name, "modified"),
+			)
+		self.revisions[key] = str(modified or "")
 
 
 def resolve(invoice) -> Resolution:
