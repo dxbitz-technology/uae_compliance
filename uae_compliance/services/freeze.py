@@ -146,7 +146,25 @@ def create_submission(invoice, control: str, document: dict, result) -> str:
 	doc.db_set("evidence_state", "Complete", update_modified=False)
 
 	frappe.db.set_value(WORKING_DOCTYPE, control, "latest_submission", doc.name, update_modified=False)
+	_approve_by_policy_where_waived(doc.name)
 	return doc.name
+
+
+def _approve_by_policy_where_waived(submission: str):
+	"""Record the policy approval for a company that has waived review.
+
+	On the same immutable revision, in the same transaction, so the record
+	says an approval was given and why, rather than the queue simply taking
+	unreviewed work. A refusal, most likely a missing route, leaves the
+	submission awaiting review, where the daily summary already points.
+	"""
+	# Imported here because the approval service reads this module's names.
+	from uae_compliance.services import approval
+
+	try:
+		approval.approve_by_policy(submission)
+	except frappe.ValidationError:
+		pass
 
 
 def _next_revision(control: str) -> int:

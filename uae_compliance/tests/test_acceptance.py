@@ -232,6 +232,30 @@ class A12ApprovalAndImmutability(IntegrationTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			doc.save(ignore_permissions=True)
 
+	def test_a_company_that_waived_review_gets_a_policy_approval(self):
+		from uae_compliance.services import approval
+
+		doc = self.a_submission()
+		binding = frappe.db.get_value("UAE Peppol Seller Company", {"company": a_company()}, "name")
+		frappe.db.set_value("UAE Peppol Seller Company", binding, "review_required", 0)
+		self.addCleanup(frappe.db.set_value, "UAE Peppol Seller Company", binding, "review_required", 1)
+
+		found = approval.approve_by_policy(doc.name)
+		self.assertTrue(found and found["approved"])
+		doc.reload()
+		self.assertEqual(doc.approval_kind, "Policy")
+		self.assertEqual(doc.processing_state, "Ready")
+
+	def test_review_stays_required_until_somebody_turns_it_off(self):
+		# A missing setting means review is required. The safe answer is the
+		# one that puts a person in the way.
+		from uae_compliance.services import approval
+
+		doc = self.a_submission()
+		self.assertIsNone(approval.approve_by_policy(doc.name))
+		doc.reload()
+		self.assertFalse(doc.approved)
+
 	def test_approving_without_the_bytes_stored_is_refused(self):
 		from uae_compliance.services import approval
 
