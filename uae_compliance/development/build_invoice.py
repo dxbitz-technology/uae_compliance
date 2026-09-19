@@ -28,7 +28,19 @@ ITEM = "PEPPOL-DEMO-001"
 CUSTOMER = "Gulf Trading LLC"
 
 
+def _a_development_site_only():
+	"""These builders plant demo masters and commit as they go.
+
+	A rollback cannot take any of it back, so they refuse to run anywhere
+	that has not said it is a development site. Being asked politely in the
+	docstring stopped nobody pointing one at the wrong bench.
+	"""
+	if not frappe.conf.developer_mode:
+		frappe.throw("The demo builders only run on a site with developer_mode set.")
+
+
 def run():
+	_a_development_site_only()
 	company = _company()
 	seller_address = _address("PDC Head Office", "Company", company, "Office 101, Business Tower")
 	customer = _customer()
@@ -271,6 +283,7 @@ def set_up_buying():
 	Its own company on purpose. UAE Peppol Test Company belongs to the site
 	tests, and taking it makes them fail in ways that look unrelated.
 	"""
+	_a_development_site_only()
 	if not frappe.db.exists("Company", BUYING_COMPANY):
 		frappe.get_doc(
 			{
