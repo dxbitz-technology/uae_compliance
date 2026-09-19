@@ -128,7 +128,30 @@ State: In progress.
 Requirement IDs: spec 4.2 the submission record, 8.1 the independent states, 8.2 freeze and approval, 10.2 the artifact contract, 12.2 P05, acceptance A11 and A12.
 
 - P05a: the frozen submission and its artifacts. Done.
-- P05b: approval and the atomic claim.
+- P05b: approval and the atomic claim. Done.
+
+An approval names the exact content it agreed to. If that content moves the
+approval stops applying, because otherwise a different document goes out
+under somebody's name. Review is required unless a person has turned it off
+for that company, and a missing setting means it is required. Where it is
+off, the approval is recorded as a policy one so nobody later reads an
+unreviewed document as a reviewed one.
+
+A claim is one atomic update or nothing. Everything it tests sits in the
+same where clause, so there is no gap between checking and taking. A fencing
+token counts up on every claim, which is what stops a worker whose claim ran
+out from writing over a newer answer.
+
+The attempt record is written and committed before any request goes out. If
+the process dies in between, that record is the only thing saying a request
+may have reached them, and without it the next worker would send the same
+invoice again believing nothing had happened.
+
+Checked on uae.local: approving with the wrong hash is refused and with the
+right one works; two workers reaching for the same submission means exactly
+one gets it; a stale fencing token cannot write a result; policy approval
+declines while review is required and works once it is off, recorded as
+Policy; and a pause empties the due list without touching anything else.
 - P05c: cancellation, correction and the immutable field controls.
 
 Freezing happens in the invoice's own transaction, so the invoice and its
