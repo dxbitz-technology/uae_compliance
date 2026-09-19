@@ -282,6 +282,29 @@ class TheSixWorkedExamplesThroughTheExtraction(unittest.TestCase):
 		self.assertEqual(document["totals"]["tax_inclusive"], D("199.50"))
 		self.assertEqual(check(document), [])
 
+	def test_a_discount_taken_on_the_grand_total_is_also_in_the_lines(self):
+		# The controller only returns early on a cash discount. An ordinary
+		# discount on the grand total is spread across the rows as well, in
+		# the ratio of the grand total, so 10 off 105 takes 9.52 off a line
+		# of 100. Tax is then worked out again on 90.48 and the grand total
+		# lands on 95.00, which is the 105 less the 10 that was asked for.
+		source = invoice(
+			items=[item("r1", qty=1, rate=100, net_rate=90.48, net_amount=90.48)],
+			taxes=[tax("t1", account="VAT 5%", amount=4.52)],
+			details=[detail("r1", "t1", rate=5, amount=4.52, taxable=90.48)],
+			discount_amount=10,
+			apply_discount_on="Grand Total",
+			net_total=90.48,
+			grand_total=95.00,
+			rounded_total=95.00,
+		)
+		document = canonical(source, Masters({"VAT 5%": STANDARD}))
+		self.assertEqual(document["allowances"], [])
+		self.assertEqual(document["totals"]["allowances"], D("0.00"))
+		self.assertEqual(document["tax_breakdown"][0]["taxable_amount"], D("90.48"))
+		self.assertEqual(document["totals"]["tax_inclusive"], D("95.00"))
+		self.assertEqual(check(document), [])
+
 	def test_a_hundred_dollars_keeps_its_hundred_dollars(self):
 		# The line stays 100 in the currency it was invoiced in. The per row
 		# tax arrives in dirhams, 18.36 of them, and converting it back at the
