@@ -1,6 +1,6 @@
 # Build state
 
-Phase: P00 to P05 are done and merged. P06 transport is next, and half of it already exists in the connector lane.
+Phase: P00 to P05 are done and merged. P06 transport is in progress; its first two packets came from the connector lane.
 Baseline: spec version 2.1, 18-09-2026. It adds two self-billing document codes for P12, ties scenario flags to the sixteen official use cases, and names Suntech as the first real provider in section 9.4.
 Branch: develop. Pull requests merge on a passing ci check. No review gate.
 Last verified code commit: develop at the P02 merge. 290 pure tests, 33 site tests.
@@ -208,6 +208,41 @@ One gap, for P07. A rollback removes the file records but the bytes stay on
 disk with nothing pointing at them. Cleaning those up needs a sweep that can
 prove a file is unreferenced, which belongs with the other operational
 repair tools.
+
+## P06 Transport and simulator
+
+State: In progress.
+Requirement IDs: spec 8.3 the durable worker boundary, 8.4 the retry rules, 9.1 the adapter boundary, 10.2 redaction, 12.2 P06, acceptance A13 to A17.
+
+- P06a: the audited transport and the result contract. Done, in the connector lane.
+- P06b: the simulator and the two test adapters. Done, in the connector lane.
+- P06c: sending, retries, events and reconciliation. Sending and retries done.
+
+The order in the sender is the whole point. Claim the work, write down that
+an attempt is starting, commit. Only then make the request, holding no
+database lock while it is in flight. Then, in a new transaction, write down
+what came back after checking that a newer worker has not been and gone.
+
+What the provider said is never read here. The adapter turns it into the
+contract's own words and the sender reads those, so a provider status code
+never reaches the app.
+
+Checked on uae.local against the simulator over a real socket. A frozen
+document went out and came back accepted: receipt Received, delivery
+Pending, reporting Pending, and the state Awaiting outcome rather than
+Complete, because transport succeeding says nothing about either of the
+other two. Three attempt records were written for one send: the business
+attempt, the sign in, and the send itself.
+
+Two things this turned up, both now fixed. The recorder was writing a
+timestamp the database would not take, and it failed quietly rather than
+taking the send down with it, which is what it is supposed to do but meant
+the audit rows were missing. And the provider reference was being read under
+a key no adapter uses.
+
+Worth recording: a run that died mid-flight left the submission in Sending
+with a Pending attempt, and it was not picked up again. That is the design.
+Clearing it is reconciliation's job, which is the next packet.
 
 ## Lane B, alongside
 

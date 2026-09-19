@@ -275,6 +275,14 @@ doctype_js = {
 # puts itself on top, so another app that extended the same form keeps working.
 app_include_js = ["/assets/uae_compliance/js/party_quick_entry.js"]
 
+# The worker that takes approved work and sends it. It reads the database
+# rather than trusting the queue, so nothing is lost when a job is.
+scheduler_events = {
+	"cron": {
+		"* * * * *": ["uae_compliance.services.sending.send_due"],
+	}
+}
+
 # The only place this app attaches to a native document. It keeps one working
 # record beside each draft and never writes back to the invoice, which would
 # put the save into a loop.
