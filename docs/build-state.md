@@ -1,6 +1,6 @@
 # Build state
 
-Phase: P00 to P03 are done and merged. P04 draft workflow is in progress.
+Phase: P00 to P04 are done and merged. P05 submission ledger is next.
 Baseline: spec version 2.1, 18-09-2026. It adds two self-billing document codes for P12, ties scenario flags to the sixteen official use cases, and names Suntech as the first real provider in section 9.4.
 Branch: develop. Pull requests merge on a passing ci check. No review gate.
 Last verified code commit: develop at the P02 merge. 290 pure tests, 33 site tests.
@@ -79,7 +79,25 @@ invoice that would fail still submits and says what would have stopped it.
 In Live it does not submit, and the message names what to fix rather than
 repeating a rule id per failure. An incomplete draft still saves either way.
 - P04c: the invoice notice and the details dialog. Done.
-- P04d: the quick entry extension, company setup and the bulk item fix.
+- P04d: the quick entry extension, company setup and the bulk item fix. Done.
+
+The quick entry form takes whatever class is installed and puts itself on
+top, so another app that already extended the same form keeps working. The
+country moves up, because it decides which questions make sense, and the tax
+section sits below and collapsed. Not sure stays a real answer everywhere.
+
+The party, its address and contact, and its profile are made in one request,
+so all of them arrive or none do. The country prefills both the postal and
+the established country, which are separate facts from then on.
+
+Company setup puts a company into Preparation and nothing more. It collects
+and checks and sends nothing, so a company can be set up long before there is
+a provider. Running it twice changes nothing.
+
+Checked in the browser: the dialog shows the country first, the tax section
+expands, the VAT number appears only once somebody says Registered, and
+saving made the customer, the address and the profile together with the
+lookup result left at Not checked.
 
 The form carries one native headline notice and one button, and nothing at
 all on a company that is switched off. The dialog groups findings by where

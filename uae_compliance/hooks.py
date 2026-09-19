@@ -265,7 +265,15 @@ before_tests = "uae_compliance.install.before_tests"
 
 # The only form this app touches. It adds one indicator and one button, and
 # nothing at all on a company that is switched off.
-doctype_js = {"Sales Invoice": "public/js/sales_invoice.js"}
+doctype_js = {
+	"Sales Invoice": "public/js/sales_invoice.js",
+	"Company": "public/js/company.js",
+}
+
+# The quick entry form is a shared class rather than a form script, so it is
+# extended once for the whole desk. It takes whatever class is installed and
+# puts itself on top, so another app that extended the same form keeps working.
+app_include_js = ["/assets/uae_compliance/js/party_quick_entry.js"]
 
 # The only place this app attaches to a native document. It keeps one working
 # record beside each draft and never writes back to the invoice, which would
