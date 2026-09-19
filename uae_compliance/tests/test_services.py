@@ -270,6 +270,41 @@ class A11RollingBack(IntegrationTestCase):
 		)
 
 
+class _HookedAdapter:
+	"""An adapter another app could declare, for the hook loading test."""
+
+	def __init__(self):
+		import dataclasses
+
+		from uae_compliance.connectors.adapters.reference_xml import DECLARATION
+
+		self.descriptor = dataclasses.replace(DECLARATION, provider_key="hooked_example")
+
+	def perform(self, call, transport):
+		raise NotImplementedError("the loading test never performs anything")
+
+
+HOOKED_ADAPTER = _HookedAdapter()
+
+
+class ThirdPartyAdapters(IntegrationTestCase):
+	def test_an_adapter_declared_through_the_hook_is_installed(self):
+		# The registry refuses import paths from configuration on purpose, so
+		# the hook is the one way another app adds an adapter. It has to
+		# actually be read, or the documented extension point is a promise.
+		from uae_compliance.services.sending import _installed_registry
+
+		def hooks(hook=None, app_name=None, **_kw):
+			if hook == "uae_peppol_adapters" and app_name == "uae_compliance":
+				return ["uae_compliance.tests.test_services.HOOKED_ADAPTER"]
+			return []
+
+		with patch.object(frappe, "get_hooks", side_effect=hooks):
+			registry = _installed_registry()
+		self.assertIn("hooked_example", registry.keys())
+		self.assertIs(registry.get("hooked_example"), HOOKED_ADAPTER)
+
+
 class AnInvoiceDraftedBeforeTheCompanyWentLive(IntegrationTestCase):
 	"""A draft saved while the company was off has no working record.
 

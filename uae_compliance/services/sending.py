@@ -142,8 +142,26 @@ def _connection_and_adapter_for(asp, operation: Operation):
 		base_url=asp.base_url,
 		credentials={key: value for key, value in credentials.items() if value},
 	)
-	adapter = connectors.installed().for_connection(connection, operation)
+	adapter = _installed_registry().for_connection(connection, operation)
 	return connection, adapter
+
+
+def _installed_registry():
+	"""The built in adapters, plus any another installed app declares.
+
+	The registry itself never imports anything by name, so this is the one
+	frappe aware spot that reads the hook and resolves each entry inside the
+	app that declared it. Configuration and requests still cannot name a path
+	to import; only an installed app's own hooks file can.
+	"""
+	registry = connectors.installed()
+	entries = []
+	for app in frappe.get_installed_apps():
+		for value in frappe.get_hooks(connectors.HOOK_NAME, app_name=app) or []:
+			entries.append((app, value))
+	if entries:
+		connectors.load_hook_adapters(registry, entries, resolve=frappe.get_attr)
+	return registry
 
 
 def _connection_and_adapter(submission: str):
