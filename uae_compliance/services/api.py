@@ -87,6 +87,13 @@ def get_readiness_batch(source_names: str) -> dict:
 	names = [name for name in names if isinstance(name, str)][:MAX_BATCH]
 	if not names:
 		return {}
+
+	# A filter, not a gate. Somebody who may read none of these gets none
+	# of them back rather than an error, because this answers a list
+	# screen and a screen showing nothing is the right answer.
+	if not frappe.has_permission("Sales Invoice", "read"):
+		return {}
+
 	allowed = [
 		row.name for row in frappe.get_list("Sales Invoice", filters={"name": ["in", names]}, fields=["name"])
 	]
