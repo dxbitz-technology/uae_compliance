@@ -11,6 +11,8 @@ Read `docs/build-state.md` first. It names the current phase, the packet in hand
 | `docs/decisions.md` | Decisions and open questions, each with its evidence and status. |
 | `docs/source-map.md` | Where every canonical value comes from in ERPNext. |
 | `docs/operations.md` | Running it: enabling production sending, restoring, pausing, what to watch. |
+| `docs/capacity.md` | What was measured, on what machine, and what was not. |
+| `docs/what-works.md` | What this release supports. Generated, never edited by hand. |
 | `docs/standards-lock.json` | The pinned official files with their checksums and the last run results. |
 | `uae_compliance/standards/NOTICES.md` | Where the official files came from and under what terms. |
 

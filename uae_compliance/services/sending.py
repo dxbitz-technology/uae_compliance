@@ -23,7 +23,7 @@ from frappe.utils import add_to_date, now_datetime
 from frappe.utils.password import get_decrypted_password
 
 from uae_compliance.connectors import registry as connectors
-from uae_compliance.connectors.transport import Policy, Transport
+from uae_compliance.connectors.transport import Policy, Transport, policy_for, safe_traceback
 from uae_compliance.domain.connector import Advice, AspReceipt, Effect, Environment, Operation, Route, advise
 from uae_compliance.services import outbox
 from uae_compliance.services.freeze import SUBMISSION_DOCTYPE
@@ -164,17 +164,12 @@ def _connection_and_adapter(submission: str):
 
 
 def _policy_for(connection) -> Policy:
-	from urllib.parse import urlsplit
+	"""The transport policy this connection runs under.
 
-	host = (urlsplit(connection.base_url).hostname or "").lower()
-	simulation = connection.environment is not Environment.PRODUCTION
-	return Policy(
-		environment=connection.environment,
-		trusted_hosts=(host,),
-		allow_plain_http=simulation,
-		allow_private_addresses=simulation,
-		verify_tls=not simulation,
-	)
+	The rule itself lives with the transport, because that is what enforces
+	it and a second copy here would be a second thing to keep right.
+	"""
+	return policy_for(connection.environment, connection.base_url)
 
 
 def _business_request(submission: str) -> connectors.BusinessRequest:
@@ -375,6 +370,11 @@ def _plainly(error: Exception, doing: str) -> str:
 	Raw exception text in a field a person reads is how a report ends up
 	showing somebody an error number and a file path. The detail still
 	matters, so it goes to the error log where it belongs.
+
+	The text is built here rather than left to the framework, which renders
+	the local variables of every frame when it is given no message. On this
+	path that would be the authorization header, the decrypted provider
+	secret and the invoice itself.
 	"""
-	frappe.log_error(title=f"UAE e-invoicing: {doing}")
+	frappe.log_error(title=f"UAE e-invoicing: {doing}", message=safe_traceback(error))
 	return _("Could not {0}. The connection or the provider is not answering.").format(doing)

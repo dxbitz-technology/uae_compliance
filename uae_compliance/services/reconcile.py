@@ -362,6 +362,13 @@ def _plainly(error: Exception, doing: str) -> str:
 	Raw exception text in a field a person reads is how a report ends up
 	showing somebody an error number and a file path. The detail still
 	matters, so it goes to the error log where it belongs.
+
+	The text is built here rather than left to the framework, which renders
+	the local variables of every frame when it is given no message. On this
+	path that would be the authorization header, the decrypted provider
+	secret and the invoice itself.
 	"""
-	frappe.log_error(title=f"UAE e-invoicing: {doing}")
+	from uae_compliance.connectors.transport import safe_traceback
+
+	frappe.log_error(title=f"UAE e-invoicing: {doing}", message=safe_traceback(error))
 	return _("Could not {0}. The connection or the provider is not answering.").format(doing)

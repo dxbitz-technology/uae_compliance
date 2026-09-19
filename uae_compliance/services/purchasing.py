@@ -46,7 +46,16 @@ def plan(inbound: str) -> dict:
 			)
 		)
 
-	rows = _lines_of(doc)
+	from uae_compliance.validation.safe_xml import UnsafeDocument
+
+	try:
+		rows = _lines_of(doc)
+	except UnsafeDocument as error:
+		# Reading it is where a document somebody else wrote gets to decide
+		# how much work we do. Refusing is the answer, not trying harder.
+		rows = []
+		blocks.append(_("This document cannot be read: {0}").format(error))
+
 	fallback = _fallback(doc.company) if doc.company else {}
 	matched, unmatched = _match_lines(rows, doc.supplier, fallback)
 	taxes, missing_tax = _match_taxes(rows, doc.company)
@@ -82,6 +91,13 @@ def create_draft(inbound: str) -> str:
 	"""
 	doc = frappe.get_doc(INBOUND_DOCTYPE, inbound)
 	doc.check_permission("write")
+
+	# Being allowed to handle arrived documents is not being allowed to put
+	# something in the books. This used to insert past permissions, which
+	# let anybody who could open an inbound document create a purchase
+	# invoice in a company they had no access to.
+	if not frappe.has_permission("Purchase Invoice", "create"):
+		raise frappe.PermissionError(_("You are not allowed to create a purchase invoice."))
 
 	found = plan(inbound)
 	if not found["can_enter"]:
@@ -126,7 +142,9 @@ def create_draft(inbound: str) -> str:
 			},
 		)
 
-	invoice.insert(ignore_permissions=True)
+	# Inserted as the person, so the company on the document is checked
+	# against what they are allowed to see as well.
+	invoice.insert()
 	frappe.db.set_value(
 		INBOUND_DOCTYPE,
 		doc.name,
