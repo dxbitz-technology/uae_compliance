@@ -105,6 +105,22 @@ whatever you were doing.
 The demo builders use their own: `Peppol Demo Co` for selling and
 `Peppol Buying Demo` for receiving.
 
+## Frappe prints every local variable
+
+It does this in two places, and both have caught me out.
+
+`frappe.log_error(title=...)` with no message renders the whole frame into
+the Error Log, so a provider timeout put a decrypted client secret and a
+bearer token in there. Use `transport.safe_traceback`.
+
+A traceback from a failing test does the same, into the test output and so
+into a public CI log. That is not only a production concern. Never bind a
+parsed `site_config.json`, a decrypted password or a request body to a
+local in a test. Put the parsing in a helper that returns what you are
+asserting on, so the values live in a frame that is gone before the
+assertion can fail. There is no lint rule for this. Check it by making the
+assertion fail on purpose and reading the output.
+
 ## Branching
 
 Fetch immediately before branching. `git fetch origin && git checkout -B <name> origin/develop`.
