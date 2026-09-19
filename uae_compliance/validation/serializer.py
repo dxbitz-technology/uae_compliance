@@ -292,7 +292,20 @@ def _line(root, line: Mapping, currency: str, *, is_credit_note: bool):
 
 
 def _line_tax(line: Mapping) -> Decimal:
-	"""The tax on one line, at the precision its own amount uses."""
+	"""The tax on one line, as it was posted.
+
+	Read rather than worked out. Three lines of 33.33 at five percent each
+	round to 1.67 and state 5.01 on a document whose posted tax is 5.00, so
+	multiplying here puts the parts and the whole at odds.
+
+	Working it out is kept only for a document nothing extracted, which is
+	a hand built one in a test. Anything this app produced carries the
+	posted figure.
+	"""
+	posted = line.get("tax_amount")
+	if isinstance(posted, Decimal):
+		return posted
+
 	net = line.get("net_amount")
 	rate = line.get("tax_rate")
 	if not isinstance(net, Decimal) or not isinstance(rate, Decimal):

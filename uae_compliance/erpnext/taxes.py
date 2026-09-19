@@ -22,6 +22,7 @@ from uae_compliance.erpnext import mapping
 from uae_compliance.erpnext.numbers import Scales, dec, flip, zero
 
 CODE_DISCOUNT_AFTER_TAX = "MAP-0005"
+CODE_CHARGE_TREATMENT = "MAP-0008"
 
 
 def split_tax_rows(invoice, resolution, source) -> tuple[dict, list]:
@@ -34,7 +35,9 @@ def split_tax_rows(invoice, resolution, source) -> tuple[dict, list]:
 	vat = {}
 	charges = []
 	for row in invoice.get("taxes") or []:
-		found = mapping.tax_category(invoice.company, row.account_head, None, resolution, source)
+		# Quietly, because an unmapped row here is a charge rather than a
+		# mistake, and saying so every time would bury the real findings.
+		found = mapping.tax_category(invoice.company, row.account_head, None, resolution, source, quiet=True)
 		if found:
 			vat[row.name] = found
 		else:
@@ -74,13 +77,45 @@ def breakdown(
 				"_lines": [],
 			},
 		)
-		group["taxable_amount"] += line["net_amount"]
+		group["taxable_amount"] += _taxable(line, vat_rows, attribution, scales, invoice, credit_note)
 		group["_lines"].append(line["source_row"])
 
 	_attribute_tax(by_key, invoice, vat_rows, attribution, scales, credit_note, company_currency)
 	for group in by_key.values():
 		group.pop("_lines", None)
 	return [by_key[key] for key in sorted(by_key, key=lambda k: (k[0], k[1]))]
+
+
+def _taxable(line, vat_rows, attribution, scales: Scales, invoice, credit_note: bool):
+	"""What the tax on this line was actually worked out on.
+
+	Usually the line's own net amount, and not always. A charge taken before
+	a tax row is inside that row's base, so a hundred of goods with twenty of
+	freight in front of a five percent row is taxed on a hundred and twenty.
+	Summing the line net amounts alone would state a base of a hundred
+	against a tax of six.
+
+	The per row table records the base each tax row applied to each line, so
+	that is read rather than worked out. Where nothing was posted against a
+	line, its own net amount is the answer.
+	"""
+	rate = Decimal(str(invoice.conversion_rate or 1))
+	for hit in attribution.get(line["source_row"]) or []:
+		if hit["tax_row"] not in vat_rows:
+			continue
+		base = dec(hit["taxable_amount"], scales.amount)
+		if not base:
+			# Nothing recorded against this line for that row. A base of
+			# zero under a line that has an amount means the table did not
+			# carry one, and the line's own amount is the better answer.
+			continue
+		if rate != 1:
+			base = dec(base / rate, scales.amount)
+		# The posted base already carries the line's own sign, including a
+		# negative line on an ordinary invoice. Only a credit note turns,
+		# and it turns the same way its line amounts do.
+		return flip(base) if credit_note else base
+	return line["net_amount"]
 
 
 def _attribute_tax(by_key, invoice, vat_rows, attribution, scales, credit_note, company_currency=None):
@@ -170,21 +205,49 @@ def _settlement_group(by_key):
 	return max(taxed, key=lambda k: (abs(by_key[k]["taxable_amount"]), k[0], str(k[1])))
 
 
-def charge_rows(charges, invoice, scales: Scales, credit_note: bool) -> list[dict]:
-	"""Posted charges that are not VAT, as document charges."""
+def charge_rows(
+	charges, invoice, scales: Scales, credit_note: bool, breakdown=None, source=None, out_findings=None
+) -> list[dict]:
+	"""Posted charges that are not VAT, as document charges.
+
+	A charge still has a tax treatment, because the rules need one for every
+	amount on the document. Where a charge sits inside a tax row's base, as
+	freight taken before a VAT row does, its treatment is that row's. That
+	is read from the document rather than assumed: the tax was worked out on
+	the charge, so the charge is taxed the same way.
+
+	Where the document has more than one taxed group there is no way to say
+	which one a charge belongs to, and it is reported rather than picked.
+	"""
+	groups = [group for group in (breakdown or []) if group.get("category")]
+	treatment = groups[0] if len(groups) == 1 else None
+
 	out = []
 	for row in charges:
 		amount = dec(row.tax_amount_after_discount_amount, scales.amount)
 		if not amount:
 			continue
-		out.append(
-			{
-				"amount": flip(amount) if credit_note else amount,
-				"reason": row.description or row.account_head,
-				"tax_category": None,
-				"tax_rate": None,
-			}
-		)
+		charge = {
+			"amount": flip(amount) if credit_note else amount,
+			"reason": row.description or row.account_head,
+		}
+		if treatment:
+			charge["tax_category"] = treatment["category"]
+			charge["tax_rate"] = treatment["rate"]
+		elif out_findings is not None and source is not None:
+			out_findings.note(
+				Finding(
+					code=CODE_CHARGE_TREATMENT,
+					severity=Severity.ERROR,
+					stage=Stage.MAPPING,
+					message="This charge is on the invoice with no tax treatment of its own.",
+					path="charges.tax_category",
+					source=source,
+					repair="Map the account this charge posts to, so its tax treatment is stated.",
+					params={"charge": row.description or row.account_head or ""},
+				)
+			)
+		out.append(charge)
 	return out
 
 

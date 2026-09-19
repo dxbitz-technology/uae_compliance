@@ -89,10 +89,18 @@ class Masters:
 	def uom_code(self, uom, resolution, source, row_id):
 		return "H87"
 
-	def tax_category(self, company, account, template, resolution, source, row_id=None):
+	def tax_category(self, company, account, template, resolution, source, row_id=None, quiet=False):
 		if template and template in self.by_template:
 			return self.by_template[template]
-		return self.by_account.get(account)
+		# A line can name several accounts, because a charge taken before a
+		# tax row means its tax was posted to two of them. Each is tried in
+		# turn, as the real lookup does.
+		accounts = [account] if isinstance(account, str) else list(account or [])
+		for name in accounts:
+			found = self.by_account.get(name)
+			if found:
+				return found
+		return None
 
 
 def item(name, *, qty, rate, net_rate=None, net_amount=None, discount=0, **extra):
@@ -161,7 +169,7 @@ def canonical(source, masters, credit_note=False):
 		vat_rows, charge_rows = taxes.split_tax_rows(source, None, None)
 	attribution = line_reader.tax_by_row(source)
 	breakdown = taxes.breakdown(source, rows, vat_rows, attribution, scales, credit_note)
-	charges = taxes.charge_rows(charge_rows, source, scales, credit_note)
+	charges = taxes.charge_rows(charge_rows, source, scales, credit_note, breakdown)
 	tax_total = sum((group["tax_amount"] for group in breakdown), zero(scales.amount))
 	return {
 		"lines": rows,
@@ -747,11 +755,12 @@ class ChargesThatAreNotTax(unittest.TestCase):
 		self.assertEqual(document["totals"]["tax"], D("5.00"))
 		self.assertEqual(check_totals(document), [])
 
-	def test_a_charge_the_tax_was_worked_out_on_is_reported(self):
+	def test_a_charge_the_tax_was_worked_out_on_is_inside_the_base(self):
 		# Freight of 20 taken before a 5 per cent row gives 6.00 of VAT on a
-		# base of 120. The group base is built from the lines alone, so it
-		# says 100 and the tax does not match it. That is a real gap between
-		# the model and the posting and it has to be said out loud.
+		# base of 120. The group base used to be summed from the lines
+		# alone, so it said 100 against a tax of 6 and the money rules
+		# reported the gap. The posted base is read now, and the charge
+		# carries the treatment it was taxed under, so the parts agree.
 		source = invoice(
 			items=[item("r1", qty=1, rate=100)],
 			taxes=[
@@ -764,9 +773,64 @@ class ChargesThatAreNotTax(unittest.TestCase):
 			rounded_total=126.00,
 		)
 		document = canonical(source, Masters({"VAT 5%": STANDARD}))
-		self.assertEqual(document["tax_breakdown"][0]["taxable_amount"], D("100.00"))
+		# Was 100.00 while the base was summed from the line amounts alone,
+		# which left the charge out of a base the tax had been worked out
+		# on. The posted base is 120.00 and that is what the group states.
+		self.assertEqual(document["tax_breakdown"][0]["taxable_amount"], D("120.00"))
 		self.assertEqual(document["tax_breakdown"][0]["tax_amount"], D("6.00"))
-		self.assertIn(CODE_TAX_AMOUNT, codes(check(document)))
+		# The charge is taxed the same way the row it sat inside was.
+		self.assertEqual(document["charges"][0]["tax_category"], "S")
+		self.assertEqual(document["charges"][0]["tax_rate"], D("5.00"))
+		self.assertEqual(codes(check(document)), [])
+
+
+class ALineWhoseTaxWentToSeveralAccounts(unittest.TestCase):
+	"""A line can have its tax posted to more than one account.
+
+	Freight taken before a VAT row puts two rows against the same line, and
+	only the second is a tax treatment. Taking the first meant the line came
+	back with no category at all and the invoice with no tax breakdown,
+	which is worse than a wrong figure because there is nothing to disagree
+	with.
+	"""
+
+	def build(self):
+		return invoice(
+			items=[item("r1", qty=1, rate=100)],
+			taxes=[
+				tax("t1", account="Freight", amount=20.00, description="Delivery"),
+				tax("t2", account="VAT 5%", amount=6.00),
+			],
+			# Both rows against the line, which is what the controller writes.
+			details=[
+				detail("r1", "t1", rate=0, amount=20.00, taxable=100.00),
+				detail("r1", "t2", rate=5, amount=6.00, taxable=120.00),
+			],
+			net_total=100.00,
+			grand_total=126.00,
+			rounded_total=126.00,
+		)
+
+	def test_the_line_finds_the_account_that_is_a_tax_treatment(self):
+		document = canonical(self.build(), Masters({"VAT 5%": STANDARD}))
+		self.assertEqual(document["lines"][0]["tax_category"], "S")
+		self.assertEqual(document["lines"][0]["tax_rate"], D("5.00"))
+
+	def test_the_invoice_still_has_a_tax_breakdown(self):
+		document = canonical(self.build(), Masters({"VAT 5%": STANDARD}))
+		self.assertEqual(len(document["tax_breakdown"]), 1)
+		self.assertEqual(document["tax_breakdown"][0]["taxable_amount"], D("120.00"))
+		self.assertEqual(document["tax_breakdown"][0]["tax_amount"], D("6.00"))
+
+	def test_the_line_carries_the_tax_that_was_posted_to_it(self):
+		# Read, not worked out. The freight row put 20 against this line and
+		# only the VAT row's 6 is tax.
+		document = canonical(self.build(), Masters({"VAT 5%": STANDARD}))
+		self.assertEqual(document["lines"][0]["tax_amount"], D("6.00"))
+
+	def test_everything_adds_up(self):
+		document = canonical(self.build(), Masters({"VAT 5%": STANDARD}))
+		self.assertEqual(codes(check(document)), [])
 
 
 class WhatTheChecksSayAboutTheseDocuments(unittest.TestCase):
