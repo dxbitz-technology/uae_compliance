@@ -1,0 +1,248 @@
+"""Turning a supplier's invoice into something in the books.
+
+Deliberately two steps. First say what would happen, so a person can look at
+it. Then, if they are happy, make a draft. Never a submitted document,
+because posting somebody else's claim without anybody reading it is the
+thing this whole approach exists to avoid.
+
+Nothing is invented on the way. A supplier that does not exist is not
+created, an item that matches nothing is not made up, and a tax the mapping
+does not cover is reported rather than guessed. Where something cannot be
+matched, the answer is to say so and stop.
+"""
+
+from __future__ import annotations
+
+import frappe
+from frappe import _
+from frappe.utils import flt
+
+INBOUND_DOCTYPE = "UAE Peppol Inbound"
+BINDING_DOCTYPE = "UAE Peppol Seller Company"
+SELLER_DOCTYPE = "UAE Peppol Seller Profile"
+TAX_CATEGORY_DOCTYPE = "UAE Peppol Tax Category"
+
+
+@frappe.whitelist()
+def plan(inbound: str) -> dict:
+	"""What entering this document would produce, and what stands in the way.
+
+	Read only. Nothing is created and nothing is changed by asking.
+	"""
+	doc = frappe.get_doc(INBOUND_DOCTYPE, inbound)
+	doc.check_permission("read")
+
+	blocks = []
+	if doc.purchase_invoice:
+		blocks.append(_("This has already been entered as {0}.").format(doc.purchase_invoice))
+	if not doc.supplier:
+		blocks.append(_("No supplier matches the sender, so there is nobody to owe."))
+	if not doc.company:
+		blocks.append(_("It is not clear which company this was sent to."))
+	if doc.environment and doc.environment != "Production":
+		blocks.append(
+			_("This arrived through a {0} connection and cannot become a real purchase.").format(
+				doc.environment.lower()
+			)
+		)
+
+	rows = _lines_of(doc)
+	fallback = _fallback(doc.company) if doc.company else {}
+	matched, unmatched = _match_lines(rows, doc.supplier, fallback)
+	taxes, missing_tax = _match_taxes(rows, doc.company)
+
+	if unmatched:
+		blocks.append(
+			_("{0} lines match nothing of ours and no fallback item is set.").format(len(unmatched))
+		)
+	for category, rate in missing_tax:
+		blocks.append(_("No tax mapping covers category {0} at {1} percent.").format(category, rate))
+
+	return {
+		"inbound": doc.name,
+		"supplier": doc.supplier,
+		"company": doc.company,
+		"their_number": doc.document_number,
+		"currency": doc.currency,
+		"payable": doc.payable,
+		"lines": matched,
+		"unmatched": unmatched,
+		"taxes": taxes,
+		"blocks": blocks,
+		"can_enter": not blocks,
+	}
+
+
+@frappe.whitelist()
+def create_draft(inbound: str) -> str:
+	"""Make the draft purchase invoice. A person submits it, not this.
+
+	Everything is checked again here rather than trusting what the plan said,
+	because the plan was a moment ago and this is now.
+	"""
+	doc = frappe.get_doc(INBOUND_DOCTYPE, inbound)
+	doc.check_permission("write")
+
+	found = plan(inbound)
+	if not found["can_enter"]:
+		frappe.throw("<br>".join(found["blocks"]), title=_("Cannot enter this yet"))
+
+	invoice = frappe.new_doc("Purchase Invoice")
+	invoice.company = doc.company
+	invoice.supplier = doc.supplier
+	invoice.currency = doc.currency
+	# Their number and their date, kept as theirs. ERPNext gives these their
+	# own fields precisely so the supplier's document stays identifiable.
+	invoice.bill_no = doc.document_number
+	invoice.bill_date = doc.issue_date
+	invoice.posting_date = frappe.utils.nowdate()
+	invoice.set_posting_time = 0
+
+	cost_center = frappe.db.get_value("Cost Center", {"company": doc.company, "is_group": 0}, "name")
+	for row in found["lines"]:
+		invoice.append(
+			"items",
+			{
+				"item_code": row["item_code"],
+				"item_name": row["name"][:140] if row["name"] else None,
+				"description": row["description"] or row["name"],
+				"qty": flt(row["quantity"]),
+				"uom": _our_uom(row.get("uom_code"), row["item_code"]),
+				"rate": flt(row["net_price"]),
+				"expense_account": row["expense_account"],
+				"cost_center": cost_center,
+			},
+		)
+
+	for tax in found["taxes"]:
+		invoice.append(
+			"taxes",
+			{
+				"charge_type": "On Net Total",
+				"account_head": tax["account_head"],
+				"description": tax["description"],
+				"rate": flt(tax["rate"]),
+				"category": "Total",
+			},
+		)
+
+	invoice.insert(ignore_permissions=True)
+	frappe.db.set_value(
+		INBOUND_DOCTYPE,
+		doc.name,
+		{"purchase_invoice": invoice.name, "state": "Accepted"},
+		update_modified=False,
+	)
+	return invoice.name
+
+
+def _our_uom(code: str | None, item_code: str) -> str | None:
+	"""Their unit code, turned back into one of ours.
+
+	The same native field the selling side reads, used the other way. Where
+	no unit carries that code, the item's own stock unit answers, because
+	refusing a whole invoice over a unit nobody has mapped helps nobody.
+	"""
+	if code:
+		found = frappe.db.get_value("UOM", {"common_code": code}, "name")
+		if found:
+			return found
+	return frappe.db.get_value("Item", item_code, "stock_uom")
+
+
+def _lines_of(doc) -> list[dict]:
+	"""Read the lines back out of the document we kept."""
+	from uae_compliance.validation.reader import lines
+
+	if not doc.payload_file:
+		return []
+	content = frappe.get_doc("File", doc.payload_file).get_content()
+	if isinstance(content, str):
+		content = content.encode("utf-8")
+	return lines(content)
+
+
+def _fallback(company: str) -> dict:
+	row = frappe.db.get_value(
+		BINDING_DOCTYPE,
+		{"company": company, "parenttype": SELLER_DOCTYPE},
+		["inbound_item", "inbound_expense_account"],
+		as_dict=True,
+	)
+	return dict(row or {})
+
+
+def _match_lines(rows: list[dict], supplier: str | None, fallback: dict):
+	"""Line by line, ours or nothing.
+
+	A supplier's part number is the strongest signal, because somebody has
+	already said it means this item. An exact item code is the next best. A
+	name is never a match: two things called Bracket are not the same thing.
+	"""
+	matched, unmatched = [], []
+	for row in rows:
+		item = _find_item(row["their_code"], supplier)
+		if item:
+			matched.append({**row, "item_code": item, "expense_account": None, "matched_on": "our records"})
+			continue
+		if fallback.get("inbound_item"):
+			matched.append(
+				{
+					**row,
+					"item_code": fallback["inbound_item"],
+					"expense_account": fallback.get("inbound_expense_account"),
+					"matched_on": "the fallback item",
+				}
+			)
+			continue
+		unmatched.append(row)
+	return matched, unmatched
+
+
+def _find_item(their_code: str | None, supplier: str | None) -> str | None:
+	if not their_code:
+		return None
+	if supplier:
+		found = frappe.db.get_value(
+			"Item Supplier",
+			{"supplier": supplier, "supplier_part_no": their_code, "parenttype": "Item"},
+			"parent",
+		)
+		if found:
+			return found
+	return frappe.db.get_value("Item", {"item_code": their_code}, "name")
+
+
+def _match_taxes(rows: list[dict], company: str | None):
+	"""Which of our accounts each tax on their document belongs to.
+
+	The same mapping the selling side uses, read the other way. A category
+	and rate we have never mapped is reported rather than posted to
+	something plausible.
+	"""
+	if not company:
+		return [], []
+
+	wanted = {}
+	for row in rows:
+		category = row.get("tax_category")
+		rate = row.get("tax_rate")
+		if category and rate is not None:
+			wanted[(category, str(rate))] = flt(rate)
+
+	taxes, missing = [], []
+	for (category, rate_text), rate in wanted.items():
+		account = frappe.db.get_value(
+			TAX_CATEGORY_DOCTYPE, {"company": company, "category": category, "rate": rate}, "account_head"
+		)
+		if not account:
+			missing.append((category, rate_text))
+			continue
+		taxes.append(
+			{
+				"account_head": account,
+				"rate": rate,
+				"description": _("{0} at {1} percent").format(category, rate_text),
+			}
+		)
+	return taxes, missing

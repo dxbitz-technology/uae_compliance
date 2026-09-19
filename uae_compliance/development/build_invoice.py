@@ -18,6 +18,11 @@ at anything real.
 import frappe
 
 COMPANY = "Peppol Demo Co"
+BUYING_COMPANY = "Peppol Buying Demo"
+BUYING_ABBR = "PBD"
+# The tax number the published example invoices are addressed to, so a
+# document seeded into the simulator inbox finds a company here.
+BUYING_TAX_ID = "134567890123003"
 ABBR = "PDC"
 ITEM = "PEPPOL-DEMO-001"
 CUSTOMER = "Gulf Trading LLC"
@@ -258,3 +263,78 @@ def _invoice(company, customer, buyer_address, seller_address, item, vat_account
 	invoice.calculate_taxes_and_totals()
 	invoice.insert(ignore_permissions=True)
 	return invoice.name
+
+
+def set_up_buying():
+	"""Prepare a company that can take in a supplier's invoice.
+
+	Its own company on purpose. UAE Peppol Test Company belongs to the site
+	tests, and taking it makes them fail in ways that look unrelated.
+	"""
+	if not frappe.db.exists("Company", BUYING_COMPANY):
+		frappe.get_doc(
+			{
+				"doctype": "Company",
+				"company_name": BUYING_COMPANY,
+				"abbr": BUYING_ABBR,
+				"default_currency": "AED",
+				"country": "United Arab Emirates",
+				"tax_id": BUYING_TAX_ID,
+			}
+		).insert(ignore_permissions=True)
+
+	# The sender of one of the published examples, so it matches something.
+	if not frappe.db.exists("Supplier", "Seller Legal Name"):
+		frappe.get_doc(
+			{
+				"doctype": "Supplier",
+				"supplier_name": "Seller Legal Name",
+				"supplier_type": "Company",
+				"tax_id": "198765432102003",
+			}
+		).insert(ignore_permissions=True)
+
+	item = "INBOUND-UNMATCHED"
+	if not frappe.db.exists("Item", item):
+		frappe.get_doc(
+			{
+				"doctype": "Item",
+				"item_code": item,
+				"item_name": "Supplier line, not yet matched",
+				"item_group": frappe.get_all("Item Group", filters={"is_group": 0}, pluck="name")[0],
+				"stock_uom": "Nos",
+				"is_stock_item": 0,
+			}
+		).insert(ignore_permissions=True)
+
+	expense = frappe.db.get_value(
+		"Account", {"company": BUYING_COMPANY, "root_type": "Expense", "is_group": 0}, "name"
+	)
+	vat = _vat_account(BUYING_COMPANY)
+	if not frappe.db.exists("UAE Peppol Tax Category", {"company": BUYING_COMPANY, "account_head": vat}):
+		frappe.get_doc(
+			{
+				"doctype": "UAE Peppol Tax Category",
+				"company": BUYING_COMPANY,
+				"account_head": vat,
+				"category": "S",
+				"rate": 5,
+			}
+		).insert(ignore_permissions=True)
+
+	if not frappe.db.exists("UAE Peppol Seller Profile", {"label": "Peppol Buying Demo"}):
+		profile = frappe.get_doc({"doctype": "UAE Peppol Seller Profile", "label": "Peppol Buying Demo"})
+		profile.append(
+			"companies",
+			{
+				"company": BUYING_COMPANY,
+				"mode": "Preparation",
+				"inbound_item": item,
+				"inbound_expense_account": expense,
+			},
+		)
+		profile.insert(ignore_permissions=True)
+
+	frappe.db.commit()
+	print(f"buying set up on {BUYING_COMPANY}")
+	return BUYING_COMPANY

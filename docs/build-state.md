@@ -369,8 +369,16 @@ inbox, the adapter reads a page of it with a cursor, and arrived documents
 land as their own records, parsed, matched where they can be matched and
 deduplicated.
 
-Not done: turning one into a Purchase Invoice. That needs item matching and
-tax mapping in reverse, and it is where the care belongs.
+Turning one into a Purchase Invoice is done, in two steps and never one.
+The first says what would happen and what stands in the way. The second
+makes a draft, which a person submits. Never a submitted document, because
+posting somebody else's claim without anybody reading it is what this whole
+approach exists to avoid.
+
+Checked against a published example invoice: the draft came out at net 1000,
+tax 50, total 1050, which is what their document said it was owed. Entering
+it a second time is refused, naming what it became the first time. The one
+whose sender matches nothing is refused and says so.
 
 Nothing arriving becomes a purchase on its own. No supplier is created, no
 item is invented, nothing posts. A sender is matched by tax number or by the

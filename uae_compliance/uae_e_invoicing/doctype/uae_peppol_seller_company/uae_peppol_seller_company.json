@@ -10,7 +10,10 @@
   "mode",
   "effective_from",
   "review_required",
-  "default_address"
+  "default_address",
+  "section_break_buying",
+  "inbound_item",
+  "inbound_expense_account"
  ],
  "fields": [
   {
@@ -52,6 +55,25 @@
    "options": "Address",
    "label": "Default Address",
    "description": "Used when an invoice names no address of its own."
+  },
+  {
+   "fieldname": "section_break_buying",
+   "fieldtype": "Section Break",
+   "label": "When A Supplier Invoice Arrives"
+  },
+  {
+   "fieldname": "inbound_item",
+   "fieldtype": "Link",
+   "options": "Item",
+   "label": "Item For Lines We Cannot Match",
+   "description": "Optional. Where a supplier's line matches nothing of ours, it goes against this item rather than one being invented. Leave blank to have unmatched lines stop the entry instead."
+  },
+  {
+   "fieldname": "inbound_expense_account",
+   "fieldtype": "Link",
+   "options": "Account",
+   "label": "Expense Account",
+   "description": "Used for lines entered against the item above."
   }
  ],
  "links": [],

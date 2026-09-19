@@ -92,6 +92,15 @@ another company's invoices, and `get_all` would hand them over.
 The workers use `get_all` on purpose. A scheduled job has no session to
 check against and has already worked out what it is allowed to touch.
 
+## Companies on the development site
+
+`UAE Peppol Test Company` belongs to the site tests. Taking it, or binding it
+to a seller profile, makes those tests fail in ways that look unrelated to
+whatever you were doing.
+
+The demo builders use their own: `Peppol Demo Co` for selling and
+`Peppol Buying Demo` for receiving.
+
 ## Branching
 
 Fetch immediately before branching. `git fetch origin && git checkout -B <name> origin/develop`.
