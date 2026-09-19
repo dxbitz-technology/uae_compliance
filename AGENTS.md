@@ -14,6 +14,7 @@ Read `docs/build-state.md` first. It names the current phase, the packet in hand
 | `docs/capacity.md` | What was measured, on what machine, and what was not. |
 | `docs/what-works.md` | What this release supports. Generated, never edited by hand. |
 | `docs/acceptance.md` | Which acceptance cases have tests, which do not, and why. |
+| `docs/review-2026-09-19.md` | Phase by phase review of the build, with the open questions. |
 | `docs/standards-lock.json` | The pinned official files with their checksums and the last run results. |
 | `uae_compliance/standards/NOTICES.md` | Where the official files came from and under what terms. |
 
