@@ -545,13 +545,15 @@ class RoundingAndPrecision(unittest.TestCase):
 		self.assertEqual(document["totals"]["tax_inclusive"], D("105.131"))
 		self.assertEqual(check(document), [])
 
-	def test_three_items_at_100_with_the_tax_inside_the_price_cannot_be_stated(self):
+	def test_three_items_at_100_with_the_tax_inside_the_price_states_the_fils(self):
 		# Three at 100 including tax. The controller divides 300 by 1.05 to
-		# get a net amount of 285.71, then divides that by three units to get
-		# a net rate of 95.24. Three at 95.24 is 285.72, so the line amount
-		# and the price do not multiply out and ibr-147-ae refuses the
-		# document. The mapping has no way to state this line, and the check
-		# says so here with the figures on it.
+		# get a net amount of 285.71, then divides that by three units to
+		# get a net rate of 95.24. Three at 95.24 is 285.72.
+		#
+		# This used to refuse an ordinary invoice with nothing anybody could
+		# change about it. The fils is stated as a line allowance now, which
+		# is what the rule's own arithmetic makes room for, so the amount
+		# and the price multiply out and the figures stay as posted.
 		source = invoice(
 			items=[item("r1", qty=3, rate=100, net_rate=95.24, net_amount=285.71)],
 			taxes=[tax("t1", account="VAT 5%", amount=14.29, inclusive=1)],
@@ -563,9 +565,27 @@ class RoundingAndPrecision(unittest.TestCase):
 		document = canonical(source, Masters({"VAT 5%": STANDARD}))
 		self.assertEqual(document["lines"][0]["net_price"], D("95.24"))
 		self.assertEqual(document["lines"][0]["net_amount"], D("285.71"))
-		found = check_lines(document)
-		self.assertEqual(codes(found), [CODE_LINE_NET])
-		self.assertEqual(found[0].params, {"stated": "285.71", "expected": "285.72"})
+		# One fils, taken off, carrying the line's own treatment.
+		allowance = document["lines"][0]["allowances"][0]
+		self.assertEqual(allowance["amount"], D("0.01"))
+		self.assertEqual(allowance["tax_category"], "S")
+		self.assertEqual(check_lines(document), [])
+
+	def test_a_line_that_disagrees_by_more_than_rounding_is_still_reported(self):
+		# The fils is only ever the fils. A row with an amount and no
+		# quantity disagrees by the whole amount, and stating that as an
+		# adjustment would hide the thing the check exists to find.
+		source = invoice(
+			items=[item("r1", qty=0, rate=100, net_rate=100.00, net_amount=100.00)],
+			taxes=[tax("t1", account="VAT 5%", amount=5.00)],
+			details=[detail("r1", "t1", rate=5, amount=5.00, taxable=100.00)],
+			net_total=100.00,
+			grand_total=105.00,
+			rounded_total=105.00,
+		)
+		document = canonical(source, Masters({"VAT 5%": STANDARD}))
+		self.assertEqual(document["lines"][0].get("allowances"), None)
+		self.assertEqual(codes(check_lines(document)), [CODE_LINE_NET])
 
 	def test_a_discount_taken_off_twice_is_reported(self):
 		# Two units at a net price of 90 is 180. A line stating 160 has had

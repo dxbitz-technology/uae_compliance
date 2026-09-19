@@ -49,11 +49,21 @@ def _submissions_of(invoice_name: str):
 
 
 def _check(row):
-	if row.processing_state in ("Complete", "Superseded"):
+	if row.processing_state == "Complete":
 		frappe.throw(
 			_("This invoice has already been sent and settled. Issue a credit note instead."),
 			title=_("Already sent"),
 		)
+
+	if row.processing_state == "Superseded":
+		# Superseded says a revision was replaced. It says nothing about
+		# whether that revision ever left, and treating it as settled made
+		# correcting an invoice the thing that stopped it ever being
+		# cancelled. It is judged below on the same evidence as any other:
+		# what the provider received, what was delivered, what was
+		# reported, and whether a request is still out.
+		_check_it_never_left(row)
+		return
 
 	if row.processing_state in IN_FLIGHT:
 		frappe.throw(
@@ -87,6 +97,33 @@ def _check(row):
 		)
 
 	_stop(row.name)
+
+
+def _check_it_never_left(row):
+	"""Whether a replaced revision is still in the way.
+
+	One that went nowhere is not. One the provider took, or that is still
+	out, is, and a credit note is then the way to change it.
+	"""
+	if _pending_attempt(row.name):
+		frappe.throw(
+			_(
+				"A request went out for an earlier version of this invoice and has not come back. It has to be reconciled before anything else."
+			),
+			title=_("Outcome unknown"),
+		)
+
+	if (
+		row.asp_receipt in WITH_THE_PROVIDER
+		or row.exchange_state == "Delivered"
+		or row.reporting_state == "Accepted"
+	):
+		frappe.throw(
+			_(
+				"An earlier version of this invoice reached the other side. Issue a credit note instead of cancelling it."
+			),
+			title=_("Already delivered"),
+		)
 
 
 def _pending_attempt(submission: str) -> bool:
