@@ -61,6 +61,14 @@ def send_one(submission: str) -> bool:
 		frappe.db.commit()
 		return False
 
+	from uae_compliance.services.deployment import may_send
+
+	allowed, why = may_send(connection.environment.value)
+	if not allowed:
+		outbox.release(submission, "Stopped", why)
+		frappe.db.commit()
+		return False
+
 	request = _business_request(submission)
 	attempt = outbox.start_attempt(submission, Operation.SUBMIT.value, token, request.digest)
 

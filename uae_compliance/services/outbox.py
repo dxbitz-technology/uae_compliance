@@ -58,6 +58,14 @@ def due(limit: int = 20) -> list[str]:
 	if stopped:
 		return []
 
+	# A restored copy of this site must not send anything, and it will not
+	# know it is a copy unless something asks.
+	from uae_compliance.services.deployment import check_environment
+
+	allowed, _why = check_environment()
+	if not allowed:
+		return []
+
 	now = now_datetime()
 	rows = frappe.get_all(
 		SUBMISSION_DOCTYPE,
