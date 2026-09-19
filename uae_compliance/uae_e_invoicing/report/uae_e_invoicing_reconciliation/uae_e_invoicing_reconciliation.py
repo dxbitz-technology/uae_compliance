@@ -71,8 +71,8 @@ def submitted_with_nothing_watching(company):
 	if not companies:
 		return []
 
-	watched = set(frappe.get_all("UAE Peppol Invoice", pluck="sales_invoice"))
-	rows = frappe.get_all(
+	watched = set(frappe.get_list("UAE Peppol Invoice", pluck="sales_invoice"))
+	rows = frappe.get_list(
 		"Sales Invoice",
 		filters={"docstatus": 1, "company": ["in", companies]},
 		fields=["name", "company", "posting_date", "modified"],
@@ -97,7 +97,7 @@ def submitted_with_nothing_watching(company):
 
 def unapproved(company):
 	cutoff = add_to_date(now_datetime(), minutes=-QUIET_MINUTES)
-	rows = frappe.get_all(
+	rows = frappe.get_list(
 		"UAE Peppol Submission",
 		filters=_with_company({"processing_state": "Awaiting review", "modified": ["<", cutoff]}, company),
 		fields=["name", "company", "document_number", "modified"],
@@ -117,7 +117,7 @@ def unapproved(company):
 
 
 def attempts_that_never_came_back(company):
-	rows = frappe.get_all(
+	rows = frappe.get_list(
 		"UAE Peppol Transmission Log",
 		filters=_with_company({"state": "Pending"}, company),
 		fields=["attempt_id", "company", "submission", "operation", "started_at"],
@@ -139,7 +139,7 @@ def attempts_that_never_came_back(company):
 
 
 def outcomes_nobody_knows(company):
-	rows = frappe.get_all(
+	rows = frappe.get_list(
 		"UAE Peppol Submission",
 		filters=_with_company({"processing_state": ["in", ["Unknown", "Attention required"]]}, company),
 		fields=["name", "company", "document_number", "processing_state", "attention_reason", "modified"],
@@ -161,7 +161,7 @@ def outcomes_nobody_knows(company):
 
 def missing_evidence(company):
 	"""Delivered and reported, but we are not holding what proves it."""
-	rows = frappe.get_all(
+	rows = frappe.get_list(
 		"UAE Peppol Submission",
 		filters=_with_company(
 			{"evidence_state": ["in", ["Pending", "Unavailable", "Invalid"]], "asp_receipt": "Received"},
@@ -187,7 +187,7 @@ def missing_evidence(company):
 
 def stale_drafts(company):
 	"""Checked once, then something underneath it moved."""
-	rows = frappe.get_all(
+	rows = frappe.get_list(
 		"UAE Peppol Invoice",
 		filters=_with_company({"readiness": "Stale"}, company),
 		fields=["sales_invoice", "company", "modified"],
@@ -210,7 +210,7 @@ def _live_companies(company):
 	filters = {"parenttype": "UAE Peppol Seller Profile", "mode": ["in", ["Preparation", "Live"]]}
 	if company:
 		filters["company"] = company
-	return frappe.get_all("UAE Peppol Seller Company", filters=filters, pluck="company")
+	return frappe.get_list("UAE Peppol Seller Company", filters=filters, pluck="company")
 
 
 def _with_company(filters: dict, company) -> dict:

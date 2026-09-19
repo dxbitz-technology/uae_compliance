@@ -293,6 +293,12 @@ scheduler_events = {
 # record beside each draft and never writes back to the invoice, which would
 # put the save into a loop.
 doc_events = {
+	# Evidence is the only thing tying a document that left this system to
+	# the record of it. Bytes that can be swapped are not evidence.
+	"File": {
+		"validate": "uae_compliance.services.evidence.guard_file",
+		"on_trash": "uae_compliance.services.evidence.guard_file_delete",
+	},
 	"Sales Invoice": {
 		"on_update": "uae_compliance.services.working.on_invoice_update",
 		"before_cancel": "uae_compliance.services.cancellation.before_invoice_cancel",
@@ -302,7 +308,7 @@ doc_events = {
 			"uae_compliance.services.freeze.on_invoice_submit",
 			"uae_compliance.services.gate.after_invoice_submit",
 		],
-	}
+	},
 }
 
 # Only what this app owns. Never another app's fields, roles or scripts.

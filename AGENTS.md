@@ -78,6 +78,19 @@ bench --site uae.local console
 It uses its own company, so it does not collide with the site tests. Safe to
 run again.
 
+## Reading lists
+
+`frappe.get_all` does not check permissions and `frappe.get_list` does. That
+is the framework's own design, not an oversight, and both are correct in
+different places.
+
+Anything a person reads uses `get_list`: the reports and the whitelisted
+methods. A restricted user asking for a readiness report must not be handed
+another company's invoices, and `get_all` would hand them over.
+
+The workers use `get_all` on purpose. A scheduled job has no session to
+check against and has already worked out what it is allowed to touch.
+
 ## Ground rules
 
 Evidence before claims. Check a framework detail in the pinned source and cite the file and line rather than trusting memory. Label what you record as Verified, Proposed, or Unresolved.

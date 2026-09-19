@@ -270,7 +270,21 @@ State: In progress.
 Requirement IDs: spec 7.4 the two reports, 11.3 recovery and what to watch, 12.2 P07, acceptance A19 and A22.
 
 - P07a: the reports, the alerts and pause and resume. Done.
-- P07b: private downloads, redaction, and the hostile input and cross company checks.
+- P07b: private downloads, redaction, and the cross company checks. Done.
+
+The framework already ties a private file to whatever it is attached to, so
+reading a submission's evidence needs permission on that submission. What it
+did not stop was somebody turning a private file public, or swapping the
+bytes under a hash that is supposed to prove what was sent. Both are refused
+now, and so is deleting evidence.
+
+The check that mattered found a real leak. A restricted user could list
+submissions and attempt records belonging to a company they had no
+permission for. `frappe.get_all` does not check permissions and
+`frappe.get_list` does, which is the framework's own design, and the reports
+were using the first. They use the second now, and the same user gets no
+rows. The workers still use `get_all` on purpose, which is written down in
+AGENTS.md so it is not tidied away later.
 - P07c: upgrade, restore, provider change and clone safeguards.
 
 Two reports. Readiness carries the reason across in its last column, so
