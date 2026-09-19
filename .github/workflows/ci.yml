@@ -60,3 +60,6 @@ jobs:
 
       - name: Determinism
         run: python scripts/standards/validate_examples.py --determinism
+
+      - name: Published capabilities
+        run: python scripts/capabilities.py
