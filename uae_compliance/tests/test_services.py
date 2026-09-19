@@ -6,14 +6,46 @@ stops a restored copy of a site from sending. Each one either writes to
 somebody's books or decides whether real invoices go out.
 """
 
+import json
 import os
 import pathlib
+import tempfile
+import types
 from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
 
 from uae_compliance.development.fixtures import a_company, a_seller, an_invoice
+
+
+def _key_names(path) -> list[str]:
+	"""The key names in a configuration file, and never the values.
+
+	A helper rather than a few lines in the test, so the parsed file lives
+	in a frame that is gone before any assertion can fail and print it.
+	"""
+	return sorted(json.loads(pathlib.Path(path).read_text()))
+
+
+def _copy_site_config(folder: str) -> str:
+	"""What a backup taken with the configuration would contain."""
+	from frappe.utils.backups import BackupGenerator
+
+	copied = os.path.join(folder, "site_config.json")
+	BackupGenerator.copy_site_config(types.SimpleNamespace(backup_path_conf=copied))
+	return copied
+
+
+def _backed_up_keys() -> list[str]:
+	with tempfile.TemporaryDirectory() as folder:
+		return _key_names(_copy_site_config(folder))
+
+
+def _backed_up_value(key: str):
+	"""One value out of the copy, for a key we put there ourselves."""
+	with tempfile.TemporaryDirectory() as folder:
+		return json.loads(pathlib.Path(_copy_site_config(folder)).read_text()).get(key)
 
 
 class A07CreatingAParty(IntegrationTestCase):
@@ -268,45 +300,34 @@ class A22StoppingARestoredCopy(IntegrationTestCase):
 		"""The unpleasant half of the truth, written down so it stays written.
 
 		A database only restore leaves the configuration behind. A backup
-		taken with the configuration does not: it is a verbatim copy of
-		site_config.json, so this key travels in it, and so do the
-		encryption key and the database password. What stops a restored
-		copy sending is the other two guards below, not this key going
-		missing. Treat such a backup as you would the passwords in it.
+		taken with the configuration does not: it copies site_config.json
+		verbatim, so this key travels in it, and so do the encryption key
+		and the database password. What stops a restored copy sending is
+		the site name in the key and the machine fingerprint, tested below,
+		not this key going missing. Treat such a backup as you would the
+		passwords inside it.
+
+		Nothing here holds a configuration value in a local. Frappe prints
+		every local in a traceback, so a failing assertion on the parsed
+		file would put the site's secrets in the test output.
 		"""
-		import json
-		import tempfile
-		import types
-
-		from frappe.utils.backups import BackupGenerator
-
-		with tempfile.TemporaryDirectory() as folder:
-			copied = os.path.join(folder, "site_config.json")
-			BackupGenerator.copy_site_config(types.SimpleNamespace(backup_path_conf=copied))
-			with open(copied) as handle:
-				backed_up = json.load(handle)
-
-		live = json.loads(pathlib.Path(frappe.get_site_path(), "site_config.json").read_text())
-		# Nothing is filtered on the way in. Key names only, never values.
-		self.assertEqual(sorted(backed_up), sorted(live))
-		for sensitive in ("db_password", "encryption_key"):
-			self.assertIn(sensitive, backed_up, "the configuration backup stopped carrying secrets")
-
-		# And the key itself, set and then taken off again, because a copy
-		# of the file is only interesting if this is what is in it.
 		from frappe.installer import update_site_config
 
+		live = pathlib.Path(frappe.get_site_path(), "site_config.json")
+
+		# Nothing is filtered on the way in.
+		self.assertEqual(_backed_up_keys(), _key_names(live))
+		for sensitive in ("db_password", "encryption_key"):
+			self.assertIn(sensitive, _backed_up_keys(), "the configuration backup stopped carrying secrets")
+
+		# And the key itself, set and then taken off again, because a copy
+		# of the file only says something if this is what is in it.
 		self.addCleanup(frappe.conf.pop, self.deployment.CONFIG_KEY, None)
 		self.addCleanup(update_site_config, self.deployment.CONFIG_KEY, "None")
 		update_site_config(self.deployment.CONFIG_KEY, frappe.local.site)
 
-		with tempfile.TemporaryDirectory() as folder:
-			copied = os.path.join(folder, "site_config.json")
-			BackupGenerator.copy_site_config(types.SimpleNamespace(backup_path_conf=copied))
-			with open(copied) as handle:
-				granted = json.load(handle)
-
-		self.assertEqual(granted.get(self.deployment.CONFIG_KEY), frappe.local.site)
+		self.assertIn(self.deployment.CONFIG_KEY, _backed_up_keys())
+		self.assertEqual(_backed_up_value(self.deployment.CONFIG_KEY), frappe.local.site)
 
 	def test_a_key_granted_for_another_site_does_not_work_here(self):
 		frappe.conf[self.deployment.CONFIG_KEY] = "somebody-elses-site.com"

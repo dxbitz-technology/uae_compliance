@@ -9,6 +9,8 @@ site happens to hold is not a test of anything, and taking a company another
 test owns makes that one fail somewhere unrelated.
 """
 
+import datetime
+
 import frappe
 
 COMPANY = "Acceptance Test Co"
@@ -16,8 +18,49 @@ ABBR = "ATC"
 CUSTOMER = "Acceptance Buyer LLC"
 ITEM = "ACCEPTANCE-ITEM-1"
 
+# Fixed on purpose, so the same fixture produces the same document every run
+# and the hashes in the freeze tests do not move. The fiscal year below is
+# built around it rather than around whatever today happens to be.
+POSTING_DATE = "2026-09-19"
+DUE_DATE = "2026-10-19"
+
+
+def a_fiscal_year(on=None):
+	"""A fiscal year covering a date, because otherwise nothing can be posted.
+
+	ERPNext refuses a posting date outside an active fiscal year, and a fresh
+	test site holds only the years its defaults happened to create. Without
+	this, every invoice test fails the day the calendar walks past them, and
+	the failure says nothing about this app.
+
+	Covers the fixture posting date and today, which are usually but not
+	always the same year.
+	"""
+	wanted = frappe.utils.getdate(on or POSTING_DATE)
+	covering = frappe.db.exists(
+		"Fiscal Year",
+		{"year_start_date": ["<=", wanted], "year_end_date": [">=", wanted], "disabled": 0},
+	)
+	if covering:
+		return covering
+
+	year = frappe.get_doc(
+		{
+			"doctype": "Fiscal Year",
+			"year": str(wanted.year),
+			"year_start_date": datetime.date(wanted.year, 1, 1),
+			"year_end_date": datetime.date(wanted.year, 12, 31),
+		}
+	)
+	year.flags.ignore_permissions = True
+	year.insert(ignore_permissions=True, ignore_if_duplicate=True)
+	frappe.db.commit()
+	return year.name
+
 
 def a_company() -> str:
+	a_fiscal_year()
+	a_fiscal_year(frappe.utils.nowdate())
 	if not frappe.db.exists("Company", COMPANY):
 		frappe.get_doc(
 			{
@@ -133,8 +176,8 @@ def an_invoice(**values):
 			"company_address": an_address("ATC Office", "Company", company),
 			"currency": "AED",
 			"conversion_rate": 1,
-			"posting_date": "2026-09-19",
-			"due_date": "2026-10-19",
+			"posting_date": POSTING_DATE,
+			"due_date": DUE_DATE,
 			"items": [
 				{
 					"item_code": an_item(),
