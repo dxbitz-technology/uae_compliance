@@ -24,6 +24,12 @@ def tax_by_row(invoice) -> dict[str, list[dict]]:
 	Amounts in this table are in the company's currency. They are used for
 	the split between categories, never as the amount on the document, which
 	comes from the invoice's own currency.
+
+	The saved table is empty while a document is being submitted, because
+	the controller clears it and rebuilds it into a working attribute that
+	is only written out afterwards. Reading a document mid-submit therefore
+	has to look at the working one, or every line comes back with no tax and
+	no category at the exact moment it matters most.
 	"""
 	found: dict[str, list[dict]] = {}
 	for row in invoice.get("item_wise_tax_details") or []:
@@ -33,6 +39,24 @@ def tax_by_row(invoice) -> dict[str, list[dict]]:
 				"rate": row.rate,
 				"amount": row.amount,
 				"taxable_amount": row.taxable_amount,
+			}
+		)
+	if found:
+		return found
+
+	# The working attribute holds the documents themselves rather than their
+	# names, because the names do not exist yet when it is built.
+	for row in getattr(invoice, "_item_wise_tax_details", None) or []:
+		item = getattr(row, "item", None)
+		tax = getattr(row, "tax", None)
+		if not item or not tax:
+			continue
+		found.setdefault(item.name, []).append(
+			{
+				"tax_row": tax.name,
+				"rate": row.get("rate"),
+				"amount": row.get("amount"),
+				"taxable_amount": row.get("taxable_amount"),
 			}
 		)
 	return found
