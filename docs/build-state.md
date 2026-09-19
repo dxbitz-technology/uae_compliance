@@ -452,3 +452,18 @@ evidence record; they do not guard the bytes underneath it.
 - Real tax templates, accounts and currency policy from a client site. Until then the mappings stay incomplete.
 - No Frappe v15 bench on this host, so that lane is unverified. version-15 and version-14 are later work.
 - Evidence bytes that went missing under a File record the app refuses to delete. Found by the integrity checker, cause unknown, demo data only.
+
+## Review fixes, 19 September 2026
+
+The independent review of `develop` at 1e43d75 found 17 defects, one
+Critical. All 17 are fixed on the branch `review-fixes`, one commit per
+finding, each with its regression test. The findings and the fix log live
+outside the repository with the reviewer's records. Highlights: the dirham
+tax total no longer includes non-tax charges and is checked against its
+breakdown; submission state and approvals cannot be moved by generic
+writes; unmatched inbound documents are manager-only; an arrived invoice
+that names our order is entered against it through the mapped path; the
+recomputing money checks carry the official slack (D066); landing and
+seller identity get database uniqueness. All 11 repository checks and the
+564 site tests pass on the branch. Not yet merged; each commit is sized to
+review on its own.
