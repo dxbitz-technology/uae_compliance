@@ -270,6 +270,49 @@ class A11RollingBack(IntegrationTestCase):
 		)
 
 
+class AnInvoiceDraftedBeforeTheCompanyWentLive(IntegrationTestCase):
+	"""A draft saved while the company was off has no working record.
+
+	Submitting it after the switch must not leave it unwatched. The record is
+	made inside the submit transaction, so a refusal further down still takes
+	it away with everything else.
+	"""
+
+	def setUp(self):
+		super().setUp()
+		a_seller("Off")
+		self.invoice = an_invoice()
+		self.addCleanup(a_seller, "Preparation")
+
+	def record(self):
+		return frappe.db.get_value("UAE Peppol Invoice", {"sales_invoice": self.invoice.name}, "name")
+
+	def test_the_freeze_makes_the_missing_record(self):
+		from uae_compliance.services import freeze
+
+		self.assertIsNone(self.record(), "an off company grew a working record on save")
+		a_seller("Live")
+		try:
+			freeze.freeze_on_submit(self.invoice)
+		except frappe.ValidationError:
+			# Live refuses an incomplete invoice, which is its own test. The
+			# record has to exist by then regardless: in a real submit both
+			# live in one transaction and a refusal takes them away together.
+			pass
+		name = self.record()
+		self.assertIsNotNone(name, "the invoice would have submitted with nothing watching it")
+		self.addCleanup(frappe.db.sql, "delete from `tabUAE Peppol Invoice` where name=%s", name)
+
+	def test_made_once_even_when_asked_twice(self):
+		from uae_compliance.services.working import record_for_submission
+
+		a_seller("Live")
+		first = record_for_submission(self.invoice)
+		second = record_for_submission(self.invoice)
+		self.assertEqual(first, second)
+		self.addCleanup(frappe.db.sql, "delete from `tabUAE Peppol Invoice` where name=%s", first)
+
+
 class A22StoppingARestoredCopy(IntegrationTestCase):
 	"""A copy of this site cannot send real invoices."""
 

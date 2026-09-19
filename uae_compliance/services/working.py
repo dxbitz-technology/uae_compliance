@@ -69,6 +69,29 @@ def _create(invoice, mode: Mode) -> str:
 	return doc.name
 
 
+def record_for_submission(invoice) -> str | None:
+	"""The working record for an invoice being submitted, made if missing.
+
+	upsert() leaves submission alone on purpose, so a draft that never saved
+	under a switched on company reaches its submit with no record at all. It
+	happens on real sites: drafts pile up while the company is off, the
+	company goes Live, somebody submits one straight away. This is the last
+	moment a record can be made inside the source transaction, and an in
+	scope invoice submitting unwatched is how one is quietly never sent.
+	"""
+	mode = mode_for(invoice.company)
+	if mode is Mode.OFF:
+		return None
+	existing = frappe.db.get_value(WORKING_DOCTYPE, {"sales_invoice": invoice.name}, "name")
+	if existing:
+		return existing
+	try:
+		return _create(invoice, mode)
+	except frappe.UniqueValidationError, frappe.DuplicateEntryError:
+		# Two submits racing. The database kept one record; use that one.
+		return frappe.db.get_value(WORKING_DOCTYPE, {"sales_invoice": invoice.name}, "name")
+
+
 def _refresh(name: str, invoice, mode: Mode):
 	"""Bring the record's scope up to date without touching what a person put in.
 

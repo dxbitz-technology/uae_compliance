@@ -24,7 +24,7 @@ from uae_compliance.domain.encoding import business_hash, canonical_bytes, paylo
 from uae_compliance.domain.findings import Level
 from uae_compliance.domain.scope import Mode
 from uae_compliance.services import validation
-from uae_compliance.services.working import WORKING_DOCTYPE, mode_for
+from uae_compliance.services.working import WORKING_DOCTYPE, mode_for, record_for_submission
 from uae_compliance.validation.artifacts import PINT_VERSION
 from uae_compliance.validation.serializer import SERIALIZER_VERSION, to_xml
 
@@ -60,6 +60,13 @@ def freeze_on_submit(invoice) -> str | None:
 		return None
 
 	control = frappe.db.get_value(WORKING_DOCTYPE, {"sales_invoice": invoice.name}, "name")
+	if not control:
+		# Drafted while the company was off and submitted after it went Live,
+		# with no save in between. Returning nothing here submitted the
+		# invoice with nobody watching it, and only the reconciliation report
+		# would ever say so. Made now, in the same transaction, so a refusal
+		# further down still takes the record away with it.
+		control = record_for_submission(invoice)
 	if not control:
 		return None
 
