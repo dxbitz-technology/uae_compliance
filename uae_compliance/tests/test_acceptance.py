@@ -382,6 +382,42 @@ class A18Cancellation(IntegrationTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			invoice.cancel()
 
+	def test_a_corrected_invoice_that_never_left_can_still_be_cancelled(self):
+		# Correcting used to make an invoice permanently uncancellable.
+		# Superseded says a revision was replaced, not that it went
+		# anywhere, and one that went nowhere is not in the way.
+		invoice, superseded = self.an_invoice_with_a_submission(
+			processing_state="Superseded", asp_receipt="Not sent"
+		)
+		invoice.cancel()
+		self.assertEqual(invoice.docstatus, 2)
+		self.assertEqual(
+			frappe.db.get_value("UAE Peppol Submission", superseded.name, "processing_state"),
+			"Superseded",
+			"the replaced revision should keep saying it was replaced",
+		)
+
+	def test_a_corrected_invoice_the_provider_took_cannot_be_cancelled(self):
+		# The other half. If the replaced revision reached the other side,
+		# a credit note is the way and not a cancellation.
+		invoice, _superseded = self.an_invoice_with_a_submission(
+			processing_state="Superseded", asp_receipt="Received"
+		)
+		with self.assertRaises(frappe.ValidationError) as refused:
+			invoice.cancel()
+		self.assertIn("reached the other side", str(refused.exception))
+
+	def test_a_corrected_invoice_with_a_request_still_out_cannot_be_cancelled(self):
+		from uae_compliance.services import outbox
+
+		invoice, superseded = self.an_invoice_with_a_submission(processing_state="Superseded")
+		attempt = outbox.start_attempt(superseded.name, "submit", 1, "digest")
+		self.addCleanup(
+			frappe.db.sql, "delete from `tabUAE Peppol Transmission Log` where attempt_id=%s", attempt
+		)
+		with self.assertRaises(frappe.ValidationError):
+			invoice.cancel()
+
 	def test_a_request_with_no_answer_blocks_cancellation(self):
 		from uae_compliance.services import outbox
 

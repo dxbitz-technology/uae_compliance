@@ -13,7 +13,7 @@ belongs to, and say so plainly when it cannot.
 
 from __future__ import annotations
 
-from decimal import Decimal
+from decimal import ROUND_UP, Decimal
 
 from uae_compliance.domain.findings import SourceRef
 from uae_compliance.erpnext import mapping
@@ -141,6 +141,7 @@ def _line(
 		"tax_reason_code": treatment.get("reason_code"),
 	}
 	line.update(_prices(row, scales, invoice))
+	_settle_the_line(line, scales)
 	if row.description and row.description != line["name"]:
 		line["note"] = row.description
 	return line
@@ -173,6 +174,59 @@ def _posted_tax(attributed, accounts, account, scales, credit_note, conversion_r
 			amount = dec(amount / Decimal(str(conversion_rate)), scales.amount)
 		total += amount
 	return flip(total) if credit_note else total
+
+
+def _settle_the_line(line: dict, scales: Scales):
+	"""State the fils that a divided price cannot carry.
+
+	The rule is exact: the line amount must equal the quantity times the
+	unit price, plus line charges, less line allowances. ERPNext works the
+	other way round when tax is inside the price, taking the amount first
+	and dividing to get the unit price, so three items at 100 with five
+	percent inside give a net of 285.71 and a unit price of 95.24. Three of
+	those is 285.72 and the rule fails by a fils.
+
+	Nothing here is wrong. The amount, the price and the quantity are all
+	what was posted, and an ordinary invoice was being refused with nothing
+	anybody could change about it.
+
+	So the difference is stated rather than hidden. The rule's own
+	arithmetic makes room for it, and a reader sees a one fils adjustment
+	with its reason instead of an invoice that will not go.
+	"""
+	price = line.get("net_price")
+	quantity = line.get("quantity")
+	amount = line.get("net_amount")
+	if not all(isinstance(value, Decimal) for value in (price, quantity, amount)):
+		return
+
+	multiplied = dec(price * quantity, scales.amount)
+	difference = dec(amount - multiplied, scales.amount)
+	if not difference:
+		return
+
+	# Only a difference that rounding the unit price could actually have
+	# produced. Rounding a price moves it by at most half a unit, so across
+	# the quantity it can move the line by at most that much again.
+	#
+	# Anything larger is a real disagreement between the amount and the
+	# price, such as a row with an amount and no quantity, and stating it as
+	# an adjustment would hide exactly what the arithmetic check exists to
+	# find.
+	half = Decimal(1).scaleb(-scales.price) / 2
+	allowed = (abs(quantity) * half).quantize(Decimal(1).scaleb(-scales.amount), rounding=ROUND_UP)
+	if abs(difference) > allowed:
+		return
+
+	adjustment = {
+		"amount": abs(difference),
+		"reason": "Rounding on the unit price",
+		"tax_category": line.get("tax_category"),
+		"tax_rate": line.get("tax_rate"),
+	}
+	# More than the price times the quantity is a charge, less is an
+	# allowance. Which way round follows the rule's own formula.
+	line.setdefault("charges" if difference > 0 else "allowances", []).append(adjustment)
 
 
 def _prices(row, scales, invoice) -> dict:

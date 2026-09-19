@@ -536,6 +536,21 @@ How taxes are matched: the same mapping the selling side uses, read the other wa
 How units are matched: the unit whose native code matches theirs, and the item's own stock unit where none does. Refusing a whole invoice over an unmapped unit helps nobody.
 Status: Verified. Checked against a published example invoice: the draft came out at net 1000, tax 50, total 1050, matching what their document said it was owed.
 
+## D062 A replaced revision is judged on what happened to it
+
+Choice: Superseded no longer blocks a cancellation on its own. The replaced revision is judged on the same evidence as any other: what the provider received, what was delivered, what was reported, and whether a request is still out.
+Reason: Superseded says a revision was replaced. It says nothing about whether that revision ever left. Treating it as settled made correcting an invoice the one thing that stopped it ever being cancelled, which is a worse answer than either of the two it was choosing between.
+Consequence: an invoice corrected before anything was sent can be cancelled, and the replaced revision keeps saying it was replaced. One whose earlier version the provider took cannot, and the message says which version.
+Status: Verified. The maintainer asked for this on 19-09-2026.
+
+## D063 The fils a divided price cannot carry is stated
+
+Choice: where the line amount and the unit price do not multiply out, the difference goes on the line as an allowance or a charge with its reason.
+Reason: ibr-147-ae is exact. The line amount must equal the quantity times the unit price, plus line charges, less line allowances. ERPNext works the other way round when tax is inside the price: it takes the amount first and divides to get the unit price. Three items at 100 with five percent inside give a net of 285.71 and a unit price of 95.24, and three of those is 285.72. An ordinary invoice was being refused with nothing anybody could change about it.
+Nothing is altered to make it fit. The amount, the price and the quantity are all what was posted, and the rule's own arithmetic makes room for the difference. A reader sees a one fils adjustment with its reason instead of a document that will not go.
+The bound matters as much as the adjustment: it is only applied where rounding the unit price could actually have produced the difference, which is half a unit of price precision across the quantity. A row with an amount and no quantity disagrees by the whole amount and is still reported, because stating that as an adjustment would hide exactly what the arithmetic check exists to find.
+Status: Verified. The maintainer asked for this on 19-09-2026.
+
 ## Unresolved facts carried from spec 14
 
 | Fact | Owner | Consequence until resolved | Phase |
