@@ -240,7 +240,12 @@ def correct(submission: str, reason: str) -> str:
 
 	from uae_compliance.domain.findings import Level
 	from uae_compliance.services import validation
-	from uae_compliance.services.freeze import create_submission
+	from uae_compliance.services.freeze import create_submission, sending_connection
+
+	# The company's current connection, resolved fresh. A correction is a new
+	# revision, and a new revision goes through whatever the seller sends
+	# through today.
+	connection = sending_connection(invoice.company)
 
 	result = validation.check(invoice, Level.FULL)
 	if result.errors:
@@ -248,8 +253,8 @@ def correct(submission: str, reason: str) -> str:
 
 	from uae_compliance.erpnext.extract import extract
 
-	document, _findings = extract(invoice)
-	new_name = create_submission(invoice, old.control, document, result)
+	document, _findings = extract(invoice, environment=connection.environment)
+	new_name = create_submission(invoice, old.control, document, result, connection)
 
 	frappe.db.set_value(SUBMISSION_DOCTYPE, new_name, "predecessor", submission, update_modified=False)
 	return new_name

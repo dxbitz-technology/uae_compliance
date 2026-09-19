@@ -78,6 +78,11 @@ def freeze_on_submit(invoice) -> str | None:
 		# work that is already there rather than make a rival copy of it.
 		return _already_active(control)
 
+	# The connection is resolved before anything is built, because a Live
+	# company with nowhere to send is a configuration gap to say plainly,
+	# and the environment on the frozen document is the connection's own.
+	connection = sending_connection(invoice.company)
+
 	result = validation.check(invoice, Level.FULL)
 	if result.errors:
 		frappe.throw(
@@ -87,11 +92,11 @@ def freeze_on_submit(invoice) -> str | None:
 
 	from uae_compliance.erpnext.extract import extract
 
-	document, _findings = extract(invoice)
+	document, _findings = extract(invoice, environment=connection.environment)
 	if document is None:
 		raise NotFrozen("the company was switched off while freezing")
 
-	return create_submission(invoice, control, document, result)
+	return create_submission(invoice, control, document, result, connection)
 
 
 def _already_active(control: str) -> str | None:
@@ -102,7 +107,55 @@ def _already_active(control: str) -> str | None:
 	)
 
 
-def create_submission(invoice, control: str, document: dict, result) -> str:
+def sending_connection(company: str):
+	"""The connection this company's seller sends through, resolved now.
+
+	A submission frozen without one is work no worker can carry, discovered
+	only when the queue quietly parks it for attention. Missing configuration
+	is said here instead, while the person who can fix it is looking.
+	"""
+	profile = frappe.db.get_value(
+		"UAE Peppol Seller Company",
+		{"company": company, "parenttype": "UAE Peppol Seller Profile"},
+		"parent",
+	)
+	asp_name = profile and frappe.db.get_value("UAE Peppol Seller Profile", profile, "current_asp")
+	if not asp_name:
+		frappe.throw(
+			_(
+				"The seller profile has no provider connection, so this invoice has nowhere to go. "
+				"Set the current ASP on the seller profile."
+			),
+			title=_("No connection"),
+		)
+	asp = frappe.db.get_value(
+		"UAE Peppol ASP",
+		asp_name,
+		["name", "provider_key", "environment", "config_revision", "enabled"],
+		as_dict=True,
+	)
+	if not asp.enabled:
+		frappe.throw(
+			_("The connection {0} is switched off, so this invoice has nowhere to go.").format(asp.name),
+			title=_("Connection disabled"),
+		)
+
+	from uae_compliance.services.sending import _installed_registry
+
+	try:
+		declaration = _installed_registry().declaration(asp.provider_key)
+	except Exception:
+		frappe.throw(
+			_("The connection {0} names the provider {1}, which is not an installed adapter.").format(
+				asp.name, asp.provider_key
+			),
+			title=_("No adapter"),
+		)
+	asp.adapter_version = declaration.adapter_version
+	return asp
+
+
+def create_submission(invoice, control: str, document: dict, result, connection=None) -> str:
 	canonical = canonical_bytes(document)
 	xml = to_xml(document)
 	revision = _next_revision(control)
@@ -128,6 +181,10 @@ def create_submission(invoice, control: str, document: dict, result) -> str:
 	doc.serializer_version = str(SERIALIZER_VERSION)
 	doc.extraction_version = document["provenance"]["extraction_version"]
 	doc.environment = document["context"]["environment"]
+	if connection is not None:
+		doc.connection = connection.name
+		doc.config_revision = connection.config_revision
+		doc.adapter_version = connection.adapter_version
 
 	buyer = (document.get("parties") or {}).get("buyer") or {}
 	route = buyer.get("participant") or {}

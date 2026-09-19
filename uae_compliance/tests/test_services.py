@@ -287,6 +287,69 @@ class _HookedAdapter:
 HOOKED_ADAPTER = _HookedAdapter()
 
 
+class TheSendingConnection(IntegrationTestCase):
+	"""A frozen submission is bound to the connection it will travel by."""
+
+	BINDING_CONNECTION = "Binding Test Connection"
+
+	def a_bound_seller(self, provider_key="reference_xml") -> str:
+		profile = a_seller("Preparation")
+		if not frappe.db.exists("UAE Peppol ASP", self.BINDING_CONNECTION):
+			frappe.get_doc(
+				{
+					"doctype": "UAE Peppol ASP",
+					"label": self.BINDING_CONNECTION,
+					"provider_key": provider_key,
+					"environment": "Simulation",
+					"base_url": "http://127.0.0.1:9999/api/v1",
+					"enabled": 1,
+				}
+			).insert(ignore_permissions=True)
+		else:
+			frappe.db.set_value(
+				"UAE Peppol ASP", self.BINDING_CONNECTION, {"provider_key": provider_key, "enabled": 1}
+			)
+		frappe.db.set_value("UAE Peppol Seller Profile", profile, "current_asp", self.BINDING_CONNECTION)
+		self.addCleanup(frappe.db.set_value, "UAE Peppol Seller Profile", profile, "current_asp", None)
+		return profile
+
+	def test_a_live_freeze_names_the_missing_connection_plainly(self):
+		from uae_compliance.services import freeze
+
+		a_seller("Live")
+		self.addCleanup(a_seller, "Preparation")
+		invoice = an_invoice()
+		with self.assertRaises(frappe.ValidationError) as caught:
+			freeze.freeze_on_submit(invoice)
+		self.assertIn("provider connection", str(caught.exception))
+
+	def test_the_connection_resolves_with_its_adapters_version(self):
+		from uae_compliance.services import freeze
+
+		self.a_bound_seller()
+		found = freeze.sending_connection(a_company())
+		self.assertEqual(found.name, self.BINDING_CONNECTION)
+		self.assertEqual(found.environment, "Simulation")
+		self.assertTrue(found.adapter_version, "the adapter's version has to freeze with the work")
+
+	def test_a_connection_naming_no_installed_adapter_is_refused(self):
+		from uae_compliance.services import freeze
+
+		self.a_bound_seller(provider_key="nobody_installed_this")
+		with self.assertRaises(frappe.ValidationError) as caught:
+			freeze.sending_connection(a_company())
+		self.assertIn("not an installed adapter", str(caught.exception))
+
+	def test_a_disabled_connection_is_refused(self):
+		from uae_compliance.services import freeze
+
+		self.a_bound_seller()
+		frappe.db.set_value("UAE Peppol ASP", self.BINDING_CONNECTION, "enabled", 0)
+		with self.assertRaises(frappe.ValidationError) as caught:
+			freeze.sending_connection(a_company())
+		self.assertIn("switched off", str(caught.exception))
+
+
 class RecordedTimestamps(IntegrationTestCase):
 	def test_a_transport_timestamp_lands_on_the_site_clock(self):
 		# The transport writes UTC and every other row is written on the
