@@ -17,6 +17,7 @@ COMPANY = "Acceptance Test Co"
 ABBR = "ATC"
 CUSTOMER = "Acceptance Buyer LLC"
 ITEM = "ACCEPTANCE-ITEM-1"
+PRICE_LIST = "Acceptance Selling"
 
 # Fixed on purpose, so the same fixture produces the same document every run
 # and the hashes in the freeze tests do not move. The fiscal year below is
@@ -98,6 +99,28 @@ def an_item() -> str:
 	return ITEM
 
 
+def a_price_list() -> str:
+	"""A selling price list, because the invoice cannot be saved without one.
+
+	ERPNext makes the price list and its currency mandatory on a Sales
+	Invoice and normally fills them from a default. A fresh test site has no
+	default, so the fixture states its own rather than relying on whatever
+	the site was set up with.
+	"""
+	if not frappe.db.exists("Price List", PRICE_LIST):
+		frappe.get_doc(
+			{
+				"doctype": "Price List",
+				"price_list_name": PRICE_LIST,
+				"selling": 1,
+				"currency": "AED",
+				"enabled": 1,
+			}
+		).insert(ignore_permissions=True)
+		frappe.db.commit()
+	return PRICE_LIST
+
+
 def an_address(title: str, doctype: str, name: str) -> str:
 	existing = frappe.db.exists("Address", {"address_title": title})
 	if existing:
@@ -176,6 +199,9 @@ def an_invoice(**values):
 			"company_address": an_address("ATC Office", "Company", company),
 			"currency": "AED",
 			"conversion_rate": 1,
+			"selling_price_list": a_price_list(),
+			"price_list_currency": "AED",
+			"plc_conversion_rate": 1,
 			"posting_date": POSTING_DATE,
 			"due_date": DUE_DATE,
 			"items": [

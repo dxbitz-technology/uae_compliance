@@ -317,8 +317,13 @@ class A22StoppingARestoredCopy(IntegrationTestCase):
 
 		# Nothing is filtered on the way in.
 		self.assertEqual(_backed_up_keys(), _key_names(live))
-		for sensitive in ("db_password", "encryption_key"):
-			self.assertIn(sensitive, _backed_up_keys(), "the configuration backup stopped carrying secrets")
+		# D017: the site encryption key is written the first time something
+		# is encrypted, so a fresh site has none yet and only the database
+		# password is certain to be there. Whichever of them the site holds,
+		# the backup holds too.
+		self.assertIn("db_password", _backed_up_keys(), "the configuration backup stopped carrying secrets")
+		if "encryption_key" in _key_names(live):
+			self.assertIn("encryption_key", _backed_up_keys())
 
 		# And the key itself, set and then taken off again, because a copy
 		# of the file only says something if this is what is in it.
