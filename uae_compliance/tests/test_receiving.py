@@ -167,6 +167,22 @@ class LandingWhatArrived(IntegrationTestCase):
 		self.assertEqual(state.state, "Unmatched")
 		self.assertIn("different contents", state.match_note)
 
+	def test_the_database_itself_refuses_a_second_landing(self):
+		# The dedup check reads before it writes, so two collectors racing
+		# the same page can both pass it. The constraint cannot be raced.
+		_stored, name = self.land(an_example(), "landing-9")
+		double = frappe.get_doc(
+			{
+				"doctype": "UAE Peppol Inbound",
+				"connection": self.connection.name,
+				"document_uuid": "landing-9",
+				"payload_digest": frappe.db.get_value("UAE Peppol Inbound", name, "payload_digest"),
+				"state": "Received",
+			}
+		)
+		with self.assertRaises((frappe.UniqueValidationError, frappe.DuplicateEntryError)):
+			double.insert(ignore_permissions=True)
+
 	def test_no_supplier_is_created_from_an_arriving_document(self):
 		before = frappe.db.count("Supplier")
 		self.land(an_example(), "landing-4")

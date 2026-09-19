@@ -46,11 +46,13 @@ ITEM_TYPE_FIELDS = {
 def after_install():
 	record_installed_rules()
 	add_item_type_field()
+	add_unique_constraints()
 
 
 def after_migrate():
 	record_installed_rules()
 	add_item_type_field()
+	add_unique_constraints()
 
 
 def record_installed_rules():
@@ -75,6 +77,16 @@ def add_item_type_field():
 	adding a second one, and it leaves any other app's fields alone.
 	"""
 	create_custom_fields(ITEM_TYPE_FIELDS, ignore_validate=True)
+
+
+def add_unique_constraints():
+	"""Uniqueness the field schema cannot state, because it spans two fields.
+
+	The landing dedup reads before it writes, and two collectors racing the
+	same page can both pass that read. The database is the guard that cannot
+	race. Safe to run again: the framework checks for the constraint first.
+	"""
+	frappe.db.add_unique("UAE Peppol Inbound", ["connection", "document_uuid"])
 
 
 def before_tests():

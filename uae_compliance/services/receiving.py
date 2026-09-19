@@ -131,7 +131,13 @@ def _land(asp, artifact) -> int:
 	# blank: a supplier's invoice would be attributed to whichever company
 	# happens to be the default rather than the one it was addressed to.
 	doc.company = None
-	doc.insert(ignore_permissions=True)
+	try:
+		doc.insert(ignore_permissions=True)
+	except frappe.UniqueValidationError, frappe.DuplicateEntryError:
+		# Two collectors racing the same page. The check above reads before
+		# it writes, so both can pass it; the database kept the first
+		# landing and this one is the duplicate it would have seen.
+		return 0
 	_store_body(doc, artifact)
 	_match(doc, summary)
 	return 1

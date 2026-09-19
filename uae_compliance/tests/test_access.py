@@ -145,15 +145,25 @@ class UnmatchedInboundDocuments(IntegrationTestCase):
 		from uae_compliance.domain.encoding import sha256_hex
 		from uae_compliance.tests.test_receiving import a_connection
 
+		connection = a_connection()
+		# A leftover from an interrupted earlier run would trip the landing
+		# uniqueness, so the fixture clears its own identifier first.
+		frappe.db.sql(
+			"delete from `tabUAE Peppol Inbound` where connection=%s and document_uuid=%s",
+			(connection, identifier),
+		)
 		doc = frappe.new_doc("UAE Peppol Inbound")
-		doc.connection = a_connection()
+		doc.connection = connection
 		doc.environment = "Simulation"
 		doc.document_uuid = identifier
 		doc.payload_digest = sha256_hex(identifier.encode())
 		doc.received_at = frappe.utils.now_datetime()
 		doc.state = "Unmatched" if company is None else "Received"
-		doc.company = company
 		doc.insert(ignore_permissions=True)
+		# Frappe fills a company link from the site default when nothing sets
+		# it, so the blank the unmatched case is about has to be written back
+		# the way the landing code writes it. Written either way.
+		frappe.db.set_value("UAE Peppol Inbound", doc.name, "company", company, update_modified=False)
 		self.addCleanup(frappe.db.sql, "delete from `tabUAE Peppol Inbound` where name=%s", doc.name)
 		return doc.name
 
